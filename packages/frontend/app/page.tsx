@@ -17,6 +17,7 @@ import { ParallaxBg } from "@/components/parallax/parallax-layer"
 import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 import { FloatingShapes } from "@/components/parallax/floating-shapes"
 import { SwapCard } from "@/components/parallax/swap-card"
+import { useScrollSpy } from "@/lib/use-scroll-spy"
 
 function scrollToId(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
   e.preventDefault()
@@ -59,23 +60,17 @@ function NavLink({ href, title, active }: { href: string; title: string; active:
 export default function LandingPage() {
   const { user } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [activeSection, setActiveSection] = useState("hero")
   const [scrolled, setScrolled] = useState(false)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   void mousePos
   const heroRef = useRef<HTMLDivElement>(null)
+  const activeSection = useScrollSpy(["hero", "features", "cryptography", "protocol", "extension", "compliance"], {
+    initialSection: "hero",
+  })
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
-      const sections = ["hero", "features", "cryptography", "protocol", "extension", "compliance"]
-      for (const section of sections) {
-        const el = document.getElementById(section)
-        if (el) {
-          const rect = el.getBoundingClientRect()
-          if (rect.top <= 200) { setActiveSection(section); return }
-        }
-      }
     }
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)

@@ -37,6 +37,7 @@ import { useEffect, useState } from "react"
 import { AppHeader } from "@/components/ui/app-header"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"
 import { FloatingShapes } from "@/components/parallax/floating-shapes"
+import { useScrollSpy } from "@/lib/use-scroll-spy"
 
 /* ──────────────────────────────────────────────
    Section Divider
@@ -442,38 +443,25 @@ function ClaimTypeTable() {
    Main Page
    ────────────────────────────────────────────── */
 export default function BlueprintPage() {
-  const [activeSection, setActiveSection] = useState("vision")
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = [
-        "vision",
-        "topology",
-        "contracts",
-        "cryptography",
-        "lifecycle",
-        "accountabstraction",
-        "backend",
-        "frontend",
-        "extension",
-        "deployment",
-        "security",
-        "directives",
-      ]
-      for (const section of sections) {
-        const el = document.getElementById(section)
-        if (el) {
-          const rect = el.getBoundingClientRect()
-          if (rect.top <= 200) {
-            setActiveSection(section)
-            return
-          }
-        }
-      }
+  const activeSection = useScrollSpy(
+    [
+      "vision",
+      "topology",
+      "contracts",
+      "cryptography",
+      "lifecycle",
+      "accountabstraction",
+      "backend",
+      "frontend",
+      "extension",
+      "deployment",
+      "security",
+      "directives",
+    ],
+    {
+      initialSection: "vision",
     }
-    window.addEventListener("scroll", handleScroll, { passive: true })
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  )
 
   const navSections = [
     { id: "vision", label: "Vision", icon: <Eye className="h-3 w-3" /> },
