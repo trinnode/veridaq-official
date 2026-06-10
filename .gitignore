@@ -1,0 +1,64 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# env files — never commit
+.env
+.env.local
+.env.production
+.env.staging
+
+# build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+coverage/
+
+# foundry
+packages/contracts/out/
+packages/contracts/cache/
+packages/contracts/broadcast/
+!packages/contracts/broadcast/dry-run/
+
+# circuits — these can be large; regenerate with setup.sh
+packages/circuits/build/
+packages/circuits/*.ptau
+packages/circuits/*.zkey
+packages/circuits/*.r1cs
+packages/circuits/*.sym
+packages/circuits/*.wasm
+packages/circuits/*.json
+!packages/circuits/input.example.json
+
+# docker volumes
+.docker-data/
+
+# misc
+.DS_Store
+*.log
+*.lock
+!pnpm-lock.yaml
+.turbo/
+.cache/
+
+# ── Development / debug artifacts (root level) ────────────────────────────────
+# These are one-off fix scripts and log files that should never be committed.
+fix-*.js
+fix-*.ts
+output.txt
+output-final.txt
+sys.log
+cookies.txt
+finish-report.md
+
+# ── Backend development artifacts ─────────────────────────────────────────────
+packages/backend/deploy-core.ts
+packages/backend/deploy-ethers.ts
+packages/backend/fix-simulate.js
+packages/backend/simulate-workflow.ts
+packages/backend/output.txt
+packages/backend/output-final.txt
+packages/backend/sys.log

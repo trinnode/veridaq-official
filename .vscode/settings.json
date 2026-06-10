@@ -1,0 +1,47 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.tabSize": 2,
+  "editor.rulers": [100],
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "files.exclude": {
+    "**/node_modules": true,
+    "packages/contracts/out": true,
+    "packages/contracts/cache": true,
+    "packages/circuits/build": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "packages/contracts/out": true,
+    "pnpm-lock.yaml": true
+  },
+  "solidity.compileUsingRemoteVersion": "v0.8.28",
+  "solidity.formatter": "prettier",
+  "solidity.linter": "solhint",
+  "[solidity]": {
+    "editor.defaultFormatter": "JuanBlanco.solidity"
+  },
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "css.customData": [".vscode/tailwind-custom-data.json"],
+  "tailwindCSS.experimental.classRegex": [
+    ["clsx\(([^)]*)\)", "(?:'|"|`)([^']*)(?:'|"|`)"],
+    ["cn\(([^)]*)\)", "(?:'|"|`)([^']*)(?:'|"|`)"]
+  ],
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.reviewSelection.enabled": true,
+  "github.copilot.chat.agent.runTasks": true,
+  "github.copilot.chat.agent.autoFix": true,
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "chat.agent.maxRequests": 100,
+  "openai.codex.instructionsFile": "AGENTS.md",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.defaultProfile.osx": "zsh"
+}

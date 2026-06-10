@@ -1,0 +1,300 @@
+// VERIDAQ database schema
+// Managed by Prisma 6 with PostgreSQL 16.
+// Run migrations with: pnpm db:push (dev) or pnpm db:migrate (staging/prod)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ─────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  INSTITUTION
+  EMPLOYER
+}
+
+enum InstitutionTier {
+  FREE
+  PAID
+}
+
+enum BatchStatus {
+  PENDING
+  PROCESSING
+  CONFIRMED
+  FAILED
+}
+
+enum CredentialStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum ReviewType {
+  AUTO
+  MANUAL
+}
+
+enum VerificationStatus {
+  PENDING
+  AWAITING_INSTITUTION
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentMethod {
+  CRYPTO
+  FIAT
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentType {
+  INSTITUTION_UPGRADE
+  INSTITUTION_FUNDING
+  EMPLOYER_TOPUP
+}
+
+enum VerificationResult {
+  VERIFIED
+  CLAIM_NOT_SATISFIED
+  CREDENTIAL_REVOKED
+  RECORD_NOT_FOUND
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────
+
+model Admin {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  name              String
+  resetToken        String?
+  resetTokenExpires DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("admins")
+}
+
+// ── Institution ───────────────────────────────────────────────────────────
+
+model Institution {
+  id                      String          @id @default(cuid())
+  // The bytes32 on-chain slug — stored as a 0x-prefixed hex string
+  onChainId               String          @unique
+  name                    String
+  email                   String          @unique
+  passwordHash            String
+  // The admin wallet address used to sign batch transactions
+  adminWallet             String
+  // The institution's public signing key (hex string)
+  publicKey               String
+  // Institution secret used for nullifier derivation, stored encrypted at rest
+  institutionKeyEncrypted String
+  institutionKeyIv        String
+  institutionKeyTag       String
+  active                  Boolean         @default(true)
+  tier                    InstitutionTier @default(FREE)
+  // Whether the institution has been KYC approved by the platform admin
+  kycApproved             Boolean         @default(false)
+  // Deactivation status
+  deactivatedAt           DateTime?
+  deactivationReason      String?
+
+  // Password reset
+  resetToken        String?
+  resetTokenExpires DateTime?
+
+  // Current ETH balance in the PaymasterVault (in wei, stored as string to avoid overflow)
+  paymasterBalance String   @default("0")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  batches              Batch[]
+  claims               ClaimDefinition[]
+  verificationRequests VerificationRequest[]
+  auditLogs            AuditLog[]
+
+  @@map("institutions")
+}
+
+// ── Employer ──────────────────────────────────────────────────────────────
+
+model Employer {
+  id                         String  @id @default(cuid())
+  name                       String
+  // CAC registration number — must be unique
+  cacNumber                  String  @unique
+  email                      String  @unique
+  passwordHash               String
+  // The employer's wallet address for ERC-4337 SubscriptionManager tracking
+  walletAddress              String  @unique @default("")
+  active                     Boolean @default(true)
+  kycApproved                Boolean @default(false)
+  freeVerificationsRemaining Int     @default(3)
+  // Paid verification credits purchased via Crossmint or crypto
+  verificationCredits        Int     @default(0)
+
+  // Password reset
+  resetToken        String?
+  resetTokenExpires DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  verificationRequests VerificationRequest[]
+
+  @@map("employers")
+}
+
+// ── Payment ────────────────────────────────────────────────────────────────
+
+model Payment {
+  id            String        @id @default(cuid())
+  referenceId   String        @unique
+  type          PaymentType
+  method        PaymentMethod?
+  status        PaymentStatus @default(PENDING)
+  amountWei     String        @default("0")
+  amountFiat    String?       // e.g. "50.00"
+  fiatCurrency  String?       // e.g. "USD", "NGN"
+  fiatProvider  String?       // e.g. "stripe", "paystack"
+  fiatSessionId String?
+  txHash        String?       // on-chain tx hash for crypto payments
+  payerId       String
+  payerRole     String        // "INSTITUTION" or "EMPLOYER"
+  description   String?
+  metadata      Json?
+  completedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+// ── Batch ─────────────────────────────────────────────────────────────────
+
+model Batch {
+  id             String      @id @default(cuid())
+  institutionId  String
+  institution    Institution @relation(fields: [institutionId], references: [id])
+  status         BatchStatus @default(PENDING)
+  // On-chain transaction hash once confirmed
+  txHash         String?
+  // The bytes32 txRef passed to the CredentialRegistry for event matching
+  txRef          String?     @unique
+  studentCount   Int
+  graduationYear Int
+  degreeTypeCode Int         @default(1)
+  // Validation error report if the batch was rejected during file parsing
+  errorReport    Json?
+  createdAt      DateTime    @default(now())
+  confirmedAt    DateTime?
+
+  credentials Credential[]
+
+  @@map("batches")
+}
+
+// ── Credential ────────────────────────────────────────────────────────────
+
+model Credential {
+  id             String           @id @default(cuid())
+  batchId        String
+  batch          Batch            @relation(fields: [batchId], references: [id])
+  institutionId  String
+  // Poseidon commitment — stored as 0x-prefixed hex
+  commitment     String           @unique
+  // Poseidon nullifier — stored as 0x-prefixed hex
+  nullifier      String           @unique
+  // The plaintext credential attributes encrypted with AES-256-GCM.
+  // The IV and auth tag are stored separately for decryption.
+  encryptedData  String
+  encryptedIv    String
+  encryptedTag   String
+  graduationYear Int
+  status         CredentialStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+
+  verificationRequests VerificationRequest[]
+
+  @@map("credentials")
+}
+
+// ── ClaimDefinition ───────────────────────────────────────────────────────
+
+model ClaimDefinition {
+  id            String      @id @default(cuid())
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  // Human-readable label shown to employers
+  label         String
+  // Circuit claim type code: 1-6
+  claimCode     Int
+  // If threshold is non-zero, this is a CGPA threshold claim (claimCode 5)
+  threshold     Int         @default(0)
+  reviewType    ReviewType  @default(AUTO)
+  active        Boolean     @default(true)
+  description   String? // Optional description for employers
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([institutionId, claimCode, threshold])
+  @@map("claim_definitions")
+}
+
+// ── VerificationRequest ───────────────────────────────────────────────────
+
+model VerificationRequest {
+  id            String              @id @default(cuid())
+  employerId    String
+  employer      Employer            @relation(fields: [employerId], references: [id])
+  institutionId String
+  institution   Institution         @relation(fields: [institutionId], references: [id])
+  credentialId  String?
+  credential    Credential?         @relation(fields: [credentialId], references: [id])
+  // The matriculation number as entered by the employer (not stored permanently; used to look up credential)
+  matricNumber  String
+  claimType     Int
+  threshold     Int                 @default(0)
+  status        VerificationStatus  @default(PENDING)
+  result        VerificationResult?
+  // Serialised Groth16 proof — stored for audit purposes; never sent back to the employer in raw form
+  proofJson     String?
+  // On-chain transaction hash of the verifyProof call
+  txHash        String?
+  createdAt     DateTime            @default(now())
+  completedAt   DateTime?
+
+  @@map("verification_requests")
+}
+
+// ── AuditLog ──────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id            String       @id @default(cuid())
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  employerId    String?
+  adminId       String?
+  action        String
+  details       Json
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime     @default(now())
+
+  @@map("audit_logs")
+}

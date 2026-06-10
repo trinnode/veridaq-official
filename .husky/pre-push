@@ -1,0 +1,13 @@
+#!/bin/sh
+# Run typecheck and tests before every push.
+# This catches issues before they reach CI.
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running typecheck..."
+pnpm typecheck
+
+echo "Running backend tests..."
+pnpm test:backend
+
+echo "Running contract tests..."
+pnpm test:contracts
