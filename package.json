@@ -10,7 +10,7 @@
     "dev:frontend": "next dev packages/frontend --port 3000",
     "simulate:role-flow": "tsx packages/backend/src/scripts/simulate-role-flow.ts",
     "build:backend": "tsc -p packages/backend/tsconfig.json",
-    "build:frontend": "next build packages/frontend",
+    "build:frontend": "pnpm extension:zip && next build packages/frontend",
     "test:backend": "vitest run --config packages/backend/vitest.config.ts",
     "test:contracts": "cd packages/contracts && forge test -vvv",
     "test:contracts:coverage": "cd packages/contracts && forge coverage",
@@ -30,7 +30,7 @@
     "contracts:deploy": "cd packages/contracts && forge script script/Deploy.s.sol --rpc-url base_sepolia --broadcast --verify",
     "contracts:deploy:dry": "cd packages/contracts && forge script script/Deploy.s.sol --rpc-url base_sepolia",
     "prepare": "husky",
-    "extension:zip": "cd packages/extension && mkdir -p dist && cp manifest.json background.js content.js popup.html panel.html ui.js config.js styles.css panel.css icon.svg dist/ && cd dist && zip -r ../VERIDAQ-Companion.zip . && cd .. && rm -rf dist"
+    "extension:zip": "mkdir -p packages/frontend/public/extension packages/extension/dist && cp packages/extension/manifest.json packages/extension/background.js packages/extension/content.js packages/extension/popup.html packages/extension/panel.html packages/extension/ui.js packages/extension/config.js packages/extension/styles.css packages/extension/panel.css packages/extension/icon.svg packages/extension/dist/ && cd packages/extension/dist && zip -r ../../frontend/public/extension/VERIDAQ-Companion.zip . && cd .. && rm -rf dist"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.32.0",
