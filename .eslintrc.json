@@ -1,0 +1,18 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "security"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:security/recommended-legacy",
+    "next/core-web-vitals"
+  ],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
+    "security/detect-object-injection": "off"
+  },
+  "ignorePatterns": ["packages/contracts/**", "packages/circuits/build/**", "node_modules/**"]
+}

@@ -1,0 +1,4 @@
+const VERIDAQ_CONFIG = {
+  BACKEND_URL: "http://localhost:4000",
+  WEB_URL: "http://localhost:3000",
+}

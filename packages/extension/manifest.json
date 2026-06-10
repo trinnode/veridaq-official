@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "VERIDAQ Companion",
+  "version": "1.0.0",
+  "description": "Quick credential verification and batch uploads without leaving your workflow.",
+  "permissions": ["storage", "activeTab", "scripting", "tabs", "cookies"],
+  "host_permissions": ["http://localhost:4000/*", "https://veridaq.xyz/*"],
+  "action": {
+    "default_title": "VERIDAQ Companion",
+    "default_popup": "popup.html",
+    "default_icon": "icon.svg"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["panel.html", "styles.css", "config.js", "ui.js", "icon.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "icon.svg",
+    "48": "icon.svg",
+    "128": "icon.svg"
+  }
+}

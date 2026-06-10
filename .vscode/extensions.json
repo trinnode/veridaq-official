@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "prisma.prisma",
+    "JuanBlanco.solidity",
+    "tintinweb.solidity-visual-auditor",
+    "nhoizey.gremlins",
+    "bradlc.vscode-tailwindcss",
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "ms-vscode.vscode-typescript-next",
+    "ms-azuretools.vscode-docker",
+    "humao.rest-client",
+    "rangav.vscode-thunder-client",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "mechatroner.rainbow-csv",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg"
+  ]
+}

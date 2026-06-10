@@ -1,0 +1,90 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dev: Full Stack",
+      "type": "shell",
+      "command": "pnpm dev",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "Dev: Backend only",
+      "type": "shell",
+      "command": "pnpm dev:backend",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Dev: Frontend only",
+      "type": "shell",
+      "command": "pnpm dev:frontend",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Docker: Start services",
+      "type": "shell",
+      "command": "docker compose up -d",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Docker: Stop services",
+      "type": "shell",
+      "command": "docker compose down",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "DB: Push schema",
+      "type": "shell",
+      "command": "pnpm db:push",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "DB: Seed data",
+      "type": "shell",
+      "command": "pnpm db:seed",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "DB: Open Studio",
+      "type": "shell",
+      "command": "pnpm db:studio",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Contracts: Test",
+      "type": "shell",
+      "command": "pnpm test:contracts",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Contracts: Deploy (dry run)",
+      "type": "shell",
+      "command": "pnpm contracts:deploy:dry",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Circuit: Compile",
+      "type": "shell",
+      "command": "pnpm circuit:compile",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Circuit: Setup (trusted setup)",
+      "type": "shell",
+      "command": "pnpm circuit:setup",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Lint: Fix all",
+      "type": "shell",
+      "command": "pnpm lint:fix && pnpm format",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Typecheck: All packages",
+      "type": "shell",
+      "command": "pnpm typecheck",
+      "presentation": { "reveal": "always" }
+    }
+  ]
+}

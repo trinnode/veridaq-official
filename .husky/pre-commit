@@ -1,0 +1,6 @@
+#!/bin/sh
+# Run lint-staged before every commit.
+# This checks only the files you are committing, not the whole codebase.
+# Temporarily disabled for initial commit
+# . "$(dirname "$0")/_/husky.sh"
+# npx lint-staged
