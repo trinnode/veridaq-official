@@ -389,11 +389,12 @@ This is the main frontend to backend bridge. It is consumed in `packages/fronten
 2. Import the repository into Vercel.
 3. Set the root directory to the repository root.
 4. Confirm that Vercel detects Next.js.
-5. Set the build command to `pnpm vercel-build`.
+5. Set the build command to `pnpm build:frontend`.
+6. Set the output directory to `packages/frontend/.next`.
 
-That script builds the frontend from `packages/frontend` and then copies the
-resulting `.next` folder to the repository root so Vercel can find
-`routes-manifest.json`.
+Do not copy the build output to the repository root. That breaks the relative
+trace paths inside `.next` and causes Vercel to look for files under
+`/node_modules`.
 
 For this repo, the frontend build uses:
 
