@@ -1,0 +1,64 @@
+# Version control
+.git/
+.gitattributes
+.gitignore
+.gitmodules
+.github/
+
+# Environment
+.env
+.env.*
+
+# Node
+node_modules/
+
+# Build outputs
+.next/
+out/
+
+# IDE / editor
+.vscode/
+.idea/
+
+# Project files not needed for backend Docker image
+AGENTS.md
+COMPLETE.md
+GUIDE.md
+README.md
+vercel.json
+.eslintrc.json
+eslint.config.mjs
+.prettierrc
+.nvmrc
+
+# Frontend
+packages/frontend/
+
+# Solidity contracts
+packages/contracts/
+
+# Chrome extension
+packages/extension/
+
+# Circuit source (only build artifacts are needed)
+packages/circuits/credential.circom
+packages/circuits/input.example.json
+packages/circuits/scripts/
+
+# Backend test files
+packages/backend/src/test/
+packages/backend/vitest.config.ts
+packages/backend/deploy-*.ts
+packages/backend/simulate-workflow.ts
+
+# Templates
+templates/
+
+# Docker volumes
+.docker-data/
+
+# Logs
+*.log
+
+# Husky
+.husky/
