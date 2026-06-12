@@ -49,5 +49,5 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
-# Apply pending migrations, then start the server
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy --schema=packages/backend/prisma/schema.prisma && node dist/backend/src/server.js"]
+# Apply pending migrations, seed database, then start the server
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy --schema=packages/backend/prisma/schema.prisma && node dist/backend/prisma/seed.js && node dist/backend/src/server.js"]
