@@ -12,6 +12,7 @@ node_modules/
 # build outputs
 dist/
 build/
+!packages/circuits/build/
 .next/
 out/
 *.tsbuildinfo
@@ -23,8 +24,14 @@ packages/contracts/cache/
 packages/contracts/broadcast/
 !packages/contracts/broadcast/dry-run/
 
-# circuits — these can be large; regenerate with setup.sh
-packages/circuits/build/
+# circuits — build artifacts for proof generation
+# These files are needed at runtime (included via !packages/circuits/build/ above):
+#   credential_final.zkey, credential_js/credential.wasm, verification_key.json
+# Large intermediates and setup files remain excluded below:
+packages/circuits/build/powersOfTau28_hez_final_13.ptau
+packages/circuits/build/credential_0000.zkey
+packages/circuits/build/credential.r1cs
+packages/circuits/build/credential.sym
 packages/circuits/*.ptau
 packages/circuits/*.zkey
 packages/circuits/*.r1cs
@@ -62,3 +69,7 @@ packages/backend/simulate-workflow.ts
 packages/backend/output.txt
 packages/backend/output-final.txt
 packages/backend/sys.log
+
+
+
+COMPLETE.md
