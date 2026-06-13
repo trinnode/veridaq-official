@@ -1,7 +1,6 @@
 #!/bin/sh
 # Run typecheck and tests before every push.
 # This catches issues before they reach CI.
-. "$(dirname "$0")/_/husky.sh"
 
 echo "Running typecheck..."
 pnpm typecheck

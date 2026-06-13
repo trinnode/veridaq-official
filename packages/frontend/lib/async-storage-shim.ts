@@ -2,7 +2,7 @@ const store = new Map<string, string>()
 
 const asyncStorage = {
   async getItem(key: string): Promise<string | null> {
-    return store.has(key) ? store.get(key) ?? null : null
+    return store.has(key) ? (store.get(key) ?? null) : null
   },
   async setItem(key: string, value: string): Promise<void> {
     store.set(key, value)
