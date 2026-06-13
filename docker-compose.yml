@@ -1,51 +1,43 @@
-version: "3.9"
-
-# VERIDAQ local development stack.
-# Runs PostgreSQL 16 and Redis 7.
-# Your backend and frontend run outside Docker (on your machine).
-# Start with: docker compose up -d
-
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: veridaq_pg
-    restart: unless-stopped
+  # ── Backend (API + BullMQ Worker) ─────────────────────────
+  # Database: use Neon (PostgreSQL)   — set DATABASE_URL in .env
+  # Cache:    use Upstash (Redis)     — set REDIS_URL in .env
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    env_file: .env
     environment:
-      POSTGRES_USER: veridaq
-      POSTGRES_PASSWORD: veridaq_dev
-      POSTGRES_DB: veridaq
-    ports:
-      - "5432:5432"
-    volumes:
-      - .docker-data/postgres:/var/lib/postgresql/data
+      - NODE_ENV=production
+      - FRONTEND_URL=http://localhost:3000
+      - BACKEND_URL=http://localhost:4000
+    restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U veridaq"]
-      interval: 10s
+      test: curl -f http://localhost:4000/health || exit 1
+      interval: 30s
       timeout: 5s
-      retries: 5
+      start_period: 30s
+      retries: 3
 
-  redis:
-    image: redis:7-alpine
-    container_name: veridaq_redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+  # ── Frontend (Next.js 15) ─────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=http://localhost:4000
     ports:
-      - "6379:6379"
-    volumes:
-      - .docker-data/redis:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
 
-  # Optional: Uncomment to run pgAdmin for database inspection
-  # pgadmin:
-  #   image: dpage/pgadmin4:latest
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: admin@veridaq.xyz
-  #     PGADMIN_DEFAULT_PASSWORD: admin
-  #   ports:
-  #     - "5050:80"
-  #   depends_on:
-  #     - postgres
+# All data is stored externally:
+#   PostgreSQL → Neon (cloud)
+#   Redis      → Upstash (cloud)
+# No local volumes needed.

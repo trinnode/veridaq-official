@@ -31,14 +31,9 @@ eslint.config.mjs
 .prettierrc
 .nvmrc
 
-# Frontend
-packages/frontend/
-
-# Solidity contracts
+# Solidity contracts (not needed for backend or frontend images)
 packages/contracts/
-
-# Chrome extension
-packages/extension/
+packages/contracts/
 
 # Circuit source (only build artifacts are needed)
 packages/circuits/credential.circom
