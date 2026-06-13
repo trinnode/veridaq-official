@@ -1,5 +1,5 @@
-import path from "node:path"
 import type { NextConfig } from "next"
+import path from "node:path"
 
 const nextConfig: NextConfig = {
   eslint: {
@@ -20,6 +20,6 @@ const nextConfig: NextConfig = {
 
     return config
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

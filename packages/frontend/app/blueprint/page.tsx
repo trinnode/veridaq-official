@@ -1,15 +1,24 @@
 "use client"
 
+import { FloatingShapes } from "@/components/parallax/floating-shapes"
+import { ParallaxBg } from "@/components/parallax/parallax-layer"
+import { AppHeader } from "@/components/ui/app-header"
+import { useScrollSpy } from "@/lib/use-scroll-spy"
 import { motion } from "framer-motion"
 import {
   BookOpen,
   CheckCircle2,
   ChevronRight,
   CircuitBoard,
+  Coins,
   Cpu,
   Database,
+  Eye,
+  EyeOff,
   FileCode2,
   Fingerprint,
+  Fuel,
+  GitBranch,
   Globe,
   Hexagon,
   Key,
@@ -22,22 +31,13 @@ import {
   Shield,
   ShieldCheck,
   Terminal,
-  Zap,
-  Coins,
-  Fuel,
-  GitBranch,
   UserCheck,
   Users,
   Wallet,
-  Eye,
-  EyeOff,
+  Zap,
 } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { AppHeader } from "@/components/ui/app-header"
-import { ParallaxBg } from "@/components/parallax/parallax-layer"
-import { FloatingShapes } from "@/components/parallax/floating-shapes"
-import { useScrollSpy } from "@/lib/use-scroll-spy"
 
 /* ──────────────────────────────────────────────
    Section Divider
@@ -83,7 +83,7 @@ function ContractCard({
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="border-surface-border bg-surface-card group overflow-hidden rounded-xl border transition-all duration-300 hover:border-accent/30"
+      className="border-surface-border bg-surface-card hover:border-accent/30 group overflow-hidden rounded-xl border transition-all duration-300"
     >
       <div className="border-surface-border flex items-center gap-3 border-b p-4">
         <div className="text-accent">{icon}</div>
@@ -94,15 +94,15 @@ function ContractCard({
               {abi}
             </span>
           </div>
-          <p className="text-xs text-muted">{purpose}</p>
+          <p className="text-muted text-xs">{purpose}</p>
         </div>
         {address && (
-          <span className="font-mono text-[9px] text-muted-subtle">{address.slice(0, 10)}...</span>
+          <span className="text-muted-subtle font-mono text-[9px]">{address.slice(0, 10)}...</span>
         )}
       </div>
       <div className="space-y-1 p-4">
         {highlights.map((h) => (
-          <div key={h} className="flex items-start gap-2 text-xs text-muted">
+          <div key={h} className="text-muted flex items-start gap-2 text-xs">
             <div className="bg-accent/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
             <span>{h}</span>
           </div>
@@ -150,14 +150,22 @@ function AnimatedProofFlow() {
               <motion.div
                 key={i}
                 className={`relative flex items-center gap-4 rounded-lg p-3 transition-all duration-500 md:gap-6 ${
-                  isActive ? "bg-accent/5 border-accent/20 border" : isDone ? "opacity-60" : "opacity-30"
+                  isActive
+                    ? "bg-accent/5 border-accent/20 border"
+                    : isDone
+                      ? "opacity-60"
+                      : "opacity-30"
                 }`}
                 animate={isActive ? { scale: [1, 1.02, 1] } : {}}
                 transition={{ repeat: isActive ? Infinity : 0, duration: 2.2 }}
               >
                 <div
-                  className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-void md:h-10 md:w-10 ${
-                    isActive ? s.color : isDone ? "bg-surface-border text-muted" : "bg-surface text-muted-subtle"
+                  className={`text-void relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold md:h-10 md:w-10 ${
+                    isActive
+                      ? s.color
+                      : isDone
+                        ? "bg-surface-border text-muted"
+                        : "bg-surface text-muted-subtle"
                   }`}
                 >
                   {i + 1}
@@ -180,9 +188,7 @@ function AnimatedProofFlow() {
                     <Zap className="h-3 w-3" />
                   </motion.div>
                 )}
-                {isDone && (
-                  <CheckCircle2 className="mr-2 h-4 w-4 text-success" />
-                )}
+                {isDone && <CheckCircle2 className="text-success mr-2 h-4 w-4" />}
               </motion.div>
             )
           })}
@@ -197,18 +203,81 @@ function AnimatedProofFlow() {
    ────────────────────────────────────────────── */
 function AaFlowDiagram() {
   const nodes = [
-    { id: 1, label: "Institution Backend", x: 10, y: 10, icon: <Server className="h-4 w-4" />, color: "accent" },
-    { id: 2, label: "SimpleAccount Factory", x: 40, y: 5, icon: <GitBranch className="h-4 w-4" />, color: "info" },
-    { id: 3, label: "UserOperation Build", x: 25, y: 30, icon: <FileCode2 className="h-4 w-4" />, color: "accent" },
-    { id: 4, label: "PaymasterVault", x: 10, y: 55, icon: <Wallet className="h-4 w-4" />, color: "warning" },
-    { id: 5, label: "EntryPoint", x: 40, y: 55, icon: <Route className="h-4 w-4" />, color: "info" },
-    { id: 6, label: "Bundler Relay", x: 55, y: 40, icon: <Globe className="h-4 w-4" />, color: "accent" },
-    { id: 7, label: "Base Sepolia", x: 70, y: 25, icon: <Database className="h-4 w-4" />, color: "success" },
-    { id: 8, label: "CredentialRegistry", x: 55, y: 10, icon: <Layers className="h-4 w-4" />, color: "accent" },
+    {
+      id: 1,
+      label: "Institution Backend",
+      x: 10,
+      y: 10,
+      icon: <Server className="h-4 w-4" />,
+      color: "accent",
+    },
+    {
+      id: 2,
+      label: "SimpleAccount Factory",
+      x: 40,
+      y: 5,
+      icon: <GitBranch className="h-4 w-4" />,
+      color: "info",
+    },
+    {
+      id: 3,
+      label: "UserOperation Build",
+      x: 25,
+      y: 30,
+      icon: <FileCode2 className="h-4 w-4" />,
+      color: "accent",
+    },
+    {
+      id: 4,
+      label: "PaymasterVault",
+      x: 10,
+      y: 55,
+      icon: <Wallet className="h-4 w-4" />,
+      color: "warning",
+    },
+    {
+      id: 5,
+      label: "EntryPoint",
+      x: 40,
+      y: 55,
+      icon: <Route className="h-4 w-4" />,
+      color: "info",
+    },
+    {
+      id: 6,
+      label: "Bundler Relay",
+      x: 55,
+      y: 40,
+      icon: <Globe className="h-4 w-4" />,
+      color: "accent",
+    },
+    {
+      id: 7,
+      label: "Base Sepolia",
+      x: 70,
+      y: 25,
+      icon: <Database className="h-4 w-4" />,
+      color: "success",
+    },
+    {
+      id: 8,
+      label: "CredentialRegistry",
+      x: 55,
+      y: 10,
+      icon: <Layers className="h-4 w-4" />,
+      color: "accent",
+    },
   ]
 
   const edges = [
-    [1, 2], [2, 3], [3, 4], [3, 5], [4, 5], [5, 6], [6, 7], [7, 8],
+    [1, 2],
+    [2, 3],
+    [3, 4],
+    [3, 5],
+    [4, 5],
+    [5, 6],
+    [6, 7],
+    [7, 8],
   ]
 
   return (
@@ -255,7 +324,9 @@ function AaFlowDiagram() {
                 viewport={{ once: true }}
                 whileHover={{ backgroundColor: `rgb(var(--color-${n.color}) / 0.12)` }}
               >
-                <div className="mb-1" style={{ color: `rgb(var(--color-${n.color}))` }}>{n.icon}</div>
+                <div className="mb-1" style={{ color: `rgb(var(--color-${n.color}))` }}>
+                  {n.icon}
+                </div>
                 <span style={{ color: `rgb(var(--color-${n.color}))` }}>{n.label}</span>
               </motion.div>
             )
@@ -362,9 +433,11 @@ function TopologyDiagram() {
                 {layer.items.map((item) => (
                   <div
                     key={item.label}
-                    className="border-surface-border bg-surface flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs text-muted transition-all hover:scale-105 hover:border-accent/30"
+                    className="border-surface-border bg-surface text-muted hover:border-accent/30 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-all hover:scale-105"
                   >
-                    <span style={{ color: `rgb(var(--color-${layer.color}) / 0.7)` }}>{item.icon}</span>
+                    <span style={{ color: `rgb(var(--color-${layer.color}) / 0.7)` }}>
+                      {item.icon}
+                    </span>
                     <span>{item.label}</span>
                   </div>
                 ))}
@@ -394,7 +467,7 @@ function SecurityPillar({ title, items }: { title: string; items: string[] }) {
       <h3 className="mb-4 text-lg font-semibold">{title}</h3>
       <ul className="space-y-2">
         {items.map((item) => (
-          <li key={item} className="flex items-start gap-2 text-sm text-muted">
+          <li key={item} className="text-muted flex items-start gap-2 text-sm">
             <div className="bg-error/20 mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
             <span>{item}</span>
           </li>
@@ -409,7 +482,11 @@ function SecurityPillar({ title, items }: { title: string; items: string[] }) {
    ────────────────────────────────────────────── */
 function ClaimTypeTable() {
   const claims = [
-    { code: 1, label: "Graduation Year Verification", constraint: "graduationYear >= 1960 AND graduationYear <= 2030" },
+    {
+      code: 1,
+      label: "Graduation Year Verification",
+      constraint: "graduationYear >= 1960 AND graduationYear <= 2030",
+    },
     { code: 2, label: "Second Class Lower or Above", constraint: "classification >= 2" },
     { code: 3, label: "Second Class Upper or Above", constraint: "classification >= 3" },
     { code: 4, label: "First Class Honours", constraint: "classification == 4" },
@@ -419,7 +496,7 @@ function ClaimTypeTable() {
 
   return (
     <div className="border-surface-border bg-surface-card overflow-hidden rounded-xl border">
-      <div className="border-surface-border grid grid-cols-3 gap-4 border-b p-4 text-[10px] font-bold uppercase tracking-widest text-muted">
+      <div className="border-surface-border text-muted grid grid-cols-3 gap-4 border-b p-4 text-[10px] font-bold uppercase tracking-widest">
         <span>Code</span>
         <span>Claim Label</span>
         <span className="hidden md:block">Constraint</span>
@@ -431,7 +508,7 @@ function ClaimTypeTable() {
               {c.code}
             </span>
             <span className="font-medium">{c.label}</span>
-            <span className="hidden font-mono text-[10px] text-muted md:block">{c.constraint}</span>
+            <span className="text-muted hidden font-mono text-[10px] md:block">{c.constraint}</span>
           </div>
         ))}
       </div>
@@ -479,13 +556,13 @@ export default function BlueprintPage() {
   ]
 
   return (
-    <div className="relative min-h-screen bg-void text-foreground">
+    <div className="bg-void text-foreground relative min-h-screen">
       <AppHeader />
       <ParallaxBg opacity={0.25} />
       <FloatingShapes count={10} />
 
       {/* Side nav */}
-      <nav className="border-surface-border fixed bottom-0 left-0 right-0 z-40 border-t bg-void/90 backdrop-blur-lg md:bottom-auto md:left-auto md:right-4 md:top-24 md:border-0 md:bg-transparent md:backdrop-blur-none">
+      <nav className="border-surface-border bg-void/90 fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-lg md:bottom-auto md:left-auto md:right-4 md:top-24 md:border-0 md:bg-transparent md:backdrop-blur-none">
         <div className="flex gap-1 overflow-x-auto px-3 py-2 md:flex-col md:gap-0.5 md:p-0">
           {navSections.map((s) => (
             <a
@@ -527,18 +604,17 @@ export default function BlueprintPage() {
             </motion.div>
 
             <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight md:text-6xl lg:text-7xl">
-              The Veridaq{" "}
-              <span className="text-gradient">Protocol Blueprint</span>
+              The Veridaq <span className="text-gradient">Protocol Blueprint</span>
             </h1>
 
-            <p className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-muted md:text-lg">
+            <p className="text-muted mx-auto mb-10 max-w-2xl text-base leading-relaxed md:text-lg">
               Every contract, every circuit, every queue, every route, every rule.
               <br />
-              This document defines the complete architecture of privacy preserving
-              academic credential verification on Base L2.
+              This document defines the complete architecture of privacy preserving academic
+              credential verification on Base L2.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted">
+            <div className="text-muted flex flex-wrap items-center justify-center gap-3 text-xs">
               <span className="border-surface-border bg-surface-card rounded-lg border px-3 py-1.5 font-mono">
                 8 Contracts
               </span>
@@ -573,32 +649,28 @@ export default function BlueprintPage() {
               <h2 className="mb-6 text-2xl font-bold md:text-3xl">
                 Academic Credential Verification Without Trust
               </h2>
-              <div className="space-y-4 text-sm leading-relaxed text-muted">
+              <div className="text-muted space-y-4 text-sm leading-relaxed">
                 <p>
-                  Veridaq solves a fundamental problem: how can an employer verify a
-                  job candidate academic claims without forcing universities to expose
-                  their entire student database and without putting private student data
-                  on a public blockchain?
+                  Veridaq solves a fundamental problem: how can an employer verify a job candidate
+                  academic claims without forcing universities to expose their entire student
+                  database and without putting private student data on a public blockchain?
                 </p>
                 <p>
-                  The answer is a cryptographic sandwich. On one side, universities
-                  commit Poseidon hashes of student credentials to Base L2. On the
-                  other side, employers generate Groth16 Zero Knowledge Proofs that
-                  verify specific claims against those commitments. The student data
-                  never appears in plaintext on any public medium.
+                  The answer is a cryptographic sandwich. On one side, universities commit Poseidon
+                  hashes of student credentials to Base L2. On the other side, employers generate
+                  Groth16 Zero Knowledge Proofs that verify specific claims against those
+                  commitments. The student data never appears in plaintext on any public medium.
                 </p>
                 <p>
-                  Three distinct portals serve three distinct roles. The Institution
-                  Portal for universities to upload and manage credential batches.
-                  The Employer Portal for organizations to submit verification requests.
-                  The Admin Portal for platform governance, KYC approval, and tier
-                  management.
+                  Three distinct portals serve three distinct roles. The Institution Portal for
+                  universities to upload and manage credential batches. The Employer Portal for
+                  organizations to submit verification requests. The Admin Portal for platform
+                  governance, KYC approval, and tier management.
                 </p>
                 <p>
-                  A Chrome Extension companion allows employers to submit verification
-                  requests directly from any webpage without opening the full portal.
-                  All cryptographic operations happen server side. The extension never
-                  sees raw student data.
+                  A Chrome Extension companion allows employers to submit verification requests
+                  directly from any webpage without opening the full portal. All cryptographic
+                  operations happen server side. The extension never sees raw student data.
                 </p>
               </div>
             </motion.div>
@@ -614,14 +686,16 @@ export default function BlueprintPage() {
                   <CheckCircle2 className="text-success h-4 w-4" />
                   Core Principles
                 </h3>
-                <ul className="space-y-2 text-sm text-muted">
+                <ul className="text-muted space-y-2 text-sm">
                   <li className="flex items-start gap-2">
                     <div className="bg-success/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
                     <span>No PII ever written to the public ledger</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-success/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>Zero Knowledge Proofs ensure mathematical verification without data exposure</span>
+                    <span>
+                      Zero Knowledge Proofs ensure mathematical verification without data exposure
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-success/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
@@ -643,22 +717,30 @@ export default function BlueprintPage() {
               </div>
 
               <div className="border-error/20 bg-error/[0.03] rounded-xl border p-5">
-                <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-error">
+                <h3 className="text-error mb-3 flex items-center gap-2 text-sm font-bold">
                   <Shield className="h-4 w-4" />
                   What Veridaq Is Not
                 </h3>
-                <ul className="space-y-2 text-sm text-muted">
+                <ul className="text-muted space-y-2 text-sm">
                   <li className="flex items-start gap-2">
                     <div className="bg-error/20 mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>Not a diploma issuance platform. Institutions remain the sole source of truth for academic records.</span>
+                    <span>
+                      Not a diploma issuance platform. Institutions remain the sole source of truth
+                      for academic records.
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-error/20 mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>Not a replacement for university transcripts. It is a mathematical verification layer.</span>
+                    <span>
+                      Not a replacement for university transcripts. It is a mathematical
+                      verification layer.
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-error/20 mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>Not a decentralized identity system. Institutions are trusted nodes.</span>
+                    <span>
+                      Not a decentralized identity system. Institutions are trusted nodes.
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -676,12 +758,12 @@ export default function BlueprintPage() {
         <SectionDivider label="Smart Contract Layer" icon={<FileCode2 className="h-5 w-5" />} />
         <section id="contracts" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="mb-8 space-y-4">
-            <p className="text-sm leading-relaxed text-muted">
-              Eight Solidity contracts deployed on Base Sepolia, compiled with
-              Foundry 0.8.28 and tested with forge. The contracts implement a
-              layered architecture with clear dependency boundaries. Every public
-              function is protected by OpenZeppelin AccessControl or custom
-              modifiers that validate caller identity against InstitutionRegistry.
+            <p className="text-muted text-sm leading-relaxed">
+              Eight Solidity contracts deployed on Base Sepolia, compiled with Foundry 0.8.28 and
+              tested with forge. The contracts implement a layered architecture with clear
+              dependency boundaries. Every public function is protected by OpenZeppelin
+              AccessControl or custom modifiers that validate caller identity against
+              InstitutionRegistry.
             </p>
           </div>
 
@@ -792,8 +874,16 @@ export default function BlueprintPage() {
                 { step: 1, name: "InstitutionRegistry", desc: "Foundation for identity mapping" },
                 { step: 2, name: "CredentialRegistry", desc: "Depends on InstitutionRegistry" },
                 { step: 3, name: "RevocationRegistry", desc: "Depends on both registries" },
-                { step: 4, name: "SubscriptionManager", desc: "Independent, receives BUNDLER_ROLE grant" },
-                { step: 5, name: "PaymasterVault", desc: "Depends on EntryPoint and SubscriptionManager" },
+                {
+                  step: 4,
+                  name: "SubscriptionManager",
+                  desc: "Independent, receives BUNDLER_ROLE grant",
+                },
+                {
+                  step: 5,
+                  name: "PaymasterVault",
+                  desc: "Depends on EntryPoint and SubscriptionManager",
+                },
                 { step: 6, name: "ZKVerifier", desc: "Standalone, embeds verification key" },
                 { step: 7, name: "SimpleAccountFactory", desc: "Standalone, creates AA wallets" },
               ].map((d) => (
@@ -802,9 +892,9 @@ export default function BlueprintPage() {
                     {d.step}
                   </span>
                   <span className="w-48 font-semibold">{d.name}</span>
-                  <span className="hidden text-muted md:block">{d.desc}</span>
+                  <span className="text-muted hidden md:block">{d.desc}</span>
                   <div className="bg-surface-border flex-1 border-t border-dashed" />
-                  <span className="text-[10px] text-muted-subtle">
+                  <span className="text-muted-subtle text-[10px]">
                     {d.step < 7 ? "depends on previous" : "standalone"}
                   </span>
                 </div>
@@ -824,13 +914,12 @@ export default function BlueprintPage() {
               className="space-y-6"
             >
               <h2 className="text-2xl font-bold md:text-3xl">Circom 2.0 Circuit Architecture</h2>
-              <p className="text-sm leading-relaxed text-muted">
-                The heart of Veridaq cryptographic guarantees is a single Circom 2.0.8
-                circuit called CredentialVerifier. It accepts 8 private inputs from the
-                institution and 4 public inputs visible to everyone. The circuit produces
-                exactly one boolean output: true if and only if the private inputs
-                correspond to the on chain commitment AND the selected claim predicate
-                is satisfied.
+              <p className="text-muted text-sm leading-relaxed">
+                The heart of Veridaq cryptographic guarantees is a single Circom 2.0.8 circuit
+                called CredentialVerifier. It accepts 8 private inputs from the institution and 4
+                public inputs visible to everyone. The circuit produces exactly one boolean output:
+                true if and only if the private inputs correspond to the on chain commitment AND the
+                selected claim predicate is satisfied.
               </p>
 
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
@@ -840,10 +929,19 @@ export default function BlueprintPage() {
                 </h3>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
-                    "nameHash", "matricHash", "cgpa", "classification",
-                    "courseHash", "graduationYear", "blindingFactor", "institutionKey",
+                    "nameHash",
+                    "matricHash",
+                    "cgpa",
+                    "classification",
+                    "courseHash",
+                    "graduationYear",
+                    "blindingFactor",
+                    "institutionKey",
                   ].map((input) => (
-                    <div key={input} className="bg-surface border-surface-border rounded-md border px-3 py-2 font-mono text-muted">
+                    <div
+                      key={input}
+                      className="bg-surface border-surface-border text-muted rounded-md border px-3 py-2 font-mono"
+                    >
                       {input}
                     </div>
                   ))}
@@ -862,7 +960,10 @@ export default function BlueprintPage() {
                     "claimType (1 6 selector)",
                     "threshold (comparison value)",
                   ].map((input) => (
-                    <div key={input} className="bg-surface border-surface-border rounded-md border px-3 py-2 font-mono text-muted">
+                    <div
+                      key={input}
+                      className="bg-surface border-surface-border text-muted rounded-md border px-3 py-2 font-mono"
+                    >
                       {input}
                     </div>
                   ))}
@@ -877,15 +978,15 @@ export default function BlueprintPage() {
               className="space-y-6"
             >
               <div className="border-surface-border bg-surface-card overflow-hidden rounded-xl border">
-                <div className="border-surface-border flex items-center gap-2 border-b px-4 py-2.5 text-xs text-muted">
+                <div className="border-surface-border text-muted flex items-center gap-2 border-b px-4 py-2.5 text-xs">
                   <div className="flex gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-error/60" />
-                    <div className="h-2 w-2 rounded-full bg-warning/60" />
-                    <div className="h-2 w-2 rounded-full bg-success/60" />
+                    <div className="bg-error/60 h-2 w-2 rounded-full" />
+                    <div className="bg-warning/60 h-2 w-2 rounded-full" />
+                    <div className="bg-success/60 h-2 w-2 rounded-full" />
                   </div>
                   <span className="ml-2">credential.circom Constraint Flow</span>
                 </div>
-                <div className="p-4 font-mono text-[10px] leading-relaxed text-muted md:text-xs">
+                <div className="text-muted p-4 font-mono text-[10px] leading-relaxed md:text-xs">
                   <div className="space-y-3">
                     <div>
                       <span className="text-accent">// Constraint 1: Commitment Consistency</span>
@@ -893,7 +994,8 @@ export default function BlueprintPage() {
                       <span className="text-accent">Poseidon</span>(nameHash, matricHash, cgpa,
                       classification, courseHash, graduationYear, blindingFactor)
                       <br />
-                      <span className="text-foreground">commitment</span> <span className="text-error">===</span>{" "}
+                      <span className="text-foreground">commitment</span>{" "}
+                      <span className="text-error">===</span>{" "}
                       <span className="text-foreground">commitHasher.out</span>
                     </div>
                     <div>
@@ -901,7 +1003,8 @@ export default function BlueprintPage() {
                       <br />
                       <span className="text-accent">Poseidon</span>(matricHash, institutionKey)
                       <br />
-                      <span className="text-foreground">nullifier</span> <span className="text-error">===</span>{" "}
+                      <span className="text-foreground">nullifier</span>{" "}
+                      <span className="text-error">===</span>{" "}
                       <span className="text-foreground">nullHasher.out</span>
                     </div>
                     <div>
@@ -913,11 +1016,13 @@ export default function BlueprintPage() {
                       <br />
                       claimType <span className="text-error">===</span> 3 : classification &gt;= 3
                       <br />
-                      claimType <span className="text-error">===</span> 4 : classification <span className="text-error">===</span> 4
+                      claimType <span className="text-error">===</span> 4 : classification{" "}
+                      <span className="text-error">===</span> 4
                       <br />
                       claimType <span className="text-error">===</span> 5 : cgpa &gt;= threshold
                       <br />
-                      claimType <span className="text-error">===</span> 6 : courseHash <span className="text-error">!=</span> 0 AND yearValid
+                      claimType <span className="text-error">===</span> 6 : courseHash{" "}
+                      <span className="text-error">!=</span> 0 AND yearValid
                       <br />
                       <span className="text-foreground">claimResult</span>{" "}
                       <span className="text-error">===</span> 1
@@ -928,23 +1033,23 @@ export default function BlueprintPage() {
 
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">Poseidon Hash Function</h3>
-                <p className="mb-4 text-sm leading-relaxed text-muted">
-                  Veridaq uses Poseidon instead of SHA256 or Keccak256 because Poseidon
-                  is specifically designed for Zero Knowledge applications. It requires
-                  far fewer constraints in Circom circuits resulting in faster proof
-                  generation and smaller proof sizes.
+                <p className="text-muted mb-4 text-sm leading-relaxed">
+                  Veridaq uses Poseidon instead of SHA256 or Keccak256 because Poseidon is
+                  specifically designed for Zero Knowledge applications. It requires far fewer
+                  constraints in Circom circuits resulting in faster proof generation and smaller
+                  proof sizes.
                 </p>
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div className="bg-surface border-surface-border rounded-lg border p-3">
                     <span className="text-accent block font-semibold">BN254 Field Modulus</span>
-                    <span className="font-mono text-[9px] text-muted break-all">
+                    <span className="text-muted break-all font-mono text-[9px]">
                       21888242871839275222246405745257275088548364400416034343698204186575808495617
                     </span>
                   </div>
                   <div className="bg-surface border-surface-border rounded-lg border p-3">
                     <span className="text-accent block font-semibold">Proof Size</span>
                     <span className="text-lg font-bold">~240 bytes</span>
-                    <span className="block text-muted">per Groth16 proof</span>
+                    <span className="text-muted block">per Groth16 proof</span>
                   </div>
                 </div>
               </div>
@@ -961,10 +1066,10 @@ export default function BlueprintPage() {
         <section id="lifecycle" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-6">
-              <p className="text-sm leading-relaxed text-muted">
-                The complete lifecycle of a credential from issuance to verification
-                spans 10 distinct phases across three systems. Each phase is
-                independently auditable and cryptographically bound to the previous one.
+              <p className="text-muted text-sm leading-relaxed">
+                The complete lifecycle of a credential from issuance to verification spans 10
+                distinct phases across three systems. Each phase is independently auditable and
+                cryptographically bound to the previous one.
               </p>
               <div className="space-y-3">
                 {[
@@ -1008,11 +1113,14 @@ export default function BlueprintPage() {
                     ],
                   },
                 ].map((p) => (
-                  <div key={p.phase} className="border-surface-border bg-surface-card rounded-xl border p-4">
-                    <h3 className="mb-3 text-sm font-bold text-accent">{p.phase}</h3>
+                  <div
+                    key={p.phase}
+                    className="border-surface-border bg-surface-card rounded-xl border p-4"
+                  >
+                    <h3 className="text-accent mb-3 text-sm font-bold">{p.phase}</h3>
                     <ul className="space-y-1.5">
                       {p.items.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-muted">
+                        <li key={i} className="text-muted flex items-start gap-2 text-xs">
                           <div className="bg-accent/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
                           <span>{item}</span>
                         </li>
@@ -1034,15 +1142,15 @@ export default function BlueprintPage() {
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold md:text-3xl">ERC 4337 Paymaster Flow</h2>
-              <p className="text-sm leading-relaxed text-muted">
-                Veridaq uses ERC 4337 Account Abstraction to separate gas payment from
-                transaction authorship. This allows the platform to sponsor transaction
-                fees for FREE tier institutions and enables institutions to pay for their
-                own batches from a dedicated on chain balance.
+              <p className="text-muted text-sm leading-relaxed">
+                Veridaq uses ERC 4337 Account Abstraction to separate gas payment from transaction
+                authorship. This allows the platform to sponsor transaction fees for FREE tier
+                institutions and enables institutions to pay for their own batches from a dedicated
+                on chain balance.
               </p>
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">UserOperation Construction</h3>
-                <ol className="space-y-3 text-sm text-muted">
+                <ol className="text-muted space-y-3 text-sm">
                   {[
                     "Compute sender address via SimpleAccountFactory.getAddress",
                     "Encode registerBatch calldata wrapped in SimpleAccount.execute()",
@@ -1067,28 +1175,28 @@ export default function BlueprintPage() {
               <AaFlowDiagram />
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">Gas Sponsorship Decision Flow</h3>
-                <div className="space-y-3 text-xs text-muted">
+                <div className="text-muted space-y-3 text-xs">
                   <div className="bg-surface border-surface-border rounded-lg border p-3">
                     <span className="text-accent block font-semibold">FREE Tier</span>
                     <span className="mt-1 block">
                       Platform sponsored pool covers gas for up to 999 students per batch.
-                      SubscriptionManager.shouldSponsor returns true. PaymasterVault
-                      deducts from sponsoredPool after postOp reconciliation.
+                      SubscriptionManager.shouldSponsor returns true. PaymasterVault deducts from
+                      sponsoredPool after postOp reconciliation.
                     </span>
                   </div>
                   <div className="bg-surface border-surface-border rounded-lg border p-3">
                     <span className="text-accent block font-semibold">PAID Tier</span>
                     <span className="mt-1 block">
-                      Institution pays from its own on chain balance. PaymasterVault
-                      deducts from institutionBalances mapping. Institution admin can
-                      deposit ETH via fundInstitution and withdraw anytime.
+                      Institution pays from its own on chain balance. PaymasterVault deducts from
+                      institutionBalances mapping. Institution admin can deposit ETH via
+                      fundInstitution and withdraw anytime.
                     </span>
                   </div>
                   <div className="bg-error/5 border-error/20 rounded-lg border p-3">
                     <span className="text-error block font-semibold">Insufficient Funds</span>
                     <span className="mt-1 block">
-                      If neither pool has sufficient balance, the batch is marked FAILED
-                      with detailed error metadata showing funding shortfall.
+                      If neither pool has sufficient balance, the batch is marked FAILED with
+                      detailed error metadata showing funding shortfall.
                     </span>
                   </div>
                 </div>
@@ -1102,17 +1210,20 @@ export default function BlueprintPage() {
         <section id="backend" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-6">
-              <p className="text-sm leading-relaxed text-muted">
-                The backend is a Fastify 5 TypeScript server with 38 source files
-                organized across 6 directories. It runs on Node.js 22 and connects to
-                PostgreSQL 16 via Prisma ORM and Redis 7 via ioredis.
+              <p className="text-muted text-sm leading-relaxed">
+                The backend is a Fastify 5 TypeScript server with 38 source files organized across 6
+                directories. It runs on Node.js 22 and connects to PostgreSQL 16 via Prisma ORM and
+                Redis 7 via ioredis.
               </p>
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">Plugin Architecture</h3>
                 <div className="space-y-2 text-sm">
                   {[
                     { name: "@fastify/helmet", desc: "CSP headers in production" },
-                    { name: "@fastify/cors", desc: "Restricted to FRONTEND_URL and EXTENSION_ORIGINS" },
+                    {
+                      name: "@fastify/cors",
+                      desc: "Restricted to FRONTEND_URL and EXTENSION_ORIGINS",
+                    },
                     { name: "@fastify/cookie", desc: "httpOnly JWT refresh tokens" },
                     { name: "@fastify/rate-limit", desc: "300 req/min global, Redis backed" },
                     { name: "@fastify/multipart", desc: "10 MB Excel upload limit" },
@@ -1123,7 +1234,7 @@ export default function BlueprintPage() {
                   ].map((p) => (
                     <div key={p.name} className="flex items-center justify-between gap-4">
                       <span className="font-mono text-xs">{p.name}</span>
-                      <span className="text-xs text-muted">{p.desc}</span>
+                      <span className="text-muted text-xs">{p.desc}</span>
                     </div>
                   ))}
                 </div>
@@ -1131,7 +1242,7 @@ export default function BlueprintPage() {
 
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">BullMQ Batch Processing Pipeline</h3>
-                <ol className="space-y-2 text-xs text-muted">
+                <ol className="text-muted space-y-2 text-xs">
                   {[
                     "Upload endpoint enqueues job to batch processing queue",
                     "Worker picks up job with concurrency limit of 2",
@@ -1160,18 +1271,45 @@ export default function BlueprintPage() {
                 <h3 className="mb-4 text-sm font-bold">API Surface (58 Routes)</h3>
                 <div className="space-y-3 text-xs">
                   {[
-                    { prefix: "Auth /api/auth", count: "9 routes", desc: "login, register, refresh, logout, password reset, extension token" },
-                    { prefix: "Institution /api/institution", count: "16 routes", desc: "batch CRUD, claims, revoke, billing, dashboard, profile, AA predeploy" },
-                    { prefix: "Employer /api/employer", count: "2 routes", desc: "get profile, update profile" },
-                    { prefix: "Admin /api/admin", count: "14 routes", desc: "KYC approval, tier management, funding, deactivation, stats" },
-                    { prefix: "Verification /api/verify", count: "5 routes", desc: "request, poll, history, PDF report, active institutions" },
-                    { prefix: "Stats /api/stats", count: "2 routes", desc: "platform snapshot, SSE streaming every 10s" },
+                    {
+                      prefix: "Auth /api/auth",
+                      count: "9 routes",
+                      desc: "login, register, refresh, logout, password reset, extension token",
+                    },
+                    {
+                      prefix: "Institution /api/institution",
+                      count: "16 routes",
+                      desc: "batch CRUD, claims, revoke, billing, dashboard, profile, AA predeploy",
+                    },
+                    {
+                      prefix: "Employer /api/employer",
+                      count: "2 routes",
+                      desc: "get profile, update profile",
+                    },
+                    {
+                      prefix: "Admin /api/admin",
+                      count: "14 routes",
+                      desc: "KYC approval, tier management, funding, deactivation, stats",
+                    },
+                    {
+                      prefix: "Verification /api/verify",
+                      count: "5 routes",
+                      desc: "request, poll, history, PDF report, active institutions",
+                    },
+                    {
+                      prefix: "Stats /api/stats",
+                      count: "2 routes",
+                      desc: "platform snapshot, SSE streaming every 10s",
+                    },
                     { prefix: "Health", count: "1 route", desc: "plain health check" },
                   ].map((g) => (
-                    <div key={g.prefix} className="border-surface-border bg-surface rounded-lg border p-3">
+                    <div
+                      key={g.prefix}
+                      className="border-surface-border bg-surface rounded-lg border p-3"
+                    >
                       <div className="mb-1 flex items-center justify-between">
-                        <span className="font-semibold text-foreground">{g.prefix}</span>
-                        <span className="font-mono text-[10px] text-accent">{g.count}</span>
+                        <span className="text-foreground font-semibold">{g.prefix}</span>
+                        <span className="text-accent font-mono text-[10px]">{g.count}</span>
                       </div>
                       <span className="text-muted">{g.desc}</span>
                     </div>
@@ -1183,11 +1321,19 @@ export default function BlueprintPage() {
                 <h3 className="mb-4 text-sm font-bold">Prisma Schema 9 Models</h3>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
-                    "Admin", "Institution", "Employer", "Batch",
-                    "Credential", "ClaimDefinition", "VerificationRequest",
+                    "Admin",
+                    "Institution",
+                    "Employer",
+                    "Batch",
+                    "Credential",
+                    "ClaimDefinition",
+                    "VerificationRequest",
                     "AuditLog",
                   ].map((m) => (
-                    <div key={m} className="bg-surface border-surface-border rounded border px-3 py-2 font-mono text-muted">
+                    <div
+                      key={m}
+                      className="bg-surface border-surface-border text-muted rounded border px-3 py-2 font-mono"
+                    >
                       {m}
                     </div>
                   ))}
@@ -1207,7 +1353,10 @@ export default function BlueprintPage() {
                     "institutionDeactivationAlert",
                     "employerDeactivationAlert",
                   ].map((t) => (
-                    <div key={t} className="bg-surface border-surface-border rounded border px-3 py-2 font-mono text-muted">
+                    <div
+                      key={t}
+                      className="bg-surface border-surface-border text-muted rounded border px-3 py-2 font-mono"
+                    >
                       {t}
                     </div>
                   ))}
@@ -1264,7 +1413,7 @@ export default function BlueprintPage() {
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="border-surface-border bg-surface-card group rounded-xl border p-6 transition-all hover:border-accent/30"
+                className="border-surface-border bg-surface-card hover:border-accent/30 group rounded-xl border p-6 transition-all"
               >
                 <div
                   className="mb-4 inline-flex rounded-lg p-3"
@@ -1278,7 +1427,7 @@ export default function BlueprintPage() {
                 <h3 className="mb-4 text-lg font-bold">{portal.role}</h3>
                 <ul className="space-y-2">
                   {portal.routes.map((r) => (
-                    <li key={r} className="flex items-start gap-2 text-xs text-muted">
+                    <li key={r} className="text-muted flex items-start gap-2 text-xs">
                       <ChevronRight
                         className="mt-0.5 h-3 w-3 shrink-0"
                         style={{ color: `rgb(var(--color-${portal.color}))` }}
@@ -1295,39 +1444,45 @@ export default function BlueprintPage() {
             <h3 className="mb-4 text-sm font-bold">Shared UI Architecture</h3>
             <div className="grid gap-4 text-sm md:grid-cols-2">
               <div className="bg-surface border-surface-border rounded-lg border p-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-widest text-accent">State Management</h4>
-                <p className="text-xs text-muted">
-                  TanStack Query for server state with 30 second stale time.
-                  Auth context provides login, logout, and user object globally.
-                  Zustand store for toast notifications. Access token in memory
-                  only, refresh token in httpOnly cookie.
+                <h4 className="text-accent mb-2 text-xs font-bold uppercase tracking-widest">
+                  State Management
+                </h4>
+                <p className="text-muted text-xs">
+                  TanStack Query for server state with 30 second stale time. Auth context provides
+                  login, logout, and user object globally. Zustand store for toast notifications.
+                  Access token in memory only, refresh token in httpOnly cookie.
                 </p>
               </div>
               <div className="bg-surface border-surface-border rounded-lg border p-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-widest text-accent">API Client</h4>
-                <p className="text-xs text-muted">
-                  Axios instance with base URL from NEXT_PUBLIC_BACKEND_URL.
-                  Request interceptor attaches Bearer token. Response interceptor
-                  handles 401 with automatic token refresh via refresh cookie.
-                  Retry queuing prevents race conditions during concurrent refreshes.
+                <h4 className="text-accent mb-2 text-xs font-bold uppercase tracking-widest">
+                  API Client
+                </h4>
+                <p className="text-muted text-xs">
+                  Axios instance with base URL from NEXT_PUBLIC_BACKEND_URL. Request interceptor
+                  attaches Bearer token. Response interceptor handles 401 with automatic token
+                  refresh via refresh cookie. Retry queuing prevents race conditions during
+                  concurrent refreshes.
                 </p>
               </div>
               <div className="bg-surface border-surface-border rounded-lg border p-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-widest text-accent">Design System</h4>
-                <p className="text-xs text-muted">
-                  Tailwind CSS with CSS custom properties for dark light theming.
-                  CSS variables stored as RGB triplets for opacity modifier support.
-                  Space Grotesk font for headings, IBM Plex Mono for code.
-                  Purple accent with red error and fuchsia info palette.
+                <h4 className="text-accent mb-2 text-xs font-bold uppercase tracking-widest">
+                  Design System
+                </h4>
+                <p className="text-muted text-xs">
+                  Tailwind CSS with CSS custom properties for dark light theming. CSS variables
+                  stored as RGB triplets for opacity modifier support. Space Grotesk font for
+                  headings, IBM Plex Mono for code. Purple accent with red error and fuchsia info
+                  palette.
                 </p>
               </div>
               <div className="bg-surface border-surface-border rounded-lg border p-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-widest text-accent">Auth Guards</h4>
-                <p className="text-xs text-muted">
-                  Each portal layout component checks authentication on mount.
-                  Orbital loading animation while verifying session. Unauthenticated
-                  users redirected to login. Role based access enforced at both
-                  frontend layout and backend route levels.
+                <h4 className="text-accent mb-2 text-xs font-bold uppercase tracking-widest">
+                  Auth Guards
+                </h4>
+                <p className="text-muted text-xs">
+                  Each portal layout component checks authentication on mount. Orbital loading
+                  animation while verifying session. Unauthenticated users redirected to login. Role
+                  based access enforced at both frontend layout and backend route levels.
                 </p>
               </div>
             </div>
@@ -1339,24 +1494,38 @@ export default function BlueprintPage() {
         <section id="extension" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-6">
-              <p className="text-sm leading-relaxed text-muted">
-                A Manifest V3 Chrome extension that enables employers to submit
-                verification requests without opening the full web portal. The
-                extension shares the web app session via httpOnly cookies and a
-                short lived extension token endpoint.
+              <p className="text-muted text-sm leading-relaxed">
+                A Manifest V3 Chrome extension that enables employers to submit verification
+                requests without opening the full web portal. The extension shares the web app
+                session via httpOnly cookies and a short lived extension token endpoint.
               </p>
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">Extension Components</h3>
                 <div className="space-y-3 text-sm">
                   {[
-                    { name: "Popup", desc: "Quick verify form with institution ID, matric number, and claim selector. Shows recent verification results." },
-                    { name: "Panel", desc: "Side panel with full verification history, batch upload shortcuts, and session status." },
-                    { name: "Content Script", desc: "Injects a context menu for right clicking matric numbers on any webpage." },
-                    { name: "Service Worker", desc: "Background worker that handles token exchange and session persistence." },
+                    {
+                      name: "Popup",
+                      desc: "Quick verify form with institution ID, matric number, and claim selector. Shows recent verification results.",
+                    },
+                    {
+                      name: "Panel",
+                      desc: "Side panel with full verification history, batch upload shortcuts, and session status.",
+                    },
+                    {
+                      name: "Content Script",
+                      desc: "Injects a context menu for right clicking matric numbers on any webpage.",
+                    },
+                    {
+                      name: "Service Worker",
+                      desc: "Background worker that handles token exchange and session persistence.",
+                    },
                   ].map((c) => (
-                    <div key={c.name} className="border-surface-border bg-surface rounded-lg border p-3">
+                    <div
+                      key={c.name}
+                      className="border-surface-border bg-surface rounded-lg border p-3"
+                    >
                       <span className="text-accent mb-1 block text-xs font-bold">{c.name}</span>
-                      <span className="text-xs text-muted">{c.desc}</span>
+                      <span className="text-muted text-xs">{c.desc}</span>
                     </div>
                   ))}
                 </div>
@@ -1365,18 +1534,26 @@ export default function BlueprintPage() {
             <div className="space-y-6">
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">Security Model</h3>
-                <ul className="space-y-3 text-xs text-muted">
+                <ul className="text-muted space-y-3 text-xs">
                   <li className="flex items-start gap-2">
                     <div className="bg-success/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>Extension never sees raw student data. All cryptographic operations happen server side.</span>
+                    <span>
+                      Extension never sees raw student data. All cryptographic operations happen
+                      server side.
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-success/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>Session shared via httpOnly cookies. Extension uses a 5 minute token obtained from the web app.</span>
+                    <span>
+                      Session shared via httpOnly cookies. Extension uses a 5 minute token obtained
+                      from the web app.
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-success/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>No external permissions required beyond host access to the Veridaq backend.</span>
+                    <span>
+                      No external permissions required beyond host access to the Veridaq backend.
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-success/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
@@ -1386,7 +1563,7 @@ export default function BlueprintPage() {
               </div>
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">Extension Flow</h3>
-                <ol className="space-y-2 text-xs text-muted">
+                <ol className="text-muted space-y-2 text-xs">
                   {[
                     "User logs into the Veridaq web app",
                     "Extension obtains short lived token via POST /api/auth/extension/token",
@@ -1414,26 +1591,48 @@ export default function BlueprintPage() {
           <div className="grid gap-8 lg:grid-cols-2">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold md:text-3xl">Infrastructure Architecture</h2>
-              <p className="text-sm leading-relaxed text-muted">
-                Veridaq runs on Docker Compose for local development with PostgreSQL
-                16 and Redis 7 as backing services. The backend and frontend run
-                outside Docker on the host machine. Base Sepolia serves as the L2
-                settlement layer.
+              <p className="text-muted text-sm leading-relaxed">
+                Veridaq runs on Docker Compose for local development with PostgreSQL 16 and Redis 7
+                as backing services. The backend and frontend run outside Docker on the host
+                machine. Base Sepolia serves as the L2 settlement layer.
               </p>
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">Local Development Stack</h3>
                 <div className="space-y-3 text-xs">
                   {[
-                    { service: "PostgreSQL 16", port: "5432", purpose: "Primary database for all Prisma models" },
-                    { service: "Redis 7", port: "6379", purpose: "BullMQ queue backend and rate limiting" },
-                    { service: "Backend", port: "4000", purpose: "Fastify 5 API server with Swagger at /docs" },
-                    { service: "Frontend", port: "3000", purpose: "Next.js 15 App Router with Tailwind CSS" },
-                    { service: "Base Sepolia", port: "RPC", purpose: "L2 EVM with 8 deployed contracts" },
+                    {
+                      service: "PostgreSQL 16",
+                      port: "5432",
+                      purpose: "Primary database for all Prisma models",
+                    },
+                    {
+                      service: "Redis 7",
+                      port: "6379",
+                      purpose: "BullMQ queue backend and rate limiting",
+                    },
+                    {
+                      service: "Backend",
+                      port: "4000",
+                      purpose: "Fastify 5 API server with Swagger at /docs",
+                    },
+                    {
+                      service: "Frontend",
+                      port: "3000",
+                      purpose: "Next.js 15 App Router with Tailwind CSS",
+                    },
+                    {
+                      service: "Base Sepolia",
+                      port: "RPC",
+                      purpose: "L2 EVM with 8 deployed contracts",
+                    },
                   ].map((s) => (
-                    <div key={s.service} className="border-surface-border bg-surface flex items-center gap-4 rounded-lg border p-3">
-                      <span className="w-32 font-semibold text-foreground">{s.service}</span>
+                    <div
+                      key={s.service}
+                      className="border-surface-border bg-surface flex items-center gap-4 rounded-lg border p-3"
+                    >
+                      <span className="text-foreground w-32 font-semibold">{s.service}</span>
                       <span className="text-accent w-16 font-mono">{s.port}</span>
-                      <span className="flex-1 text-muted">{s.purpose}</span>
+                      <span className="text-muted flex-1">{s.purpose}</span>
                     </div>
                   ))}
                 </div>
@@ -1442,7 +1641,7 @@ export default function BlueprintPage() {
             <div className="space-y-6">
               <div className="border-surface-border bg-surface-card rounded-xl border p-5">
                 <h3 className="mb-4 text-sm font-bold">Production Deployment Checklist</h3>
-                <ul className="space-y-2 text-xs text-muted">
+                <ul className="text-muted space-y-2 text-xs">
                   <li className="flex items-start gap-2">
                     <div className="bg-accent/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
                     <span>.env file with 58 Zod validated environment variables</span>
@@ -1453,7 +1652,10 @@ export default function BlueprintPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-accent/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>Seed script to create admin, demo institution, demo employer, and 6 claim definitions</span>
+                    <span>
+                      Seed script to create admin, demo institution, demo employer, and 6 claim
+                      definitions
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-accent/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
@@ -1493,11 +1695,11 @@ export default function BlueprintPage() {
         <SectionDivider label="Security Model" icon={<Shield className="h-5 w-5" />} />
         <section id="security" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="mb-8 space-y-4">
-            <p className="text-sm leading-relaxed text-muted">
-              Veridaq security operates at three layers: cryptographic guarantees at
-              the circuit level, smart contract access controls at the protocol level,
-              and application security at the API level. Each layer enforces
-              independent constraints that an attacker must bypass sequentially.
+            <p className="text-muted text-sm leading-relaxed">
+              Veridaq security operates at three layers: cryptographic guarantees at the circuit
+              level, smart contract access controls at the protocol level, and application security
+              at the API level. Each layer enforces independent constraints that an attacker must
+              bypass sequentially.
             </p>
           </div>
 
@@ -1543,7 +1745,7 @@ export default function BlueprintPage() {
         <SectionDivider label="Protocol Directives" icon={<ScrollText className="h-5 w-5" />} />
         <section id="directives" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="border-error/20 bg-error/[0.02] rounded-xl border p-6 md:p-8">
-            <h2 className="mb-6 flex items-center gap-3 text-xl font-bold text-error">
+            <h2 className="text-error mb-6 flex items-center gap-3 text-xl font-bold">
               <Shield className="h-6 w-6" />
               Absolute Architectural Directives
             </h2>
@@ -1551,43 +1753,54 @@ export default function BlueprintPage() {
               {[
                 {
                   rule: "No PII on the public ledger",
-                  detail: "No student name, matric number, CGPA, course, or any personally identifiable information may ever appear in a transaction calldata or event log on Base Sepolia. Only Poseidon commitments and nullifiers are recorded on chain.",
+                  detail:
+                    "No student name, matric number, CGPA, course, or any personally identifiable information may ever appear in a transaction calldata or event log on Base Sepolia. Only Poseidon commitments and nullifiers are recorded on chain.",
                 },
                 {
                   rule: "Proofs are boolean only",
-                  detail: "ZKVerifier.sol returns exactly true or false. No intermediate data, no plaintext, no metadata about the student is returned to the caller. The employer learns only whether the claim is satisfied.",
+                  detail:
+                    "ZKVerifier.sol returns exactly true or false. No intermediate data, no plaintext, no metadata about the student is returned to the caller. The employer learns only whether the claim is satisfied.",
                 },
                 {
                   rule: "Revocation is permanent and auditable",
-                  detail: "Once a nullifier is revoked on RevocationRegistry, it cannot be unrevoked. The revocation record includes a reason code and timestamp, creating a permanent audit trail.",
+                  detail:
+                    "Once a nullifier is revoked on RevocationRegistry, it cannot be unrevoked. The revocation record includes a reason code and timestamp, creating a permanent audit trail.",
                 },
                 {
                   rule: "Access control at every layer",
-                  detail: "Every API route, every smart contract function, every frontend route enforces role based access. INSTITUTION, EMPLOYER, and ADMIN roles are strictly separated and enforced independently at each layer.",
+                  detail:
+                    "Every API route, every smart contract function, every frontend route enforces role based access. INSTITUTION, EMPLOYER, and ADMIN roles are strictly separated and enforced independently at each layer.",
                 },
                 {
                   rule: "Gas sponsorship is deterministic",
-                  detail: "The PaymasterVault sponsorship decision is based purely on the institution tier and batch size. No human intervention, no discretionary approval. FREE tier batches under 1000 students are always sponsored.",
+                  detail:
+                    "The PaymasterVault sponsorship decision is based purely on the institution tier and batch size. No human intervention, no discretionary approval. FREE tier batches under 1000 students are always sponsored.",
                 },
                 {
                   rule: "Plaintext is ephemeral",
-                  detail: "Student plaintext attributes exist in application memory only during proof generation. After SnarkJS fullProve completes, the plaintext buffer is cleared. The only persistent storage of plaintext is AES 256 GCM ciphertext in the database.",
+                  detail:
+                    "Student plaintext attributes exist in application memory only during proof generation. After SnarkJS fullProve completes, the plaintext buffer is cleared. The only persistent storage of plaintext is AES 256 GCM ciphertext in the database.",
                 },
                 {
                   rule: "Institutions are the sole source of truth",
-                  detail: "Veridaq does not issue credentials. Institutions upload commitments of their own records. Veridaq provides the cryptographic verification layer. If an institution registers a false commitment, that is an institutional issue, not a protocol issue.",
+                  detail:
+                    "Veridaq does not issue credentials. Institutions upload commitments of their own records. Veridaq provides the cryptographic verification layer. If an institution registers a false commitment, that is an institutional issue, not a protocol issue.",
                 },
                 {
                   rule: "Verification is permissionless",
-                  detail: "Any employer with a valid account and available verification credits can verify any credential from any institution. No bilateral agreement, no API key exchange, no manual approval is required for individual verifications.",
+                  detail:
+                    "Any employer with a valid account and available verification credits can verify any credential from any institution. No bilateral agreement, no API key exchange, no manual approval is required for individual verifications.",
                 },
               ].map((d) => (
-                <div key={d.rule} className="border-surface-border bg-surface-card rounded-xl border p-5">
+                <div
+                  key={d.rule}
+                  className="border-surface-border bg-surface-card rounded-xl border p-5"
+                >
                   <h3 className="mb-2 flex items-start gap-2 text-sm font-bold">
                     <div className="bg-error/20 mt-0.5 h-2 w-2 shrink-0 rounded-full" />
                     {d.rule}
                   </h3>
-                  <p className="text-xs leading-relaxed text-muted">{d.detail}</p>
+                  <p className="text-muted text-xs leading-relaxed">{d.detail}</p>
                 </div>
               ))}
             </div>
@@ -1598,7 +1811,7 @@ export default function BlueprintPage() {
         <div className="container mx-auto mt-32 px-4 text-center md:px-6">
           <div className="border-surface-border bg-surface-card mx-auto max-w-2xl rounded-xl border p-8">
             <h2 className="mb-4 text-2xl font-bold">Explore the Protocol</h2>
-            <p className="mb-6 text-sm text-muted">
+            <p className="text-muted mb-6 text-sm">
               Dive deeper into the contracts, circuit, and API documentation.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
@@ -1625,7 +1838,16 @@ export default function BlueprintPage() {
 /* ── Inline icon components for missing imports ── */
 function Building2(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18" />
       <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
       <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
@@ -1639,7 +1861,16 @@ function Building2(props: React.SVGProps<SVGSVGElement>) {
 
 function Briefcase(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
       <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
     </svg>
@@ -1648,7 +1879,16 @@ function Briefcase(props: React.SVGProps<SVGSVGElement>) {
 
 function Puzzle(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.611a2.404 2.404 0 0 1-1.704.706 2.404 2.404 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.404 2.404 0 0 1 1.998 12c0-.617.236-1.233.706-1.704L4.315 8.69a.979.979 0 0 1 .837-.276c.47.07.802.48.968.925a2.501 2.501 0 1 0 3.214-3.214c-.446-.166-.855-.497-.925-.968a.979.979 0 0 1 .276-.837l1.611-1.611a2.404 2.404 0 0 1 1.704-.706c.617 0 1.233.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.969a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.968 1.02Z" />
     </svg>
   )

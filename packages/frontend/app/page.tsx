@@ -1,23 +1,43 @@
 "use client"
 
-import { motion, AnimatePresence } from "framer-motion"
-import {
-  ArrowRight, Building2, CheckCircle2, Database, Download,
-  FileJson, Fingerprint, Hexagon, Lock, Menu, Puzzle,
-  ShieldCheck, Shield, Terminal, X, Zap, Globe, Key,
-  Eye, EyeOff, ChevronRight, Workflow, Layers, Cpu, Network,
-
-} from "lucide-react"
-import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
-import { useAuth } from "@/lib/auth"
-import { LogoMark } from "@/components/ui/logo"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { FloatingShapes } from "@/components/parallax/floating-shapes"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"
 import { ScrollReveal } from "@/components/parallax/scroll-reveal"
-import { FloatingShapes } from "@/components/parallax/floating-shapes"
 import { SwapCard } from "@/components/parallax/swap-card"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { LogoMark } from "@/components/ui/logo"
+import { useAuth } from "@/lib/auth"
 import { useScrollSpy } from "@/lib/use-scroll-spy"
+import { AnimatePresence, motion } from "framer-motion"
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  Cpu,
+  Database,
+  Download,
+  Eye,
+  EyeOff,
+  FileJson,
+  Fingerprint,
+  Globe,
+  Hexagon,
+  Key,
+  Layers,
+  Lock,
+  Menu,
+  Network,
+  Puzzle,
+  Shield,
+  ShieldCheck,
+  Terminal,
+  Workflow,
+  X,
+  Zap,
+} from "lucide-react"
+import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
 
 function scrollToId(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
   e.preventDefault()
@@ -64,9 +84,12 @@ export default function LandingPage() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   void mousePos
   const heroRef = useRef<HTMLDivElement>(null)
-  const activeSection = useScrollSpy(["hero", "features", "cryptography", "protocol", "extension", "compliance"], {
-    initialSection: "hero",
-  })
+  const activeSection = useScrollSpy(
+    ["hero", "features", "cryptography", "protocol", "extension", "compliance"],
+    {
+      initialSection: "hero",
+    }
+  )
 
   useEffect(() => {
     const handleScroll = () => {
@@ -78,7 +101,10 @@ export default function LandingPage() {
 
   useEffect(() => {
     const handleMouse = (e: MouseEvent) => {
-      setMousePos({ x: (e.clientX / window.innerWidth - 0.5) * 2, y: (e.clientY / window.innerHeight - 0.5) * 2 })
+      setMousePos({
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2,
+      })
     }
     window.addEventListener("mousemove", handleMouse, { passive: true })
     return () => window.removeEventListener("mousemove", handleMouse)
@@ -102,7 +128,12 @@ export default function LandingPage() {
           </Link>
           <div className="hidden items-center gap-6 lg:flex">
             {navLinks.map(({ href, label }) => (
-              <NavLink key={href} href={href} title={label} active={activeSection === href.replace("#", "")} />
+              <NavLink
+                key={href}
+                href={href}
+                title={label}
+                active={activeSection === href.replace("#", "")}
+              />
             ))}
           </div>
           <div className="hidden items-center gap-3 lg:flex">
@@ -113,8 +144,18 @@ export default function LandingPage() {
               </Link>
             ) : (
               <>
-                <Link href="/institution/login" className="text-muted text-sm font-medium transition-colors hover:text-foreground">Institution</Link>
-                <Link href="/employer/login" className="text-muted text-sm font-medium transition-colors hover:text-foreground">Employer</Link>
+                <Link
+                  href="/institution/login"
+                  className="text-muted hover:text-foreground text-sm font-medium transition-colors"
+                >
+                  Institution
+                </Link>
+                <Link
+                  href="/employer/login"
+                  className="text-muted hover:text-foreground text-sm font-medium transition-colors"
+                >
+                  Employer
+                </Link>
               </>
             )}
           </div>
@@ -133,15 +174,37 @@ export default function LandingPage() {
             >
               <div className="container mx-auto flex flex-col gap-1 p-4">
                 {navLinks.map(({ href, label }) => (
-                  <a key={href} onClick={(e) => { scrollToId(e, href.replace("#", "")); setIsMenuOpen(false) }} href={href} className="text-muted hover:text-inherit rounded-lg px-4 py-3 text-sm font-medium transition-colors hover:bg-surface">{label}</a>
+                  <a
+                    key={href}
+                    onClick={(e) => {
+                      scrollToId(e, href.replace("#", ""))
+                      setIsMenuOpen(false)
+                    }}
+                    href={href}
+                    className="text-muted hover:bg-surface rounded-lg px-4 py-3 text-sm font-medium transition-colors hover:text-inherit"
+                  >
+                    {label}
+                  </a>
                 ))}
                 <div className="border-surface-border my-2 border-t" />
                 {user ? (
-                  <Link href={`/${user.role.toLowerCase()}/dashboard`} className="btn-primary justify-center text-sm">Go to Dashboard <ArrowRight className="h-4 w-4" /></Link>
+                  <Link
+                    href={`/${user.role.toLowerCase()}/dashboard`}
+                    className="btn-primary justify-center text-sm"
+                  >
+                    Go to Dashboard <ArrowRight className="h-4 w-4" />
+                  </Link>
                 ) : (
                   <>
-                    <Link href="/employer/login" className="btn-primary justify-center text-sm">Verify Credentials</Link>
-                    <Link href="/institution/login" className="btn-secondary justify-center text-sm">Institution Portal</Link>
+                    <Link href="/employer/login" className="btn-primary justify-center text-sm">
+                      Verify Credentials
+                    </Link>
+                    <Link
+                      href="/institution/login"
+                      className="btn-secondary justify-center text-sm"
+                    >
+                      Institution Portal
+                    </Link>
                   </>
                 )}
               </div>
@@ -152,7 +215,11 @@ export default function LandingPage() {
 
       <main className="space-y-32 pb-20 pt-24 md:space-y-48 md:pb-32">
         {/* ════════════════════════ HERO ════════════════════════ */}
-        <section ref={heroRef} id="hero" className="container relative mx-auto px-4 pt-8 md:px-6 md:pt-16">
+        <section
+          ref={heroRef}
+          id="hero"
+          className="container relative mx-auto px-4 pt-8 md:px-6 md:pt-16"
+        >
           <div className="mx-auto max-w-5xl text-center">
             <ScrollReveal direction="scale" delay={0}>
               <div className="bg-accent/5 border-accent/10 text-accent mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest">
@@ -173,7 +240,7 @@ export default function LandingPage() {
             </ScrollReveal>
 
             <ScrollReveal direction="up" delay={0.35}>
-              <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted md:mb-12 md:text-xl">
+              <p className="text-muted mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:mb-12 md:text-xl">
                 Issue and cryptographically verify academic qualifications without exposing student
                 identity. Powered by Zero-Knowledge Proofs and Layer-2 rollups.
               </p>
@@ -203,8 +270,12 @@ export default function LandingPage() {
                   { value: "0", label: "PII Exposed" },
                 ].map(({ value, label }) => (
                   <div key={label} className="flex flex-col items-center">
-                    <span className="font-display mb-1 text-2xl font-bold text-foreground md:text-3xl">{value}</span>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted md:text-xs">{label}</span>
+                    <span className="font-display text-foreground mb-1 text-2xl font-bold md:text-3xl">
+                      {value}
+                    </span>
+                    <span className="text-muted text-[10px] font-semibold uppercase tracking-wider md:text-xs">
+                      {label}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -216,13 +287,16 @@ export default function LandingPage() {
         <section id="features" className="container relative mx-auto px-4 md:px-6">
           <ScrollReveal direction="up" delay={0}>
             <div className="mb-10 text-center md:mb-16">
-              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">Core Capabilities</span>
+              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">
+                Core Capabilities
+              </span>
               <h2 className="font-display mb-4 text-3xl font-bold md:text-5xl">
                 <Layers className="text-accent mr-3 inline h-8 w-8 md:h-10 md:w-10" />
                 Platform Architecture
               </h2>
-              <p className="mx-auto max-w-2xl text-base text-muted md:text-lg">
-                Cryptographic primitives isolated by design. Data off-chain, mathematically verified on-chain.
+              <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
+                Cryptographic primitives isolated by design. Data off-chain, mathematically verified
+                on-chain.
               </p>
             </div>
           </ScrollReveal>
@@ -230,60 +304,68 @@ export default function LandingPage() {
           {/* Bento Grid */}
           <div className="grid gap-4 md:grid-cols-3 md:grid-rows-2">
             <ScrollReveal direction="scale" delay={0}>
-              <div className="group relative overflow-hidden rounded-2xl border border-surface-border bg-gradient-to-br from-surface-card to-void p-6 transition-all duration-500 hover:border-accent/30 hover:shadow-glow-sm md:col-span-2 [perspective:500px] hover:[transform:rotateX(1deg)]">
-                <div className="bg-accent/5 pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full blur-3xl transition-all duration-700 group-hopver:bg-accent/10 group-hover:scale-150" />
+              <div className="border-surface-border from-surface-card to-void hover:border-accent/30 hover:shadow-glow-sm group relative overflow-hidden rounded-2xl border bg-gradient-to-br p-6 transition-all duration-500 [perspective:500px] hover:[transform:rotateX(1deg)] md:col-span-2">
+                <div className="bg-accent/5 group-hopver:bg-accent/10 pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full blur-3xl transition-all duration-700 group-hover:scale-150" />
                 <div className="relative z-10">
                   <div className="bg-accent/10 text-accent mb-4 inline-flex rounded-xl p-3">
                     <Building2 className="h-6 w-6" />
                   </div>
                   <h3 className="font-display mb-2 text-xl font-semibold">Institution Intake</h3>
-                  <p className="max-w-md text-sm leading-relaxed text-muted">
-                    Academic records normalized into standardized datasets, secured within off-chain trusted enclaves with AES-256-GCM encryption. Batch upload via XLSX with Poseidon commitment hashing.
+                  <p className="text-muted max-w-md text-sm leading-relaxed">
+                    Academic records normalized into standardized datasets, secured within off-chain
+                    trusted enclaves with AES-256-GCM encryption. Batch upload via XLSX with
+                    Poseidon commitment hashing.
                   </p>
                 </div>
               </div>
             </ScrollReveal>
 
             <ScrollReveal direction="scale" delay={0.1}>
-              <div className="group relative overflow-hidden rounded-2xl border border-surface-border bg-gradient-to-br from-surface-card to-void p-6 transition-all duration-500 hover:border-accent/30 hover:shadow-glow-sm [perspective:500px] hover:[transform:rotateX(1deg)]">
+              <div className="border-surface-border from-surface-card to-void hover:border-accent/30 hover:shadow-glow-sm group relative overflow-hidden rounded-2xl border bg-gradient-to-br p-6 transition-all duration-500 [perspective:500px] hover:[transform:rotateX(1deg)]">
                 <div className="bg-accent/5 pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full blur-3xl" />
                 <div className="relative z-10">
                   <div className="bg-accent/10 text-accent mb-4 inline-flex rounded-xl p-3">
                     <Cpu className="h-6 w-6" />
                   </div>
                   <h3 className="font-display mb-2 text-xl font-semibold">State Processing</h3>
-                  <p className="text-sm leading-relaxed text-muted">
-                    Local instances convert arbitrary text vectors to 256-bit numeric fields compatible with zero-knowledge arithmetic boundaries.
+                  <p className="text-muted text-sm leading-relaxed">
+                    Local instances convert arbitrary text vectors to 256-bit numeric fields
+                    compatible with zero-knowledge arithmetic boundaries.
                   </p>
                 </div>
               </div>
             </ScrollReveal>
 
             <ScrollReveal direction="scale" delay={0.15}>
-              <div className="group relative overflow-hidden rounded-2xl border border-surface-border bg-gradient-to-br from-surface-card to-void p-6 transition-all duration-500 hover:border-accent/30 hover:shadow-glow-sm [perspective:500px] hover:[transform:rotateX(1deg)]">
+              <div className="border-surface-border from-surface-card to-void hover:border-accent/30 hover:shadow-glow-sm group relative overflow-hidden rounded-2xl border bg-gradient-to-br p-6 transition-all duration-500 [perspective:500px] hover:[transform:rotateX(1deg)]">
                 <div className="bg-accent/5 pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full blur-3xl" />
                 <div className="relative z-10">
                   <div className="bg-accent/10 text-accent mb-4 inline-flex rounded-xl p-3">
                     <Network className="h-6 w-6" />
                   </div>
                   <h3 className="font-display mb-2 text-xl font-semibold">ZK Commitment</h3>
-                  <p className="text-sm leading-relaxed text-muted">
-                    Circom-powered Groth16 circuit constructs Poseidon hashes of metadata inputs. Committed via ERC-4337 Paymaster.
+                  <p className="text-muted text-sm leading-relaxed">
+                    Circom-powered Groth16 circuit constructs Poseidon hashes of metadata inputs.
+                    Committed via ERC-4337 Paymaster.
                   </p>
                 </div>
               </div>
             </ScrollReveal>
 
             <ScrollReveal direction="scale" delay={0.2}>
-              <div className="group relative overflow-hidden rounded-2xl border border-surface-border bg-gradient-to-br from-surface-card to-void p-6 transition-all duration-500 hover:border-accent/30 hover:shadow-glow-sm md:col-span-2 [perspective:500px] hover:[transform:rotateX(1deg)]">
+              <div className="border-surface-border from-surface-card to-void hover:border-accent/30 hover:shadow-glow-sm group relative overflow-hidden rounded-2xl border bg-gradient-to-br p-6 transition-all duration-500 [perspective:500px] hover:[transform:rotateX(1deg)] md:col-span-2">
                 <div className="bg-accent/5 pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full blur-3xl" />
                 <div className="relative z-10">
                   <div className="bg-accent/10 text-accent mb-4 inline-flex rounded-xl p-3">
                     <ShieldCheck className="h-6 w-6" />
                   </div>
-                  <h3 className="font-display mb-2 text-xl font-semibold">Immutable Verification</h3>
-                  <p className="max-w-md text-sm leading-relaxed text-muted">
-                    External entities request proof executions, receiving strictly boolean assertions without exposing any mapping seeds. Powered by BN254 elliptic curve precompiles.
+                  <h3 className="font-display mb-2 text-xl font-semibold">
+                    Immutable Verification
+                  </h3>
+                  <p className="text-muted max-w-md text-sm leading-relaxed">
+                    External entities request proof executions, receiving strictly boolean
+                    assertions without exposing any mapping seeds. Powered by BN254 elliptic curve
+                    precompiles.
                   </p>
                 </div>
               </div>
@@ -295,29 +377,47 @@ export default function LandingPage() {
         <section id="cryptography" className="container relative mx-auto px-4 md:px-6">
           <div className="grid items-start gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             <ScrollReveal direction="left" delay={0}>
-              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">Zero-Knowledge</span>
-              <h2 className="font-display mb-6 text-3xl font-bold md:text-4xl">Cryptographic Circuits</h2>
-              <p className="mb-4 text-base text-muted md:text-lg">
+              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">
+                Zero-Knowledge
+              </span>
+              <h2 className="font-display mb-6 text-3xl font-bold md:text-4xl">
+                Cryptographic Circuits
+              </h2>
+              <p className="text-muted mb-4 text-base md:text-lg">
                 Our core constraint system is built in Circom 2. It accepts private inputs mapping
                 to student identity elements and deterministically verifies claims without revealing
                 any underlying data.
               </p>
-              <p className="mb-8 text-base text-muted md:text-lg">
+              <p className="text-muted mb-8 text-base md:text-lg">
                 The output is an irreducible Poseidon-hashed construct that ensures exactly 100%
                 compliance verification while maintaining 0% knowledge of the actual individual.
               </p>
 
               <div className="space-y-5">
                 {[
-                  { icon: <Zap className="h-4 w-4" />, title: "Secure Trusted Setup", desc: "Phase 2 ceremony powered by Hermez deterministic entropy. Poison-resistant parameters." },
-                  { icon: <Globe className="h-4 w-4" />, title: "L2 Precompiled Verification", desc: "Deployed on Base Sepolia leveraging BN254 elliptic curve precompiles for gas-efficient proof verification." },
-                  { icon: <Key className="h-4 w-4" />, title: "Poseidon Hashing", desc: "ZKP-friendly hash function with optimal algebraic properties for constraint-efficient circuits." },
+                  {
+                    icon: <Zap className="h-4 w-4" />,
+                    title: "Secure Trusted Setup",
+                    desc: "Phase 2 ceremony powered by Hermez deterministic entropy. Poison-resistant parameters.",
+                  },
+                  {
+                    icon: <Globe className="h-4 w-4" />,
+                    title: "L2 Precompiled Verification",
+                    desc: "Deployed on Base Sepolia leveraging BN254 elliptic curve precompiles for gas-efficient proof verification.",
+                  },
+                  {
+                    icon: <Key className="h-4 w-4" />,
+                    title: "Poseidon Hashing",
+                    desc: "ZKP-friendly hash function with optimal algebraic properties for constraint-efficient circuits.",
+                  },
                 ].map(({ icon, title, desc }) => (
-                  <div key={title} className="flex items-start gap-4 group">
-                    <div className="bg-accent/10 text-accent mt-0.5 rounded-md p-1.5 transition-all duration-300 group-hover:scale-110 group-hover:bg-accent/20">{icon}</div>
+                  <div key={title} className="group flex items-start gap-4">
+                    <div className="bg-accent/10 text-accent group-hover:bg-accent/20 mt-0.5 rounded-md p-1.5 transition-all duration-300 group-hover:scale-110">
+                      {icon}
+                    </div>
                     <div>
-                      <h4 className="font-semibold text-foreground">{title}</h4>
-                      <p className="text-sm text-muted">{desc}</p>
+                      <h4 className="text-foreground font-semibold">{title}</h4>
+                      <p className="text-muted text-sm">{desc}</p>
                     </div>
                   </div>
                 ))}
@@ -325,14 +425,16 @@ export default function LandingPage() {
             </ScrollReveal>
 
             <ScrollReveal direction="right" delay={0.1}>
-              <div className="border-surface-border group relative w-full overflow-x-auto border bg-surface p-4 font-mono text-sm shadow-elevated transition-shadow duration-300 hover:shadow-glow-sm md:p-6">
-                <div className="mb-4 flex min-w-max items-center gap-2 border-b border-surface-border pb-4 md:mb-6">
-                  <div className="h-2.5 w-2.5 rounded-full bg-error/60" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-success/60" />
-                  <span className="ml-3 text-xs text-muted">packages/circuits/credential.circom</span>
+              <div className="border-surface-border bg-surface shadow-elevated hover:shadow-glow-sm group relative w-full overflow-x-auto border p-4 font-mono text-sm transition-shadow duration-300 md:p-6">
+                <div className="border-surface-border mb-4 flex min-w-max items-center gap-2 border-b pb-4 md:mb-6">
+                  <div className="bg-error/60 h-2.5 w-2.5 rounded-full" />
+                  <div className="bg-warning/60 h-2.5 w-2.5 rounded-full" />
+                  <div className="bg-success/60 h-2.5 w-2.5 rounded-full" />
+                  <span className="text-muted ml-3 text-xs">
+                    packages/circuits/credential.circom
+                  </span>
                 </div>
-                <pre className="min-w-max text-xs leading-relaxed text-muted sm:text-sm">
+                <pre className="text-muted min-w-max text-xs leading-relaxed sm:text-sm">
                   {`pragma circom 2.0.0;
 include "poseidon.circom";
 
@@ -384,12 +486,14 @@ template CredentialVerifier() {
         <section id="protocol" className="container relative mx-auto px-4 md:px-6">
           <ScrollReveal direction="up" delay={0}>
             <div className="mb-10 text-center md:mb-16">
-              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">How It Works</span>
+              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">
+                How It Works
+              </span>
               <h2 className="font-display mb-4 text-3xl font-bold md:text-5xl">
                 <Workflow className="text-accent mr-3 inline h-8 w-8 md:h-10 md:w-10" />
                 Protocol Operations
               </h2>
-              <p className="mx-auto max-w-2xl text-base text-muted md:text-lg">
+              <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
                 End-to-end operational flow from API ingest to L2 finality.
               </p>
             </div>
@@ -397,31 +501,55 @@ template CredentialVerifier() {
 
           <div className="relative">
             {/* Timeline line */}
-            <div className="bg-gradient-to-b from-accent/30 via-accent/10 to-transparent absolute left-8 top-0 hidden h-full w-px md:block" />
+            <div className="from-accent/30 via-accent/10 absolute left-8 top-0 hidden h-full w-px bg-gradient-to-b to-transparent md:block" />
 
             {[
-              { step: "01", icon: <FileJson className="h-5 w-5" />, title: "Hash Injection", desc: "Academic records stripped of PII, transformed into Poseidon commitment bundles via SNARK-compatible field elements." },
-              { step: "02", icon: <Database className="h-5 w-5" />, title: "L2 Commitment", desc: "Commitment bundles transmitted to Base Sepolia using ERC-4337 sponsored Paymaster for gasless institution operations." },
-              { step: "03", icon: <Cpu className="h-5 w-5" />, title: "ZK Proof Generation", desc: "Employer inputs mathematical constraints. Groth16 proof generated locally in ~0.7s via compiled WASM circuit." },
-              { step: "04", icon: <Shield className="h-5 w-5" />, title: "Immutable Verification", desc: "Non-reversible boolean executed on-chain via BN254 pairing precompiles. Result stored in VerificationRegistry." },
+              {
+                step: "01",
+                icon: <FileJson className="h-5 w-5" />,
+                title: "Hash Injection",
+                desc: "Academic records stripped of PII, transformed into Poseidon commitment bundles via SNARK-compatible field elements.",
+              },
+              {
+                step: "02",
+                icon: <Database className="h-5 w-5" />,
+                title: "L2 Commitment",
+                desc: "Commitment bundles transmitted to Base Sepolia using ERC-4337 sponsored Paymaster for gasless institution operations.",
+              },
+              {
+                step: "03",
+                icon: <Cpu className="h-5 w-5" />,
+                title: "ZK Proof Generation",
+                desc: "Employer inputs mathematical constraints. Groth16 proof generated locally in ~0.7s via compiled WASM circuit.",
+              },
+              {
+                step: "04",
+                icon: <Shield className="h-5 w-5" />,
+                title: "Immutable Verification",
+                desc: "Non-reversible boolean executed on-chain via BN254 pairing precompiles. Result stored in VerificationRegistry.",
+              },
             ].map(({ step, icon, title, desc }, i) => (
               <ScrollReveal key={step} direction="up" delay={i * 0.1}>
                 <div className="group relative mb-8 pl-0 md:pl-16">
-                  <div className="bg-surface-card border-accent/20 absolute left-0 top-0 hidden h-10 w-10 items-center justify-center rounded-full border md:flex transition-all duration-500 group-hover:border-accent group-hover:shadow-glow-sm">
+                  <div className="bg-surface-card border-accent/20 group-hover:border-accent group-hover:shadow-glow-sm absolute left-0 top-0 hidden h-10 w-10 items-center justify-center rounded-full border transition-all duration-500 md:flex">
                     <span className="text-accent font-display text-xs font-bold">{step}</span>
                   </div>
                   <div className="card-interactive group relative overflow-hidden transition-all duration-500 [perspective:400px] hover:[transform:rotateX(1deg)]">
-                    <div className="absolute right-4 top-4 select-none font-black leading-none text-foreground/[0.03] text-[80px] md:text-[100px]">{step}</div>
+                    <div className="text-foreground/[0.03] absolute right-4 top-4 select-none text-[80px] font-black leading-none md:text-[100px]">
+                      {step}
+                    </div>
                     <div className="relative z-10 flex items-start gap-4">
-                      <div className="bg-accent/10 text-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:bg-accent/20 group-hover:scale-110 md:hidden">
+                      <div className="bg-accent/10 text-accent group-hover:bg-accent/20 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 md:hidden">
                         {icon}
                       </div>
                       <div>
                         <h3 className="font-display mb-2 flex items-center gap-3 text-xl font-semibold md:text-2xl">
-                          <span className="bg-accent/20 text-accent hidden h-8 w-8 items-center justify-center rounded-lg text-xs font-bold md:flex">{step}</span>
+                          <span className="bg-accent/20 text-accent hidden h-8 w-8 items-center justify-center rounded-lg text-xs font-bold md:flex">
+                            {step}
+                          </span>
                           {title}
                         </h3>
-                        <p className="text-sm leading-relaxed text-muted md:pr-12">{desc}</p>
+                        <p className="text-muted text-sm leading-relaxed md:pr-12">{desc}</p>
                       </div>
                     </div>
                   </div>
@@ -432,22 +560,29 @@ template CredentialVerifier() {
 
           <div className="mt-8 grid gap-6 md:mt-12 lg:grid-cols-2">
             <ScrollReveal direction="left" delay={0}>
-              <div className="card-elevated group relative overflow-hidden transition-all duration-500 hover:shadow-glow-md">
-                <div className="bg-accent/5 pointer-events-none absolute -right-20 -bottom-20 h-40 w-40 rounded-full blur-3xl" />
+              <div className="card-elevated hover:shadow-glow-md group relative overflow-hidden transition-all duration-500">
+                <div className="bg-accent/5 pointer-events-none absolute -bottom-20 -right-20 h-40 w-40 rounded-full blur-3xl" />
                 <div className="relative z-10">
-                  <h3 className="font-display mb-4 text-xl font-bold md:text-2xl">Cryptographic Finality</h3>
-                  <p className="mb-6 text-sm leading-relaxed text-muted md:text-base">
-                    The verification loop on the smart contract ensures zero tolerance for mathematical
-                    fabrications. Verification logic executes deterministically on the OP Stack
-                    resulting in absolute, publicly viewable verification assertions while retaining
-                    state anonymity.
+                  <h3 className="font-display mb-4 text-xl font-bold md:text-2xl">
+                    Cryptographic Finality
+                  </h3>
+                  <p className="text-muted mb-6 text-sm leading-relaxed md:text-base">
+                    The verification loop on the smart contract ensures zero tolerance for
+                    mathematical fabrications. Verification logic executes deterministically on the
+                    OP Stack resulting in absolute, publicly viewable verification assertions while
+                    retaining state anonymity.
                   </p>
-                  <ul className="space-y-3 text-sm text-muted">
-                    {["Deterministic execution on Base L2", "Non-interactive succinct zero-knowledge proofs",
-                      "Absolute decoupling via Poseidon hashing", "ERC-4337 Account Abstraction for gas sponsorship",
+                  <ul className="text-muted space-y-3 text-sm">
+                    {[
+                      "Deterministic execution on Base L2",
+                      "Non-interactive succinct zero-knowledge proofs",
+                      "Absolute decoupling via Poseidon hashing",
+                      "ERC-4337 Account Abstraction for gas sponsorship",
                     ].map((item) => (
                       <li key={item} className="flex items-center gap-3">
-                        <div className="bg-accent/10 text-accent rounded p-1"><CheckCircle2 className="h-3.5 w-3.5" /></div>
+                        <div className="bg-accent/10 text-accent rounded p-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        </div>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -457,12 +592,14 @@ template CredentialVerifier() {
             </ScrollReveal>
 
             <ScrollReveal direction="right" delay={0.1}>
-              <div className="border-surface-border group relative w-full overflow-x-auto border bg-surface p-4 font-mono text-sm transition-shadow duration-300 hover:shadow-glow-sm md:p-6">
-                <div className="border-surface-border mb-4 flex min-w-max justify-between border-b pb-3 text-xs text-muted">
-                  <span className="flex items-center gap-2"><Lock className="h-3 w-3" /> Solidity // ZKVerifier.sol</span>
+              <div className="border-surface-border bg-surface hover:shadow-glow-sm group relative w-full overflow-x-auto border p-4 font-mono text-sm transition-shadow duration-300 md:p-6">
+                <div className="border-surface-border text-muted mb-4 flex min-w-max justify-between border-b pb-3 text-xs">
+                  <span className="flex items-center gap-2">
+                    <Lock className="h-3 w-3" /> Solidity // ZKVerifier.sol
+                  </span>
                   <span className="text-accent">~236k Gas</span>
                 </div>
-                <pre className="min-w-max overflow-visible text-xs leading-relaxed text-muted sm:text-sm">
+                <pre className="text-muted min-w-max overflow-visible text-xs leading-relaxed sm:text-sm">
                   {`function verifyProof(
   uint256[2] calldata _pA,
   uint256[2][2] calldata _pB,
@@ -490,12 +627,14 @@ template CredentialVerifier() {
         <section id="extension" className="container relative mx-auto px-4 md:px-6">
           <ScrollReveal direction="up" delay={0}>
             <div className="mb-10 text-center md:mb-16">
-              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">Browser Tooling</span>
+              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">
+                Browser Tooling
+              </span>
               <h2 className="font-display mb-4 text-3xl font-bold md:text-5xl">
                 <Puzzle className="text-accent mr-3 inline h-8 w-8 md:h-10 md:w-10" />
                 Chrome Extension
               </h2>
-              <p className="mx-auto max-w-2xl text-base text-muted md:text-lg">
+              <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
                 Quick credential verification and batch uploads without leaving your workflow.
               </p>
             </div>
@@ -505,26 +644,51 @@ template CredentialVerifier() {
             <ScrollReveal direction="left" delay={0}>
               <div className="space-y-6">
                 {[
-                  { icon: <Eye className="h-5 w-5" />, title: "Quick Verify", desc: "Submit verification requests directly from any webpage. Input institution ID, matric number, and claim type." },
-                  { icon: <Download className="h-5 w-5" />, title: "Batch Upload", desc: "Upload student credential batches (.xlsx) directly from the extension panel without opening the full portal." },
-                  { icon: <Shield className="h-5 w-5" />, title: "Session Sync", desc: "Seamlessly shares your web app session via httpOnly cookies. One login, everywhere." },
-                  { icon: <EyeOff className="h-5 w-5" />, title: "Zero Data Exposure", desc: "All cryptographic operations happen server-side. The extension never sees raw student data." },
+                  {
+                    icon: <Eye className="h-5 w-5" />,
+                    title: "Quick Verify",
+                    desc: "Submit verification requests directly from any webpage. Input institution ID, matric number, and claim type.",
+                  },
+                  {
+                    icon: <Download className="h-5 w-5" />,
+                    title: "Batch Upload",
+                    desc: "Upload student credential batches (.xlsx) directly from the extension panel without opening the full portal.",
+                  },
+                  {
+                    icon: <Shield className="h-5 w-5" />,
+                    title: "Session Sync",
+                    desc: "Seamlessly shares your web app session via httpOnly cookies. One login, everywhere.",
+                  },
+                  {
+                    icon: <EyeOff className="h-5 w-5" />,
+                    title: "Zero Data Exposure",
+                    desc: "All cryptographic operations happen server-side. The extension never sees raw student data.",
+                  },
                 ].map(({ icon, title, desc }, i) => (
                   <ScrollReveal key={title} direction="left" delay={i * 0.05}>
-                    <div className="flex items-start gap-4 group">
-                      <div className="bg-accent/10 text-accent mt-0.5 rounded-lg p-2.5 transition-all duration-300 group-hover:scale-110 group-hover:bg-accent/20">{icon}</div>
+                    <div className="group flex items-start gap-4">
+                      <div className="bg-accent/10 text-accent group-hover:bg-accent/20 mt-0.5 rounded-lg p-2.5 transition-all duration-300 group-hover:scale-110">
+                        {icon}
+                      </div>
                       <div>
-                        <h3 className="mb-1 font-semibold text-foreground">{title}</h3>
-                        <p className="text-sm text-muted">{desc}</p>
+                        <h3 className="text-foreground mb-1 font-semibold">{title}</h3>
+                        <p className="text-muted text-sm">{desc}</p>
                       </div>
                     </div>
                   </ScrollReveal>
                 ))}
                 <div className="pt-4">
-                  <a href="/extension/VERIDAQ-Companion.zip" download className="btn-primary text-sm">
-                    <Download className="h-4 w-4" /> Download Extension (Chrome) <ChevronRight className="h-3 w-3" />
+                  <a
+                    href="/extension/VERIDAQ-Companion.zip"
+                    download
+                    className="btn-primary text-sm"
+                  >
+                    <Download className="h-4 w-4" /> Download Extension (Chrome){" "}
+                    <ChevronRight className="h-3 w-3" />
                   </a>
-                  <p className="mt-3 text-xs text-muted">Manifest V3 &middot; Chrome 88+ &middot; No external permissions required</p>
+                  <p className="text-muted mt-3 text-xs">
+                    Manifest V3 &middot; Chrome 88+ &middot; No external permissions required
+                  </p>
                 </div>
               </div>
             </ScrollReveal>
@@ -536,24 +700,27 @@ template CredentialVerifier() {
         </section>
 
         {/* ════════════════════════ COMPLIANCE ════════════════════════ */}
-        <section id="compliance" className="border-surface-border relative border-t bg-surface/30 px-4 py-24 text-center md:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent parallax-bg" />
+        <section
+          id="compliance"
+          className="border-surface-border bg-surface/30 relative border-t px-4 py-24 text-center md:py-32"
+        >
+          <div className="via-accent/[0.02] parallax-bg absolute inset-0 bg-gradient-to-b from-transparent to-transparent" />
           <div className="container relative z-10 mx-auto max-w-5xl">
             <ScrollReveal direction="up" delay={0}>
-              <div className="bg-accent/10 border-accent/20 mb-8 inline-flex h-16 w-16 rotate-12 items-center justify-center rounded-2xl border transition-all duration-500 hover:rotate-0 hover:scale-110 hover:shadow-glow-sm">
+              <div className="bg-accent/10 border-accent/20 hover:shadow-glow-sm mb-8 inline-flex h-16 w-16 rotate-12 items-center justify-center rounded-2xl border transition-all duration-500 hover:rotate-0 hover:scale-110">
                 <Lock className="text-accent h-8 w-8" />
               </div>
               <h2 className="font-display mb-8 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
                 Compliance by Mathematics.
               </h2>
-              <p className="mx-auto mb-12 hidden max-w-3xl text-lg leading-relaxed text-muted md:mb-16 md:block">
+              <p className="text-muted mx-auto mb-12 hidden max-w-3xl text-lg leading-relaxed md:mb-16 md:block">
                 If personally identifiable information does not mathematically exist on the ledger,
                 it cannot be leaked, requested, or subpoenaed. GDPR and CCPA regulations are met
                 intrinsically via absolute data deprivation.
               </p>
-              <p className="mb-10 text-base leading-relaxed text-muted md:hidden">
-                By absolutely depriving the public ledger of personally identifiable inputs,
-                you are natively guarded against data breaches.
+              <p className="text-muted mb-10 text-base leading-relaxed md:hidden">
+                By absolutely depriving the public ledger of personally identifiable inputs, you are
+                natively guarded against data breaches.
               </p>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
                 {[
@@ -564,10 +731,12 @@ template CredentialVerifier() {
                 ].map(({ title, desc }, i) => (
                   <ScrollReveal key={title} direction="zoom-in" delay={i * 0.08}>
                     <div className="card-interactive group flex flex-col items-center gap-3 py-6 md:py-8">
-                      <Fingerprint className="text-accent/60 h-6 w-6 transition-all duration-300 group-hover:text-accent group-hover:scale-110 md:h-8 md:w-8" />
+                      <Fingerprint className="text-accent/60 group-hover:text-accent h-6 w-6 transition-all duration-300 group-hover:scale-110 md:h-8 md:w-8" />
                       <div className="flex flex-col gap-1 text-center">
-                        <span className="text-sm font-bold tracking-wide md:text-base">{title}</span>
-                        <span className="text-[10px] text-muted md:text-xs">{desc}</span>
+                        <span className="text-sm font-bold tracking-wide md:text-base">
+                          {title}
+                        </span>
+                        <span className="text-muted text-[10px] md:text-xs">{desc}</span>
                       </div>
                     </div>
                   </ScrollReveal>
