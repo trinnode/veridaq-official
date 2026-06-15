@@ -148,42 +148,42 @@ export default function DocumentationPage() {
             <motion.div key="overview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.98 }} className="space-y-12 w-full">
               <header className="border-b border-surface-border pb-8 w-full">
                 <div className="inline-flex items-center gap-2 px-2 py-1 rounded-sm bg-accent/10 text-accent text-xs font-mono mb-6 border border-accent/20">DOCUMENTATION // SECTION 01</div>
-                <h1 className="text-4xl md:text-6xl font-black mb-6 text-foreground tracking-tight break-words">Executive Overview.</h1>
-                <p className="text-xl md:text-2xl text-muted font-light leading-relaxed">
-                  Veridaq completely decentralizes the academic verification layer, allowing employers to verify student claims computationally without requiring institutions to expose private academic databases.
-                </p>
+                 <h1 className="text-4xl md:text-6xl font-black mb-6 text-foreground tracking-tight break-words">Executive Overview.</h1>
+                 <p className="text-xl md:text-2xl text-muted font-light leading-relaxed">
+                   Academic verification today forces universities to choose between exposing student databases or forcing graduates through slow transcript request processes. Veridaq eliminates that trade-off. Employers verify claims cryptographically. Universities never expose a single record.
+                 </p>
               </header>
 
               <div className="space-y-6 w-full">
                 <h2 className="text-2xl font-bold flex items-center gap-3"><ShieldCheck className="text-accent shrink-0" /> The Core Problem</h2>
-                <div className="bg-surface-card border border-surface-border p-6 md:p-8 space-y-4 w-full">
-                  <p className="text-muted leading-relaxed break-words">
-                    Traditional academic verification requires universities to expose massive student databases via APIs to third-party employers, or forces students into manual "transcript request" portals which take weeks to fulfill. Once data is handed to an employer, the university permanently loses custody and control of that student's PII (Personally Identifiable Information).
-                  </p>
-                  <p className="text-muted leading-relaxed break-words">
-                    Blockchain solutions attempt to solve this by minting "Soulbound NFTs" or JSON verifiable credentials. However, putting raw student names, grades, and GPAs on a public blockchain is a catastrophic privacy violation. Even encrypting them means trusting the future resilience of the encryption algorithm.
-                  </p>
-                </div>
+                 <div className="bg-surface-card border border-surface-border p-6 md:p-8 space-y-4 w-full">
+                   <p className="text-muted leading-relaxed break-words">
+                     Today, if an employer wants to verify a degree, the university either exposes an API with all its student data or the graduate requests a transcript that takes weeks to process. Either way, the university loses control of the data once it is handed over.
+                   </p>
+                   <p className="text-muted leading-relaxed break-words">
+                     Blockchain solutions like soulbound NFTs and on-chain credentials try to fix this, but they put student names, grades, and GPAs on a public ledger. Some encrypt the data, but encryption is only as good as the key management — and quantum resistance is a real concern for long-lived academic records that must remain verifiable for decades.
+                   </p>
+                 </div>
               </div>
 
               <div className="space-y-6 w-full">
                 <h2 className="text-2xl font-bold flex items-center gap-3"><Layers className="text-accent shrink-0" /> The Veridaq Solution</h2>
-                <div className="grid md:grid-cols-2 gap-6 w-full max-w-full">
-                  <div className="p-6 border border-surface-border bg-surface w-full max-w-full overflow-hidden">
-                    <div className="text-accent font-mono text-xs mb-3 border-b border-surface-border pb-2 inline-block">01 // HASH COMMITMENTS</div>
-                    <h3 className="text-xl font-bold mb-3 text-foreground">No Public Data</h3>
-                    <p className="text-muted text-sm leading-relaxed break-words">
-                      Instead of uploading transcripts, universities upload deterministic mathematically irreversible hashes. `Poseidon(Name, GPA, Matric_Number, Blinding_Salt)`. The L2 Ledger only sees a randomized `bytes32` string. No human or AI can ever reverse this string back to a name or GPA.
-                    </p>
-                  </div>
-                  <div className="p-6 border border-surface-border bg-surface w-full max-w-full overflow-hidden">
-                    <div className="text-accent font-mono text-xs mb-3 border-b border-surface-border pb-2 inline-block">02 // ZK PROOFS</div>
-                    <h3 className="text-xl font-bold mb-3 text-foreground">Boolean Truths</h3>
-                    <p className="text-muted text-sm leading-relaxed break-words">
-                      When an employer asks, "Did John get a 3.5 GPA?", Veridaq computes a Groth16 Zero-Knowledge Proof mathematically proving that the underlying data producing the hash satisfies the condition `&gt= 3.5`. The network verifies the math, returning exactly "TRUE" or "FALSE".
-                    </p>
-                  </div>
-                </div>
+                 <div className="grid md:grid-cols-2 gap-6 w-full max-w-full">
+                   <div className="p-6 border border-surface-border bg-surface w-full max-w-full overflow-hidden">
+                     <div className="text-accent font-mono text-xs mb-3 border-b border-surface-border pb-2 inline-block">01 // HASH COMMITMENTS</div>
+                     <h3 className="text-xl font-bold mb-3 text-foreground">No Public Data</h3>
+                     <p className="text-muted text-sm leading-relaxed break-words">
+                       Instead of uploading transcripts, universities upload hashes. Poseidon(name, GPA, matric_number, blinding_salt). The blockchain sees a bytes32 string that cannot be reversed — even with infinite computational resources — because the blinding factor is random and known only to the institution.
+                     </p>
+                   </div>
+                   <div className="p-6 border border-surface-border bg-surface w-full max-w-full overflow-hidden">
+                     <div className="text-accent font-mono text-xs mb-3 border-b border-surface-border pb-2 inline-block">02 // ZK PROOFS</div>
+                     <h3 className="text-xl font-bold mb-3 text-foreground">Boolean Truths</h3>
+                     <p className="text-muted text-sm leading-relaxed break-words">
+                       When an employer asks "did this graduate achieve a 3.5 CGPA?" the backend generates a Groth16 proof that the underlying data satisfies the claim. The proof verifies on-chain and returns TRUE or FALSE. Neither the employer nor the blockchain ever see the actual CGPA.
+                     </p>
+                   </div>
+                 </div>
               </div>
 
               <div className="border border-red-500/20 bg-red-500/5 p-6 md:p-8 w-full overflow-hidden">
@@ -203,9 +203,9 @@ export default function DocumentationPage() {
               <header className="border-b border-surface-border pb-8 w-full">
                 <div className="inline-flex items-center gap-2 px-2 py-1 rounded-sm bg-accent/10 text-accent text-xs font-mono mb-6 border border-accent/20">DOCUMENTATION // SECTION 02</div>
                 <h1 className="text-4xl md:text-6xl font-black mb-6 text-foreground tracking-tight break-words">System Architecture.</h1>
-                <p className="text-lg text-muted font-light leading-relaxed">
-                  Veridaq operates across three distinct domains: Web2 Next.js Enclaves, Fastify API Gateways routing via Redis Queues, and the Base Layer-2 EVM Contracts executing verification.
-                </p>
+                 <p className="text-lg text-muted font-light leading-relaxed">
+                   Three distinct domains: the Next.js frontend portals, the Fastify backend with Redis queues, and the Base L2 smart contracts that execute verification. Each domain is isolated by design — a compromise in one does not cascade to the others.
+                 </p>
               </header>
 
               <h2 className="text-2xl font-bold border-b border-surface-border pb-4 w-full">Direct Flow of Events</h2>
@@ -339,9 +339,9 @@ export default function DocumentationPage() {
               <header className="border-b border-surface-border pb-8">
                 <div className="inline-flex items-center gap-2 px-2 py-1 rounded-sm bg-accent/10 text-accent text-xs font-mono mb-6 border border-accent/20">DOCUMENTATION // SECTION 03</div>
                 <h1 className="text-4xl md:text-6xl font-black mb-6 text-foreground tracking-tight break-words">Smart Contracts Ledger.</h1>
-                <p className="text-lg text-muted font-light leading-relaxed">
-                  Five active Solidity state contracts natively compiled using Foundry (`pragma solidity 0.8.28`). Highly optimized. Reverts implemented strictly as Custom Errors.
-                </p>
+                 <p className="text-lg text-muted font-light leading-relaxed">
+                   Six Solidity contracts compiled with Foundry at pragma 0.8.28. Every revert uses custom errors — no string reverts. The ERC-4337 Paymaster and the auto-generated Groth16 verifier are the critical pieces.
+                 </p>
               </header>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
@@ -403,9 +403,9 @@ export default function DocumentationPage() {
               <header className="border-b border-surface-border pb-8">
                 <div className="inline-flex items-center gap-2 px-2 py-1 rounded-sm bg-accent/10 text-accent text-xs font-mono mb-6 border border-accent/20">DOCUMENTATION // SECTION 04</div>
                 <h1 className="text-4xl md:text-6xl font-black mb-6 text-foreground tracking-tight break-words">Zero Knowledge Circuit.</h1>
-                <p className="text-lg text-muted font-light leading-relaxed">
-                  Written purely in Circom `v2.0.8`. The protocol mathematically tests isolated boundaries of datasets against physical chain mappings masking exact identities fully.
-                </p>
+                 <p className="text-lg text-muted font-light leading-relaxed">
+                   Written in Circom 2.0.8. The circuit takes private inputs from the backend and public inputs from the verification request, then produces a Groth16 proof that can be verified on-chain in constant time.
+                 </p>
               </header>
 
               <div className="grid md:grid-cols-2 gap-8 mb-8 w-full max-w-full">
@@ -476,9 +476,9 @@ cgpaCheck.in[1] <== threshold;
               <header className="border-b border-surface-border pb-8">
                 <div className="inline-flex items-center gap-2 px-2 py-1 rounded-sm bg-accent/10 text-accent text-xs font-mono mb-6 border border-accent/20">DOCUMENTATION // SECTION 05</div>
                 <h1 className="text-4xl md:text-6xl font-black mb-6 text-foreground tracking-tight break-words">API Backend Subnets.</h1>
-                <p className="text-lg text-muted font-light leading-relaxed">
-                  Veridaq backend logic is orchestrated via native Fastify 5 instances routing strictly typed definitions checking parameters completely via Zod before yielding processing commands.
-                </p>
+                 <p className="text-lg text-muted font-light leading-relaxed">
+                   Fastify 5 handles all API traffic. Every endpoint validates its input with Zod before touching the database. Redis queues prevent the event loop from blocking during batch uploads and proof generation.
+                 </p>
               </header>
 
               <div className="grid md:grid-cols-3 gap-6 w-full max-w-full overflow-hidden">
