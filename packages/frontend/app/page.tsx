@@ -32,6 +32,8 @@ import {
   Shield,
   ShieldCheck,
   Terminal,
+  UserCheck,
+  Users,
   Workflow,
   X,
   Zap,
@@ -50,6 +52,7 @@ function scrollToId(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
 
 const navLinks = [
   { href: "#features", label: "Features" },
+  { href: "#portals", label: "Portals" },
   { href: "#cryptography", label: "Cryptography" },
   { href: "#protocol", label: "Protocol" },
   { href: "#extension", label: "Extension" },
@@ -85,7 +88,7 @@ export default function LandingPage() {
   void mousePos
   const heroRef = useRef<HTMLDivElement>(null)
   const activeSection = useScrollSpy(
-    ["hero", "features", "cryptography", "protocol", "extension", "compliance"],
+    ["hero", "features", "portals", "cryptography", "protocol", "extension", "compliance"],
     {
       initialSection: "hero",
     }
@@ -233,7 +236,7 @@ export default function LandingPage() {
 
             <ScrollReveal direction="zoom-in" delay={0.15}>
               <h1 className="font-display mb-6 text-5xl font-bold leading-[1.08] tracking-tight md:mb-8 md:text-7xl lg:text-8xl">
-                <span className="text-foreground">Censor-Resistant</span>
+                <span className="text-foreground">Censor Resistant</span>
                 <br />
                 <span className="text-gradient">Academic Truth.</span>
               </h1>
@@ -241,8 +244,8 @@ export default function LandingPage() {
 
             <ScrollReveal direction="up" delay={0.35}>
               <p className="text-muted mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:mb-12 md:text-xl">
-                Universities issue tamper-proof credentials. Employers verify them without the
-                university exposing a single student record. Zero-knowledge proofs on Base L2.
+                Universities issue tamper proof credentials. Employers verify them without the
+                university exposing a single student record. Zero knowledge proofs on Base L2.
               </p>
             </ScrollReveal>
 
@@ -295,7 +298,7 @@ export default function LandingPage() {
                 Platform Architecture
               </h2>
               <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
-                Four layers that make credential verification private, permanent, and trustless.
+                Four layers that make credential verification private, permanent, and trustworthy.
               </p>
             </div>
           </ScrollReveal>
@@ -374,25 +377,124 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ════════════════════════ PORTALS ════════════════════════ */}
+        <section id="portals" className="container relative mx-auto px-4 md:px-6">
+          <ScrollReveal direction="up" delay={0}>
+            <div className="mb-10 text-center md:mb-16">
+              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">
+                Three Portals
+              </span>
+              <h2 className="font-display mb-4 text-3xl font-bold md:text-5xl">
+                <Users className="text-accent mr-3 inline h-8 w-8 md:h-10 md:w-10" />
+                Who Uses Veridaq
+              </h2>
+              <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
+                Each role has its own portal with specific workflows and permissions.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            <ScrollReveal direction="up" delay={0}>
+              <div className="border-surface-border bg-surface-card rounded-lg border p-6">
+                <div className="bg-accent/10 text-accent mb-4 inline-flex rounded-xl p-3">
+                  <Building2 className="h-6 w-6" />
+                </div>
+                <h3 className="font-display mb-3 text-xl font-bold">Institution Portal</h3>
+                <ul className="text-muted space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Upload student credential batches in XLSX format</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Manage claim definitions and credential lifecycle</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>View earnings dashboard and withdraw revenue share</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Toggle employer access to verify your own students</span>
+                  </li>
+                </ul>
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.1}>
+              <div className="border-surface-border bg-surface-card rounded-lg border p-6">
+                <div className="bg-accent/10 text-accent mb-4 inline-flex rounded-xl p-3">
+                  <UserCheck className="h-6 w-6" />
+                </div>
+                <h3 className="font-display mb-3 text-xl font-bold">Employer Portal</h3>
+                <ul className="text-muted space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Submit verification requests with claim type and threshold</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Purchase credit packs from 10 to 500 verifications</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>View verification history with transaction hash audit trail</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Use Chrome extension for quick verify from any webpage</span>
+                  </li>
+                </ul>
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.2}>
+              <div className="border-surface-border bg-surface-card rounded-lg border p-6">
+                <div className="bg-accent/10 text-accent mb-4 inline-flex rounded-xl p-3">
+                  <Shield className="h-6 w-6" />
+                </div>
+                <h3 className="font-display mb-3 text-xl font-bold">Admin Portal</h3>
+                <ul className="text-muted space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Approve institution KYC and manage subscriptions</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>View platform revenue and gas pool balances</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Monitor per institution earnings and transactions</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="text-accent mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Manage platform wide settings and deactivate accounts</span>
+                  </li>
+                </ul>
+              </div>
+            </ScrollReveal>
+          </div>
+        </section>
+
         {/* ════════════════════════ CRYPTOGRAPHY ════════════════════════ */}
         <section id="cryptography" className="container relative mx-auto px-4 md:px-6">
           <div className="grid items-start gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             <ScrollReveal direction="left" delay={0}>
-              <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">
-                Zero-Knowledge
+                <span className="text-accent font-display mb-2 block text-xs font-semibold uppercase tracking-[0.2em]">
+                Zero Knowledge
               </span>
               <h2 className="font-display mb-6 text-3xl font-bold md:text-4xl">
                 Cryptographic Circuits
               </h2>
               <p className="text-muted mb-4 text-base md:text-lg">
-                The core of the system is a Circom 2 circuit. It takes private inputs — the
-                student's hashed name, matric number, CGPA — and public inputs — the claim type
-                and threshold — and produces a Groth16 proof that the claim is true without
+                The core of the system is a Circom 2 circuit. It takes private inputs like the
+                student hashed name, matric number, and CGPA, and public inputs like the claim type
+                and threshold. It produces a Groth16 proof that the claim is true without
                 revealing any of the private inputs.
               </p>
               <p className="text-muted mb-8 text-base md:text-lg">
-                The proof verifies on-chain in milliseconds. The employer gets a boolean answer.
-                The student's data stays on the backend server and nowhere else.
+                The proof verifies on chain in milliseconds. The employer gets a boolean answer.
+                The student data stays on the backend server and nowhere else.
               </p>
 
               <div className="space-y-5">
@@ -400,17 +502,17 @@ export default function LandingPage() {
                   {
                     icon: <Zap className="h-4 w-4" />,
                     title: "Secure Trusted Setup",
-                    desc: "Phase 2 ceremony using Hermez Powers of Tau. The parameters are public and verifiable — no toxic waste.",
+                    desc: "Phase 2 ceremony using Hermez Powers of Tau. The parameters are public and verifiable with no toxic waste.",
                   },
                   {
                     icon: <Globe className="h-4 w-4" />,
                     title: "L2 Precompiled Verification",
-                    desc: "Proofs verify on Base Sepolia using BN254 precompiles. About 236,000 gas per verification — cheap enough for everyday use.",
+                    desc: "Proofs verify on Base Sepolia using BN254 precompiles. About 236,000 gas per verification, cheap enough for everyday use.",
                   },
                   {
                     icon: <Key className="h-4 w-4" />,
                     title: "Poseidon Hashing",
-                    desc: "A ZKP-friendly hash designed for arithmetic circuits. Keccak256 would make the circuit impractically large — Poseidon keeps it fast and small.",
+                    desc: "A ZKP friendly hash designed for arithmetic circuits. Keccak256 would make the circuit impractically large. Poseidon keeps it fast and small.",
                   },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="group flex items-start gap-4">
@@ -569,16 +671,16 @@ template CredentialVerifier() {
                     Cryptographic Finality
                   </h3>
                   <p className="text-muted mb-6 text-sm leading-relaxed md:text-base">
-                    The on-chain verifier checks the Groth16 proof against the stored commitment
-                    and the employer's claim. If the math works, the result sticks. No one can
-                    alter it — not the institution, not the employer, not us.
+                    The on chain verifier checks the Groth16 proof against the stored commitment
+                    and the employer claim. If the math works, the result sticks. No one can
+                    alter it, not the institution, not the employer, not us.
                   </p>
                   <ul className="text-muted space-y-3 text-sm">
                     {[
                       "Verification executes deterministically on Base L2",
-                      "Non-interactive — the employer never touches the student's data",
+                      "Non interactive, the employer never touches the student data",
                       "Poseidon hashing guarantees the commitment cannot be reversed",
-                      "ERC-4337 Paymaster covers all gas — no wallet management needed",
+                      "ERC 4337 Paymaster covers all gas, no wallet management needed",
                     ].map((item) => (
                       <li key={item} className="flex items-center gap-3">
                         <div className="bg-accent/10 text-accent rounded p-1">
@@ -622,6 +724,46 @@ template CredentialVerifier() {
               </div>
             </ScrollReveal>
           </div>
+
+          {/* Revenue Model Summary */}
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            <ScrollReveal direction="up" delay={0}>
+              <div className="border-surface-border bg-surface-card rounded-lg border p-5">
+                <div className="text-accent font-mono text-xs mb-2">REVENUE SPLIT</div>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-3xl font-bold text-accent">70</span>
+                  <span className="text-muted text-sm">/ 20 / 10</span>
+                </div>
+                <p className="text-muted text-xs leading-relaxed">
+                  Platform takes 70 percent. Institution earns 20 percent. Gas pool gets 10 percent.
+                </p>
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.1}>
+              <div className="border-surface-border bg-surface-card rounded-lg border p-5">
+                <div className="text-accent font-mono text-xs mb-2">CREDIT PACKS</div>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-3xl font-bold text-foreground">$15</span>
+                  <span className="text-muted text-sm">to $550</span>
+                </div>
+                <p className="text-muted text-xs leading-relaxed">
+                  Buy verification credits in packs from 10 to 500. Volume discounts apply.
+                </p>
+              </div>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.2}>
+              <div className="border-surface-border bg-surface-card rounded-lg border p-5">
+                <div className="text-accent font-mono text-xs mb-2">SELF VERIFICATION</div>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-3xl font-bold text-foreground">20%</span>
+                  <span className="text-muted text-sm">always earned</span>
+                </div>
+                <p className="text-muted text-xs leading-relaxed">
+                  Institutions earn their 20 percent share even when verifying their own students through the institution as employer feature.
+                </p>
+              </div>
+            </ScrollReveal>
+          </div>
         </section>
 
         {/* ════════════════════════ EXTENSION ════════════════════════ */}
@@ -637,7 +779,8 @@ template CredentialVerifier() {
               </h2>
               <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
                 Verify credentials and upload batches directly from your browser. No need to open
-                the full portal for routine tasks.
+                the full portal for routine tasks. Institutions with employer access can also
+                verify through the extension.
               </p>
             </div>
           </ScrollReveal>
@@ -724,6 +867,33 @@ template CredentialVerifier() {
                 If the data does not exist on-chain, it cannot be breached. Compliance is built
                 into the architecture, not bolted on after the fact.
               </p>
+
+              <div className="mb-12 grid gap-6 md:grid-cols-2">
+                {[
+                  {
+                    title: "No PII on Chain, Ever",
+                    body: "The blockchain stores only Poseidon hash commitments — 32-byte field elements that cannot be reversed. No student name, matric number, CGPA, or classification ever appears on the public ledger. This is not a configuration option. It is a structural property of the system that cannot be disabled.",
+                  },
+                  {
+                    title: "Encryption by Default",
+                    body: "Student credential data is encrypted with AES-256-GCM before being stored in PostgreSQL. The encryption key lives in the environment and never touches the database. Data is decrypted only in memory for milliseconds during proof generation, then garbage collected.",
+                  },
+                  {
+                    title: "Right to Erasure Compatible",
+                    body: "Because on-chain commitments contain no personal data, institutions can delete the encrypted backend records without violating blockchain immutability. The orphaned commitments are meaningless bytes without access to the original data and blinding factor.",
+                  },
+                  {
+                    title: "Auditable by Design",
+                    body: "Every verification produces a transaction hash on Base Sepolia. Any party can verify that a proof was checked and accepted by the on-chain verifier. The audit trail is permanent, public, and contains zero personal data.",
+                  },
+                ].map(({ title, body }, i) => (
+                  <div key={title} className="border-surface-border bg-surface-card rounded-lg border p-5 text-left">
+                    <h3 className="font-bold text-foreground text-sm mb-2">{title}</h3>
+                    <p className="text-muted text-xs leading-relaxed">{body}</p>
+                  </div>
+                ))}
+              </div>
+
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
                 {[
                   { title: "GDPR", desc: "No PII processed" },
