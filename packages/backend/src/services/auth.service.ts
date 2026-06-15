@@ -105,6 +105,7 @@ export class AuthService {
     publicKey: string
     institutionKey?: string
     password: string
+    alsoEmployer?: boolean
   }) {
     const existing = await this.prisma.institution.findUnique({ where: { email: data.email } })
     if (existing) throw new Error("Email already registered")
@@ -127,6 +128,8 @@ export class AuthService {
     const adminWallet = config.PLATFORM_ADMIN_ADDRESS
       ?? "0x0000000000000000000000000000000000000001"
 
+    const alsoEmployer = data.alsoEmployer ?? false
+
     const inst = await this.prisma.institution.create({
       data: {
         name: data.name,
@@ -140,8 +143,27 @@ export class AuthService {
         onChainId: provisionalOnChainId,
         kycApproved: false,
         active: true,
+        alsoEmployer,
       },
     })
+
+    // Auto-create employer profile if alsoEmployer is enabled
+    if (alsoEmployer) {
+      const empWallet = `0x${crypto.randomBytes(20).toString("hex")}`
+      await this.prisma.employer.create({
+        data: {
+          name: data.name,
+          cacNumber: `INST-${provisionalOnChainId.slice(2, 10).toUpperCase()}`,
+          email: data.email,
+          passwordHash,
+          walletAddress: empWallet,
+          kycApproved: false,
+          active: true,
+          institutionId: inst.id,
+          freeVerificationsRemaining: 3,
+        },
+      })
+    }
 
     // Fire & forget admin alert
     this.emailService
@@ -173,6 +195,7 @@ export class AuthService {
         name: inst.name,
         role: "INSTITUTION",
         kycApproved: inst.kycApproved,
+        alsoEmployer: inst.alsoEmployer,
       },
     }
   }

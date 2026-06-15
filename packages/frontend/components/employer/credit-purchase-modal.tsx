@@ -12,8 +12,10 @@ import { useConnectModal } from "@rainbow-me/rainbowkit"
 const CREDIT_PACKS = [
   { label: "10 Verifications", credits: 10, usd: 15, eth: "0.01", amountWei: parseEther("0.01").toString() },
   { label: "25 Verifications", credits: 25, usd: 30, eth: "0.02", amountWei: parseEther("0.02").toString() },
-  { label: "50 Verifications", credits: 50, usd: 50, eth: "0.05", amountWei: parseEther("0.05").toString() },
-  { label: "100 Verifications", credits: 100, usd: 90, eth: "0.10", amountWei: parseEther("0.10").toString() },
+  { label: "50 Verifications", credits: 50, usd: 50, eth: "0.035", amountWei: parseEther("0.035").toString() },
+  { label: "100 Verifications", credits: 100, usd: 90, eth: "0.06", amountWei: parseEther("0.06").toString() },
+  { label: "250 Verifications", credits: 250, usd: 200, eth: "0.14", amountWei: parseEther("0.14").toString() },
+  { label: "500 Verifications", credits: 500, usd: 550, eth: "0.38", amountWei: parseEther("0.38").toString() },
 ]
 
 const paymasterVaultAbi = [

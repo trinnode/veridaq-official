@@ -10,12 +10,18 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { PortalBg } from "@/components/parallax/floating-shapes"
 import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 
-const nav = [
+const baseNav = [
   { href: "/institution/dashboard", label: "Dashboard", icon: "grid" },
   { href: "/institution/batches", label: "Batches", icon: "layers" },
   { href: "/institution/claims", label: "Claims", icon: "file-check" },
   { href: "/institution/verifications", label: "Verifications", icon: "shield-check" },
   { href: "/institution/billing", label: "Billing", icon: "wallet" },
+]
+
+const employerNav = [
+  { href: "/institution/verify", label: "Verify", icon: "shield-check" },
+  { href: "/institution/earnings", label: "Earnings", icon: "wallet" },
+  { href: "/institution/settings", label: "Settings", icon: "settings" },
 ]
 
 export function DashboardLayout({ children, title }: { children: React.ReactNode; title: string }) {
@@ -62,7 +68,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
               <span className="text-xs font-bold tracking-widest text-accent">VERIDAQ</span>
             </Link>
             <nav className="hidden items-center gap-1 lg:flex">
-              {nav.map(({ href, label }) => (
+              {baseNav.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
@@ -75,6 +81,24 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
                   {label}
                 </Link>
               ))}
+              {user.alsoEmployer && (
+                <>
+                  <span className="text-muted mx-1 text-xs">|</span>
+                  {employerNav.map(({ href, label }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                        pathname === href
+                          ? "bg-accent/10 text-accent"
+                          : "text-muted hover:bg-surface hover:text-foreground"
+                      }`}
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </>
+              )}
             </nav>
           </div>
 
@@ -103,7 +127,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
         {isMenuOpen && (
           <div className="bg-surface-card border-surface-border animate-slide-down absolute left-0 right-0 top-14 z-30 border-b shadow-elevated lg:hidden">
             <div className="flex flex-col gap-1 p-3">
-              {nav.map(({ href, label }) => (
+              {baseNav.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
@@ -117,6 +141,25 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
                   {label}
                 </Link>
               ))}
+              {user.alsoEmployer && (
+                <>
+                  <div className="border-surface-border my-1 border-t" />
+                  {employerNav.map(({ href, label }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                        pathname === href
+                          ? "bg-accent/10 text-accent"
+                          : "text-muted hover:bg-surface hover:text-foreground"
+                      }`}
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </>
+              )}
               <div className="border-surface-border my-1 border-t" />
               <button
                 onClick={() => {

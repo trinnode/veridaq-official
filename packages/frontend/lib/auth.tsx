@@ -7,7 +7,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 import { api, setAccessToken } from "./api"
 
-export type User = { id: string; email: string; name: string; role: string; kycApproved?: boolean }
+export type User = { id: string; email: string; name: string; role: string; kycApproved?: boolean; alsoEmployer?: boolean }
 type AuthCtx = {
   user: User | null
   loading: boolean

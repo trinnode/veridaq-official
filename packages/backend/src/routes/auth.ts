@@ -34,6 +34,7 @@ const registerInstitutionBody = z.object({
     .regex(/^(0x)?[0-9a-fA-F]{64}$/)
     .optional(),
   password: z.string().min(8).max(128),
+  alsoEmployer: z.boolean().optional().default(false),
 })
 
 const triggerResetBody = z.object({
@@ -163,6 +164,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
           name: inst.name,
           role: "INSTITUTION",
           kycApproved: inst.kycApproved,
+          alsoEmployer: inst.alsoEmployer,
         }
     } else if (role === "EMPLOYER") {
       const emp = await app.prisma.employer.findUnique({ where: { id: sub } })
@@ -201,6 +203,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         email: data.email,
         publicKey: data.publicKey,
         password: data.password,
+        alsoEmployer: data.alsoEmployer,
         ...(data.institutionKey ? { institutionKey: data.institutionKey } : {}),
       }
       const result = await authSvc.registerInstitution(payload)

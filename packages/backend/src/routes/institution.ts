@@ -13,6 +13,8 @@
  * GET  /api/institution/billing        — get Paymaster balance
  */
 
+import bcryptjs from "bcryptjs"
+import crypto from "crypto"
 import ExcelJS from "exceljs"
 import type { FastifyPluginAsync } from "fastify"
 import { formatEther } from "viem"
@@ -451,6 +453,54 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
     const result = await instSvc.declineVerification(id, req.jwtPayload.sub)
     if (!result.ok) return rep.code(400).send({ error: result.error })
     return { ok: true }
+  })
+
+  // ── Employer access toggle ──────────────────────────────────────────────
+
+  app.patch("/employer-access", async (req, rep) => {
+    const institutionId = req.jwtPayload.sub
+    const body = req.body as { enabled: boolean } | null
+    const enabled = body?.enabled ?? false
+
+    const inst = await app.prisma.institution.findUnique({
+      where: { id: institutionId },
+      select: { id: true, name: true, alsoEmployer: true, employerProfile: { select: { id: true, active: true } } },
+    })
+    if (!inst) return rep.code(404).send({ error: "Institution not found" })
+
+    if (enabled && !inst.employerProfile) {
+      // Create linked employer profile
+      const empWallet = `0x${crypto.randomBytes(20).toString("hex")}`
+      const empHash = await bcryptjs.hash(crypto.randomBytes(32).toString("hex"), 12)
+      await app.prisma.employer.create({
+        data: {
+          name: inst.name,
+          cacNumber: `INST-AUTO-${institutionId.slice(0, 8).toUpperCase()}`,
+          email: `emp-${institutionId.slice(0, 8)}@veridaq.internal`,
+          passwordHash: empHash,
+          walletAddress: empWallet,
+          kycApproved: false,
+          active: true,
+          institutionId: inst.id,
+          freeVerificationsRemaining: 3,
+        },
+      })
+    }
+
+    if (!enabled && inst.employerProfile) {
+      // Deactivate (don't delete) the employer profile
+      await app.prisma.employer.update({
+        where: { id: inst.employerProfile.id },
+        data: { active: false },
+      })
+    }
+
+    await app.prisma.institution.update({
+      where: { id: institutionId },
+      data: { alsoEmployer: enabled },
+    })
+
+    return { ok: true, alsoEmployer: enabled }
   })
 
   // ── Profile and billing ─────────────────────────────────────────────────
