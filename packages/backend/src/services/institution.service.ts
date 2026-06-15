@@ -225,6 +225,7 @@ export class InstitutionService {
         threshold: true,
         institution: {
           select: {
+            id: true,
             onChainId: true,
             publicKey: true,
             institutionKeyEncrypted: true,
@@ -299,13 +300,20 @@ export class InstitutionService {
     const verifySvc = new VS(this.prisma, this.blockchainSvc)
 
     void verifySvc
-      .runProofGeneration(request.id, request.credential, institutionKey, {
-        employerId: request.employerId,
-        institutionOnChainId: request.institution.onChainId,
-        matricNumber: request.matricNumber,
-        claimType: request.claimType,
-        threshold: request.threshold,
-      })
+      .runProofGeneration(
+        request.id,
+        request.credential,
+        institutionKey,
+        {
+          employerId: request.employerId,
+          institutionOnChainId: request.institution.onChainId,
+          matricNumber: request.matricNumber,
+          claimType: request.claimType,
+          threshold: request.threshold,
+        },
+        request.institution.id,
+        true // manual review verifications are always free for now
+      )
       .catch((error: unknown) => {
         log.error({ error, requestId }, "Manual verification approval proof generation failed")
       })

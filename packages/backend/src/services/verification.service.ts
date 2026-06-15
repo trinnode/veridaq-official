@@ -15,7 +15,9 @@ import pino from "pino"
 import { decrypt } from "../utils/crypto.js"
 import { hashToField, hexToField } from "../utils/field.js"
 import { BlockchainService } from "./blockchain.service.js"
+import { EarningsService } from "./earnings.service.js"
 import { ProofService } from "./proof.service.js"
+import { config } from "../config/index.js"
 
 const log = pino({ name: "verification-service" })
 
@@ -31,12 +33,14 @@ type CreateRequestInput = {
 export class VerificationService {
   private proofSvc: ProofService
   private blockchainSvc: BlockchainService
+  private earningsSvc: EarningsService
 
   constructor(
     private prisma: PrismaClient,
     blockchainSvc?: BlockchainService
   ) {
     this.proofSvc = new ProofService()
+    this.earningsSvc = new EarningsService(prisma)
     // Allow injection for testing; fall back to real service in production.
     this.blockchainSvc = blockchainSvc ?? new BlockchainService()
   }
@@ -169,8 +173,12 @@ export class VerificationService {
       )
       const institutionKey = hexToField(institutionKeyHex).toString()
 
+      // This verification consumed a free trial → no revenue share.
+      // When paid credits are implemented, this will be false for credit-based verifications.
+      const isFreeVerification = true
+
       // Proof generation runs asynchronously — the client polls /request/:id for status.
-      this.runProofGeneration(request.id, credential, institutionKey, input).catch((err) => {
+      this.runProofGeneration(request.id, credential, institutionKey, input, institution.id, isFreeVerification).catch((err) => {
         log.error({ err, requestId: request.id }, "Proof generation failed")
       })
     }
@@ -189,7 +197,9 @@ export class VerificationService {
       encryptedTag: string
     },
     institutionKey: string,
-    input: CreateRequestInput
+    input: CreateRequestInput,
+    institutionId: string,
+    isFreeVerification: boolean
   ) {
     try {
       const { proof, publicSignals } = await this.proofSvc.generateProof(
@@ -240,6 +250,16 @@ export class VerificationService {
           completedAt: new Date(),
         },
       })
+
+      // Credit earnings for the institution whose student was verified
+      const usdAmount = config.VERIFICATION_PRICE_USD
+      await this.earningsSvc.creditVerification(
+        institutionId,
+        requestId,
+        usdAmount,
+        "0", // wei — actual wei amount calculated at transfer time
+        isFreeVerification
+      )
     } catch (err) {
       log.error({ err, requestId }, "Proof generation or on-chain verification failed")
       await this.prisma.verificationRequest.update({

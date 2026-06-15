@@ -25,7 +25,8 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
   const reportSvc = new ReportService(app.prisma)
 
   // All verification routes require the caller to be an employer
-  app.addHook("preHandler", app.requireEmployer)
+  // or an institution with alsoEmployer=true
+  app.addHook("preHandler", app.requireEmployerOrInstitutionEmployer)
 
   // ── Submit a request ────────────────────────────────────────────────────
 
@@ -33,7 +34,20 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
     const { institutionOnChainId, matricNumber, claimType, threshold, courseName } =
       createRequestBody.parse(req.body)
 
-    const employerId = req.jwtPayload.sub
+    // Resolve employer ID: EMPLOYER role uses sub directly;
+    // INSTITUTION role must look up their linked employer profile
+    let employerId = req.jwtPayload.sub
+    if (req.jwtPayload.role === "INSTITUTION") {
+      const inst = await app.prisma.institution.findUnique({
+        where: { id: employerId },
+        select: { employerProfile: { select: { id: true } } },
+      })
+      if (!inst?.employerProfile) {
+        return rep.code(403).send({ error: "Institution not configured as employer" })
+      }
+      employerId = inst.employerProfile.id
+    }
+
     const payload = {
       employerId,
       institutionOnChainId,
