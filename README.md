@@ -1,55 +1,37 @@
-# VERIDAQ
+# VERIDAQ — Zero-Knowledge Academic Verification
 
-**Censor-Resistant Academic Truth.**
+Academic credential verification is broken. Universities expose student databases to third parties or force graduates through transcript requests that take weeks. Once data leaves the university, they lose control forever. Blockchain solutions exist but most put raw grades and names on a public ledger — a privacy catastrophe waiting to happen.
 
-VERIDAQ lets universities register student credentials on-chain as Poseidon hash
-commitments and lets employers verify specific academic claims through Groth16
-Zero-Knowledge Proofs. No student name, grade, matriculation number, or personal
-attribute ever appears on the public blockchain in readable form.
+VERIDAQ fixes this. No student name, grade, matriculation number, or any personal identifier ever appears on-chain in readable form. The system uses Poseidon hash commitments and Groth16 Zero-Knowledge Proofs so employers can verify claims without the university exposing anything.
 
-Built as a final year B.Tech project at the Federal University of Technology, Minna,
-Department of Cybersecurity Science, 2025/2026 session.
+Built at the Federal University of Technology, Minna, Department of Cybersecurity Science, 2025/2026 session.
 
 ---
 
-## What it does
+## How it works
 
-A university registrar uploads an Excel file of graduating students. The backend
-computes a Poseidon hash commitment and a nullifier for each student record and
-submits them on-chain in a single batch transaction. No raw data leaves the backend.
+**Universities** upload an Excel file of graduating students. The backend computes a Poseidon hash commitment and a nullifier for each record and submits them on-chain in a single transaction. No raw data leaves the backend server.
 
-When an employer wants to verify a candidate's qualifications, they submit the
-candidate's matriculation number, their institution, and the specific claim they
-want confirmed (for example, "minimum Upper Second Class"). The backend retrieves
-the private credential data, generates a Groth16 ZKP off-chain proving the claim
-is true, then submits the proof to the on-chain verifier. The result is VERIFIED or
-NOT VERIFIED. The transaction hash is the permanent audit record.
+**Employers** submit a candidate's matriculation number, their institution, and the specific claim they want verified — "CGPA above 3.50", "First Class Honours", "Programme Completion". The backend retrieves the private credential data, generates a Groth16 ZKP off-chain proving the claim is true, and submits the proof to the on-chain verifier. The result is VERIFIED or NOT VERIFIED. The transaction hash is the permanent audit trail.
 
-Students receive one email when their credential is registered. They have no portal
-and need to take no action.
+**Students** receive one email when their credential is registered. They have no portal and take no action. Their data never touches the blockchain.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     Next.js 15 frontend                  │
-│           Institution │ Employer │ Admin portals          │
-└──────────────────────────┬──────────────────────────────┘
-                           │ HTTPS / REST
-┌──────────────────────────▼──────────────────────────────┐
-│                   Fastify 5 backend                      │
-│   Auth │ Batch upload │ Proof generation │ Admin API     │
-│   Prisma 6 (PostgreSQL) │ BullMQ (Redis) │ viem 2       │
-└──────────────────────────┬──────────────────────────────┘
-                           │ JSON-RPC (Alchemy)
-┌──────────────────────────▼──────────────────────────────┐
-│                  Base Sepolia (EVM L2)                   │
-│  InstitutionRegistry │ CredentialRegistry               │
-│  RevocationRegistry  │ SubscriptionManager              │
-│  PaymasterVault      │ Groth16Verifier                  │
-└─────────────────────────────────────────────────────────┘
+  Next.js 15 Frontend
+  Institution | Employer | Admin portals
+        |
+  Fastify 5 Backend
+  Auth | Batch upload | Proof generation | Admin API
+  Prisma 6 (PostgreSQL) | BullMQ (Redis) | viem 2
+        |
+  Base Sepolia (EVM L2)
+  InstitutionRegistry | CredentialRegistry
+  RevocationRegistry | SubscriptionManager
+  PaymasterVault | Groth16Verifier
 ```
 
 ---
@@ -68,71 +50,49 @@ and need to take no action.
 | Queue               | Redis 7, BullMQ 5                        |
 | Blockchain client   | viem 2                                   |
 | Frontend            | Next.js 15 App Router, React 19          |
-| Styling             | Tailwind CSS 3.4                         |
+| Styling             | Tailwind CSS 3.4, shadcn/ui              |
 | Package manager     | pnpm 9 (single root package.json)        |
 | Infrastructure      | Docker Compose                           |
-
----
-
-## Project structure
-
-```
-veridaq/
-  packages/
-    contracts/     Foundry project — 5 Solidity contracts + tests + deploy script
-    circuits/      Circom 2 circuit + trusted setup scripts
-    backend/       Fastify 5 API — routes, services, BullMQ workers, Prisma
-    frontend/      Next.js 15 App Router — institution, employer, admin portals
-  AGENTS.md        Codex/Copilot agent instructions
-  GUIDE.md         Full setup guide
-  docker-compose.yml  PostgreSQL 16 + Redis 7
-  package.json     All npm dependencies for the entire monorepo
-  pnpm-workspace.yaml  Monorepo config
-```
 
 ---
 
 ## Quick start
 
 ```bash
-# 1. Install Foundry dependencies
+# 1. Install dependencies
 cd packages/contracts && forge install && cd ../..
-
-# 2. Install Node dependencies
 pnpm install
 
-# 3. Configure environment
+# 2. Configure environment
 cp .env.example .env
-# Fill in the required values — see GUIDE.md Step 4
+# Fill in required values — see GUIDE.md
 
-# 4. Start the database and cache
+# 3. Start PostgreSQL and Redis
 docker compose up -d
 
-# 5. Run migrations and seed default accounts
+# 4. Run migrations and seed
 pnpm db:migrate && pnpm db:seed
 
-# 6. Build contracts and run tests
+# 5. Build and test contracts
 cd packages/contracts && forge test -vvv && cd ../..
 
-# 7. Compile the ZKP circuit (takes several minutes on first run)
+# 6. Compile ZKP circuit (first run takes several minutes)
 pnpm circuit:compile && pnpm circuit:setup
 
-# 8. Deploy contracts to Base Sepolia
+# 7. Deploy to Base Sepolia
 pnpm contracts:deploy
 
-# 9. Start development servers
+# 8. Start development
 pnpm dev
 ```
 
-Open http://localhost:3000.
-
-See `GUIDE.md` for the full step-by-step guide including troubleshooting.
+Open http://localhost:3000. See `GUIDE.md` for the full step-by-step.
 
 ---
 
 ## Default development accounts
 
-These are created by `pnpm db:seed` and only exist in your local database.
+Created by `pnpm db:seed`. Exist only in your local database.
 
 | Role        | Email                 | Password    |
 | ----------- | --------------------- | ----------- |
@@ -142,7 +102,7 @@ These are created by `pnpm db:seed` and only exist in your local database.
 
 ---
 
-## Smart contracts
+## Contracts
 
 | Contract            | Purpose                                                  |
 | ------------------- | -------------------------------------------------------- |
@@ -157,56 +117,40 @@ These are created by `pnpm db:seed` and only exist in your local database.
 
 ## ZKP circuit
 
-The circuit is in `packages/circuits/credential.circom`. It proves that a given
-commitment was computed from private inputs that satisfy the claimed property,
-without revealing the private inputs.
+Located at `packages/circuits/credential.circom`. Proves that a given commitment was computed from private inputs satisfying the claimed property without revealing those inputs.
 
-Private inputs: student name, matric number, CGPA, degree class, course code,
-graduation year, random blinding factor.
+**Private inputs** (never leave the backend):
+- student name (hashed)
+- matric number (hashed)
+- CGPA
+- degree classification
+- course code (hashed)
+- graduation year
+- random blinding factor
+- institution key
 
-Public inputs: commitment, nullifier, claim type, claim threshold.
+**Public inputs** (visible on-chain):
+- commitment
+- nullifier
+- claim type
+- claim threshold
 
-The Poseidon hash function is used throughout because it is efficient inside
-arithmetic circuits. Using keccak256 here would make the circuit impractically large.
-
----
-
-## Security properties
-
-The system provides the following guarantees by construction:
-
-**No personal data on-chain.** Commitments are Poseidon hashes of seven private
-inputs including a random blinding factor. The hash is computationally hiding:
-given only the commitment, an adversary learns nothing about the underlying data.
-
-**Non-forgeability.** The Groth16 verifier on-chain checks mathematical soundness
-of the proof. The backend cannot fabricate a VERIFIED result without a valid
-witness.
-
-**Revocation.** Institutions can revoke any credential by nullifier. The verifier
-checks the RevocationRegistry before accepting a proof.
-
-**JWT hygiene.** Access tokens live in memory only. Refresh tokens are in httpOnly
-cookies. Neither is ever stored in localStorage.
-
-**Input validation.** Every API endpoint validates its request body with Zod before
-touching the database or blockchain.
+Poseidon is used because it is efficient inside arithmetic circuits. Keccak256 would make the circuit impractically large.
 
 ---
 
-## Acknowledgements
+## Security
 
-This project builds on work by the Ethereum community, the iden3 team (Circom,
-circomlibjs), the OpenZeppelin team, the Foundry team, and the Base team at Coinbase.
-
-The trusted setup uses the Hermez Powers of Tau ceremony conducted by the Hermez
-Network team in 2020.
+- **No personal data on-chain.** Commitments are Poseidon hashes with a random blinding factor. Given only the commitment, an adversary learns nothing about the underlying data.
+- **Non-forgeability.** The Groth16 verifier checks mathematical soundness. The backend cannot fabricate a VERIFIED result without a valid witness.
+- **Revocation.** Institutions can revoke credentials by nullifier. The verifier checks the RevocationRegistry before accepting a proof.
+- **JWT hygiene.** Access tokens live in memory only. Refresh tokens are in httpOnly cookies. Neither is ever stored in localStorage.
+- **Input validation.** Every API endpoint validates its request body with Zod before touching the database or blockchain.
 
 ---
 
-## Licence
+## License
 
 MIT — see `LICENSE` file.
 
-> This is an academic project. It has not been audited. Do not use for production
-> credential verification without an independent security review.
+> This is an academic project. It has not been audited. Do not use for production credential verification without an independent security review.

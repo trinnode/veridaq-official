@@ -241,8 +241,8 @@ export default function LandingPage() {
 
             <ScrollReveal direction="up" delay={0.35}>
               <p className="text-muted mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:mb-12 md:text-xl">
-                Issue and cryptographically verify academic qualifications without exposing student
-                identity. Powered by Zero-Knowledge Proofs and Layer-2 rollups.
+                Universities issue tamper-proof credentials. Employers verify them without the
+                university exposing a single student record. Zero-knowledge proofs on Base L2.
               </p>
             </ScrollReveal>
 
@@ -295,8 +295,7 @@ export default function LandingPage() {
                 Platform Architecture
               </h2>
               <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
-                Cryptographic primitives isolated by design. Data off-chain, mathematically verified
-                on-chain.
+                Four layers that make credential verification private, permanent, and trustless.
               </p>
             </div>
           </ScrollReveal>
@@ -312,9 +311,9 @@ export default function LandingPage() {
                   </div>
                   <h3 className="font-display mb-2 text-xl font-semibold">Institution Intake</h3>
                   <p className="text-muted max-w-md text-sm leading-relaxed">
-                    Academic records normalized into standardized datasets, secured within off-chain
-                    trusted enclaves with AES-256-GCM encryption. Batch upload via XLSX with
-                    Poseidon commitment hashing.
+                    Universities upload an XLSX of graduating students. Each record is encrypted
+                    with AES-256-GCM and hashed with Poseidon before anything leaves the server.
+                    No raw data ever touches the public network.
                   </p>
                 </div>
               </div>
@@ -329,8 +328,9 @@ export default function LandingPage() {
                   </div>
                   <h3 className="font-display mb-2 text-xl font-semibold">State Processing</h3>
                   <p className="text-muted text-sm leading-relaxed">
-                    Local instances convert arbitrary text vectors to 256-bit numeric fields
-                    compatible with zero-knowledge arithmetic boundaries.
+                    Names, matric numbers, and grades get converted to 256-bit field elements the
+                    zero-knowledge circuit can work with. All processing stays local — nothing is
+                    sent externally.
                   </p>
                 </div>
               </div>
@@ -345,8 +345,9 @@ export default function LandingPage() {
                   </div>
                   <h3 className="font-display mb-2 text-xl font-semibold">ZK Commitment</h3>
                   <p className="text-muted text-sm leading-relaxed">
-                    Circom-powered Groth16 circuit constructs Poseidon hashes of metadata inputs.
-                    Committed via ERC-4337 Paymaster.
+                    A Circom circuit computes Poseidon hashes of the student data. These hashes
+                    get submitted to Base Sepolia via an ERC-4337 Paymaster — the institution
+                    never needs to hold or manage ETH.
                   </p>
                 </div>
               </div>
@@ -363,9 +364,9 @@ export default function LandingPage() {
                     Immutable Verification
                   </h3>
                   <p className="text-muted max-w-md text-sm leading-relaxed">
-                    External entities request proof executions, receiving strictly boolean
-                    assertions without exposing any mapping seeds. Powered by BN254 elliptic curve
-                    precompiles.
+                    Employers submit a claim and get back VERIFIED or NOT VERIFIED. No student data
+                    is revealed in the process. The proof executes on-chain using BN254 curve
+                    precompiles — gas-efficient and permanent.
                   </p>
                 </div>
               </div>
@@ -384,13 +385,14 @@ export default function LandingPage() {
                 Cryptographic Circuits
               </h2>
               <p className="text-muted mb-4 text-base md:text-lg">
-                Our core constraint system is built in Circom 2. It accepts private inputs mapping
-                to student identity elements and deterministically verifies claims without revealing
-                any underlying data.
+                The core of the system is a Circom 2 circuit. It takes private inputs — the
+                student's hashed name, matric number, CGPA — and public inputs — the claim type
+                and threshold — and produces a Groth16 proof that the claim is true without
+                revealing any of the private inputs.
               </p>
               <p className="text-muted mb-8 text-base md:text-lg">
-                The output is an irreducible Poseidon-hashed construct that ensures exactly 100%
-                compliance verification while maintaining 0% knowledge of the actual individual.
+                The proof verifies on-chain in milliseconds. The employer gets a boolean answer.
+                The student's data stays on the backend server and nowhere else.
               </p>
 
               <div className="space-y-5">
@@ -398,17 +400,17 @@ export default function LandingPage() {
                   {
                     icon: <Zap className="h-4 w-4" />,
                     title: "Secure Trusted Setup",
-                    desc: "Phase 2 ceremony powered by Hermez deterministic entropy. Poison-resistant parameters.",
+                    desc: "Phase 2 ceremony using Hermez Powers of Tau. The parameters are public and verifiable — no toxic waste.",
                   },
                   {
                     icon: <Globe className="h-4 w-4" />,
                     title: "L2 Precompiled Verification",
-                    desc: "Deployed on Base Sepolia leveraging BN254 elliptic curve precompiles for gas-efficient proof verification.",
+                    desc: "Proofs verify on Base Sepolia using BN254 precompiles. About 236,000 gas per verification — cheap enough for everyday use.",
                   },
                   {
                     icon: <Key className="h-4 w-4" />,
                     title: "Poseidon Hashing",
-                    desc: "ZKP-friendly hash function with optimal algebraic properties for constraint-efficient circuits.",
+                    desc: "A ZKP-friendly hash designed for arithmetic circuits. Keccak256 would make the circuit impractically large — Poseidon keeps it fast and small.",
                   },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="group flex items-start gap-4">
@@ -494,7 +496,7 @@ template CredentialVerifier() {
                 Protocol Operations
               </h2>
               <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
-                End-to-end operational flow from API ingest to L2 finality.
+                From batch upload to on-chain verification — how data moves through the system.
               </p>
             </div>
           </ScrollReveal>
@@ -508,25 +510,25 @@ template CredentialVerifier() {
                 step: "01",
                 icon: <FileJson className="h-5 w-5" />,
                 title: "Hash Injection",
-                desc: "Academic records stripped of PII, transformed into Poseidon commitment bundles via SNARK-compatible field elements.",
+                desc: "Student records get hashed through Poseidon with a random blinding factor. The result is a fixed-size field element that cannot be reversed.",
               },
               {
                 step: "02",
                 icon: <Database className="h-5 w-5" />,
                 title: "L2 Commitment",
-                desc: "Commitment bundles transmitted to Base Sepolia using ERC-4337 sponsored Paymaster for gasless institution operations.",
+                desc: "The hashes are submitted to Base Sepolia via an ERC-4337 Paymaster. The institution pays no gas — the platform sponsors the transaction.",
               },
               {
                 step: "03",
                 icon: <Cpu className="h-5 w-5" />,
                 title: "ZK Proof Generation",
-                desc: "Employer inputs mathematical constraints. Groth16 proof generated locally in ~0.7s via compiled WASM circuit.",
+                desc: "An employer submits a claim. The backend generates a Groth16 proof in ~0.7 seconds using a compiled WASM circuit. The proof says 'this claim is true' without revealing why.",
               },
               {
                 step: "04",
                 icon: <Shield className="h-5 w-5" />,
                 title: "Immutable Verification",
-                desc: "Non-reversible boolean executed on-chain via BN254 pairing precompiles. Result stored in VerificationRegistry.",
+                desc: "The proof is verified on-chain via BN254 pairing precompiles. The result — VERIFIED or NOT VERIFIED — is permanent and public. The underlying data remains private.",
               },
             ].map(({ step, icon, title, desc }, i) => (
               <ScrollReveal key={step} direction="up" delay={i * 0.1}>
@@ -567,17 +569,16 @@ template CredentialVerifier() {
                     Cryptographic Finality
                   </h3>
                   <p className="text-muted mb-6 text-sm leading-relaxed md:text-base">
-                    The verification loop on the smart contract ensures zero tolerance for
-                    mathematical fabrications. Verification logic executes deterministically on the
-                    OP Stack resulting in absolute, publicly viewable verification assertions while
-                    retaining state anonymity.
+                    The on-chain verifier checks the Groth16 proof against the stored commitment
+                    and the employer's claim. If the math works, the result sticks. No one can
+                    alter it — not the institution, not the employer, not us.
                   </p>
                   <ul className="text-muted space-y-3 text-sm">
                     {[
-                      "Deterministic execution on Base L2",
-                      "Non-interactive succinct zero-knowledge proofs",
-                      "Absolute decoupling via Poseidon hashing",
-                      "ERC-4337 Account Abstraction for gas sponsorship",
+                      "Verification executes deterministically on Base L2",
+                      "Non-interactive — the employer never touches the student's data",
+                      "Poseidon hashing guarantees the commitment cannot be reversed",
+                      "ERC-4337 Paymaster covers all gas — no wallet management needed",
                     ].map((item) => (
                       <li key={item} className="flex items-center gap-3">
                         <div className="bg-accent/10 text-accent rounded p-1">
@@ -635,7 +636,8 @@ template CredentialVerifier() {
                 Chrome Extension
               </h2>
               <p className="text-muted mx-auto max-w-2xl text-base md:text-lg">
-                Quick credential verification and batch uploads without leaving your workflow.
+                Verify credentials and upload batches directly from your browser. No need to open
+                the full portal for routine tasks.
               </p>
             </div>
           </ScrollReveal>
@@ -714,13 +716,13 @@ template CredentialVerifier() {
                 Compliance by Mathematics.
               </h2>
               <p className="text-muted mx-auto mb-12 hidden max-w-3xl text-lg leading-relaxed md:mb-16 md:block">
-                If personally identifiable information does not mathematically exist on the ledger,
-                it cannot be leaked, requested, or subpoenaed. GDPR and CCPA regulations are met
-                intrinsically via absolute data deprivation.
+                If student data never exists on the ledger in readable form, it cannot be leaked,
+                subpoenaed, or sold. GDPR and CCPA compliance is a structural consequence — not a
+                checkbox.
               </p>
               <p className="text-muted mb-10 text-base leading-relaxed md:hidden">
-                By absolutely depriving the public ledger of personally identifiable inputs, you are
-                natively guarded against data breaches.
+                If the data does not exist on-chain, it cannot be breached. Compliance is built
+                into the architecture, not bolted on after the fact.
               </p>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
                 {[
