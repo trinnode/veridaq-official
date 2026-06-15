@@ -15,6 +15,7 @@ import type { FastifyPluginAsync } from "fastify"
 import { parseEther } from "viem"
 import { z } from "zod"
 import { AdminService } from "../services/admin.service.js"
+import { EarningsService } from "../services/earnings.service.js"
 import { PaymentService } from "../services/payment.service.js"
 
 const tierBody = z.object({
@@ -144,5 +145,37 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
       }),
     ])
     return { total, page, limit, items }
+  })
+
+  // ── Admin: Earnings / Gas Pool ──────────────────────────────────────────
+
+  app.get("/earnings/pool", async () => {
+    const svc = new EarningsService(app.prisma)
+    return svc.getGasPoolSummary()
+  })
+
+  app.get("/earnings/platform", async () => {
+    const svc = new EarningsService(app.prisma)
+    return svc.getPlatformEarnings()
+  })
+
+  app.get("/earnings/institutions", async (req) => {
+    const q = req.query as { page?: string; limit?: string }
+    const page = Math.max(1, Number(q.page ?? 1))
+    const limit = Math.min(50, Math.max(1, Number(q.limit ?? 20)))
+    const svc = new EarningsService(app.prisma)
+    return svc.listAllInstitutionEarnings(page, limit)
+  })
+
+  app.post("/earnings/withdraw/:id/process", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as { approved: boolean } | null
+    try {
+      const svc = new EarningsService(app.prisma)
+      return svc.processFiatWithdrawal(id, body?.approved ?? true)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Processing failed"
+      return rep.code(400).send({ error: message })
+    }
   })
 }

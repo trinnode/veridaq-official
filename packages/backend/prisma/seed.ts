@@ -50,6 +50,7 @@ async function main() {
       active: true,
       tier: "FREE",
       kycApproved: true,
+      alsoEmployer: true,
     },
     create: {
       onChainId: "0x" + Buffer.from("futminna").toString("hex").padStart(64, "0"),
@@ -64,6 +65,7 @@ async function main() {
       active: true,
       tier: "FREE",
       kycApproved: true,
+      alsoEmployer: true,
     },
   })
 
@@ -114,6 +116,36 @@ async function main() {
         reviewType: "MANUAL",
       },
     ],
+  })
+
+  // Linked employer profile for FUTMinna (alsoEmployer)
+  await prisma.employer.upsert({
+    where: { email: "futminna-employer@veridaq.xyz" },
+    update: {},
+    create: {
+      name: "Federal University of Technology Minna (Employer)",
+      cacNumber: "INST-FUTMINNA",
+      email: "futminna-employer@veridaq.xyz",
+      passwordHash: instHash,
+      walletAddress: "0x0000000000000000000000000000000000000010",
+      active: true,
+      kycApproved: true,
+      freeVerificationsRemaining: 3,
+      institutionId: inst.id,
+    },
+  })
+
+  // Gas pool — initial balance for sponsor gas
+  await prisma.gasPool.upsert({
+    where: { id: "default" },
+    update: {},
+    create: {
+      id: "default",
+      availableUsd: 100,
+      availableWei: 0,
+      totalDepositedUsd: 100,
+      totalDepositedWei: 0,
+    },
   })
 
   // Employer — First Bank Nigeria

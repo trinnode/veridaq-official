@@ -65,6 +65,8 @@ enum PaymentType {
   INSTITUTION_UPGRADE
   INSTITUTION_FUNDING
   EMPLOYER_TOPUP
+  BATCH_UPLOAD
+  CREDIT_PURCHASE
 }
 
 enum VerificationResult {
@@ -120,13 +122,18 @@ model Institution {
 
   // Current ETH balance in the PaymasterVault (in wei, stored as string to avoid overflow)
   paymasterBalance String   @default("0")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  // Institution-as-Employer: opt-in flag
+  alsoEmployer      Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   batches              Batch[]
   claims               ClaimDefinition[]
   verificationRequests VerificationRequest[]
   auditLogs            AuditLog[]
+  employerProfile      Employer?
+  earnings             InstitutionEarnings?
+  earningTransactions  EarningTransaction[]
 
   @@map("institutions")
 }
@@ -151,6 +158,10 @@ model Employer {
   // Password reset
   resetToken        String?
   resetTokenExpires DateTime?
+
+  // Optional link to an institution that also acts as employer
+  institutionId String?  @unique
+  institution   Institution? @relation(fields: [institutionId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -297,4 +308,87 @@ model AuditLog {
   createdAt     DateTime     @default(now())
 
   @@map("audit_logs")
+}
+
+// ── InstitutionEarnings ──────────────────────────────────────────────────
+
+model InstitutionEarnings {
+  id              String      @id @default(cuid())
+  institutionId   String      @unique
+  institution     Institution @relation(fields: [institutionId], references: [id])
+
+  // Running totals
+  totalEarnedUsd  Decimal @default(0)
+  totalEarnedWei  Decimal @default(0)
+  withdrawnUsd    Decimal @default(0)
+  withdrawnWei    Decimal @default(0)
+  availableUsd    Decimal @default(0)
+  availableWei    Decimal @default(0)
+
+  // Withdrawal wallet for crypto payouts
+  payoutWallet    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("institution_earnings")
+}
+
+// ── EarningTransaction ───────────────────────────────────────────────────
+
+model EarningTransaction {
+  id              String   @id @default(cuid())
+  institutionId   String
+  institution     Institution @relation(fields: [institutionId], references: [id])
+
+  verificationId  String?   // FK to verification_request if type=EARNED
+  type            String    // "EARNED" | "WITHDRAWN" | "DEPOSITED" | "SPONSORED"
+  amountUsd       Decimal
+  amountWei       Decimal
+
+  // Breakdown for EARNED type
+  platformShareUsd   Decimal?
+  institutionShareUsd Decimal?
+  poolShareUsd       Decimal?
+
+  description     String
+  referenceId     String?   // Payment ref, txHash, or withdrawal ref
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+
+  @@map("earning_transactions")
+}
+
+// ── GasPool ──────────────────────────────────────────────────────────────
+
+model GasPool {
+  id                String   @id @default(cuid())
+
+  totalDepositedUsd Decimal  @default(0)
+  totalDepositedWei Decimal  @default(0)
+  totalSpentUsd     Decimal  @default(0)
+  totalSpentWei     Decimal  @default(0)
+  availableUsd      Decimal  @default(0)
+  availableWei      Decimal  @default(0)
+
+  updatedAt         DateTime @updatedAt
+
+  @@map("gas_pool")
+}
+
+// ── GasPoolTransaction ─────────────────────────────────────────────────────
+
+model GasPoolTransaction {
+  id              String   @id @default(cuid())
+  type            String   // "DEPOSIT" | "SPEND"
+  amountUsd       Decimal
+  amountWei       Decimal
+  source          String?  // "VERIFICATION_SHARE" | "BATCH_UPLOAD_FEE" | "ADMIN_TOPUP"
+  destination     String?  // "FREE_TIER_BATCH" | "EMPLOYER_TRIAL" | "ADMIN_WITHDRAWAL"
+  referenceId     String?  // Payment ref, batch upload ref, etc.
+  description     String?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  @@map("gas_pool_transactions")
 }

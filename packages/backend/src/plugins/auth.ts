@@ -20,6 +20,7 @@ declare module "fastify" {
     requireAdmin: (req: FastifyRequest, rep: FastifyReply) => Promise<any>
     requireInstitution: (req: FastifyRequest, rep: FastifyReply) => Promise<any>
     requireEmployer: (req: FastifyRequest, rep: FastifyReply) => Promise<any>
+    requireEmployerOrInstitutionEmployer: (req: FastifyRequest, rep: FastifyReply) => Promise<any>
   }
   interface FastifyRequest {
     jwtPayload: JwtPayload
@@ -51,8 +52,31 @@ export const authPlugin: FastifyPluginAsync = fp(async (app) => {
       }
     }
 
+  // Dual-role guard: allows EMPLOYER role OR INSTITUTION role with alsoEmployer=true
+  const makeDualRoleGuard =
+    (primaryRole: JwtPayload["role"], secondaryRole: JwtPayload["role"]) =>
+    async (req: FastifyRequest, rep: FastifyReply) => {
+      await requireAuth(req, rep)
+      if (rep.sent) return
+
+      const { role, sub } = req.jwtPayload
+
+      if (role === primaryRole) return
+
+      if (role === secondaryRole) {
+        const inst = await app.prisma.institution.findUnique({
+          where: { id: sub },
+          select: { alsoEmployer: true },
+        })
+        if (inst?.alsoEmployer) return
+      }
+
+      return rep.code(403).send({ error: "Forbidden" })
+    }
+
   app.decorate("requireAuth", requireAuth)
   app.decorate("requireAdmin", makeRoleGuard("ADMIN"))
   app.decorate("requireInstitution", makeRoleGuard("INSTITUTION"))
   app.decorate("requireEmployer", makeRoleGuard("EMPLOYER"))
+  app.decorate("requireEmployerOrInstitutionEmployer", makeDualRoleGuard("EMPLOYER", "INSTITUTION"))
 })
