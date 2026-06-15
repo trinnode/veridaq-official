@@ -16,10 +16,10 @@
     --color-surface-hover: 34 34 51;
     --color-accent: 205 50 165;
     --color-accent-dim: 175 30 135;
-    --color-accent-muted: rgba(152, 0, 157, 0.06)
+    --color-accent-muted: rgba(152, 0, 157, 0.06);
     --color-accent-glow: rgba(205, 50, 165, 0.12);
-    --color-muted: rgb(127, 0, 231);
-    --color-muted-subtle: 63 63 70;
+    --color-muted: 155 155 170;
+    --color-muted-subtle: 110 110 125;
     --color-foreground: 250 250 250;
     --color-error: 220 38 38;
     --color-error-bg: rgba(220, 38, 38, 0.08);
@@ -49,8 +49,8 @@
     --color-accent-dim: 160 28 120;
     --color-accent-muted: rgba(190, 42, 150, 0.06);
     --color-accent-glow: rgba(190, 42, 150, 0.10);
-    --color-muted: 113 113 122;
-    --color-muted-subtle: 161 161 170;
+    --color-muted: 100 100 115;
+    --color-muted-subtle: 140 140 155;
     --color-foreground: 24 24 27;
     --color-error: 185 28 28;
     --color-error-bg: rgba(185, 28, 28, 0.07);
@@ -85,6 +85,7 @@
     color: rgb(var(--color-foreground));
   }
   .light body {
+    background-color: rgb(var(--color-void));
     color: rgb(var(--color-foreground));
   }
 
