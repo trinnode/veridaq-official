@@ -59,6 +59,36 @@ const envSchema = z.object({
 
   CROSSMINT_SERVER_API_KEY: z.string().optional(),
   CROSSMINT_WEBHOOK_SECRET: z.string().optional(),
+
+  // Revenue sharing
+  VERIFICATION_PRICE_USD: z.coerce.number().positive().default(1.50),
+  PLATFORM_REVENUE_SHARE_PERCENT: z.coerce.number().int().min(0).max(100).default(70),
+  INSTITUTION_REVENUE_SHARE_PERCENT: z.coerce.number().int().min(0).max(100).default(20),
+  GAS_POOL_REVENUE_SHARE_PERCENT: z.coerce.number().int().min(0).max(100).default(10),
+
+  // Batch upload pricing (flat fees per range)
+  BATCH_PRICE_1001_5000_USD: z.coerce.number().positive().default(20),
+  BATCH_PRICE_5001_10000_USD: z.coerce.number().positive().default(30),
+  BATCH_PRICE_10001_25000_USD: z.coerce.number().positive().default(90),
+  BATCH_PRICE_25001_50000_USD: z.coerce.number().positive().default(170),
+
+  // Credit pack pricing
+  CREDIT_PACK_5_USD: z.coerce.number().positive().default(7),
+  CREDIT_PACK_10_USD: z.coerce.number().positive().default(15),
+  CREDIT_PACK_25_USD: z.coerce.number().positive().default(35),
+  CREDIT_PACK_50_USD: z.coerce.number().positive().default(65),
+  CREDIT_PACK_100_USD: z.coerce.number().positive().default(120),
+  CREDIT_PACK_500_USD: z.coerce.number().positive().default(550),
+
+  // Gas pool
+  GAS_POOL_MIN_BALANCE_USD: z.coerce.number().positive().default(10),
+  GAS_POOL_LOW_BALANCE_ALERT: z.coerce.boolean().default(false),
+
+  // Batch processing
+  MAX_BATCH_CHUNK_SIZE: z.coerce.number().int().positive().default(200),
+
+  // Operator wallet for sending crypto withdrawals
+  PLATFORM_OPERATOR_PRIVATE_KEY: z.string().min(64).optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

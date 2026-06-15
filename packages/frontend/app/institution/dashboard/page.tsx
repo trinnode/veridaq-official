@@ -5,6 +5,7 @@ import { StatCard } from "@/components/ui/stat-card"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { AlertCircle, ArrowRight, FileCheck2, RefreshCcw, ShieldCheck, Upload } from "lucide-react"
+import { EarningsSummary } from "@/components/institution/earnings-summary"
 import { toast } from "@/components/ui/toast"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -91,6 +92,13 @@ export default function InstitutionDashboard() {
                   )}
                 </div>
               </div>
+
+              {user?.alsoEmployer && (
+                <div className="bg-surface-card border-surface-border flex flex-col justify-between rounded-xl border p-4">
+                  <p className="text-muted text-sm">Earnings</p>
+                  <EarningsSummary />
+                </div>
+              )}
 
               <div className="card from-surface-card to-void border-surface-border flex flex-col justify-between rounded-xl border bg-gradient-to-br p-4">
                 <div className="flex items-start justify-between">

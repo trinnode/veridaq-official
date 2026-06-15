@@ -28,6 +28,7 @@ import { authRoutes } from "./routes/auth.js"
 import { employerRoutes } from "./routes/employer.js"
 import { institutionRoutes } from "./routes/institution.js"
 import { crossmintRoutes } from "./routes/crossmint.js"
+import { earningsRoutes } from "./routes/earnings.js"
 import { paymentRoutes } from "./routes/payment.js"
 import { statsRoutes } from "./routes/stats.js"
 import { verificationRoutes } from "./routes/verification.js"
@@ -111,6 +112,7 @@ async function bootstrap() {
   // Routes
   await app.register(authRoutes, { prefix: "/api/auth" })
   await app.register(institutionRoutes, { prefix: "/api/institution" })
+  await app.register(earningsRoutes, { prefix: "/api/earnings" })
   await app.register(employerRoutes, { prefix: "/api/employer" })
   await app.register(adminRoutes, { prefix: "/api/admin" })
   await app.register(verificationRoutes, { prefix: "/api/verify" })

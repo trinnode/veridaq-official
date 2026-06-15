@@ -1168,4 +1168,33 @@ export class BlockchainService {
     const hex = uuid.replace(/-/g, "").padStart(64, "0")
     return `0x${hex}`
   }
+
+  /**
+   * Send ETH from the platform operator wallet to an external address.
+   * Uses PLATFORM_OPERATOR_PRIVATE_KEY (separate from the admin key).
+   * Used for institution withdrawal payouts.
+   */
+  async sendEth(to: Address, amountWei: bigint): Promise<Hash> {
+    const operatorKey = config.PLATFORM_OPERATOR_PRIVATE_KEY
+    if (!operatorKey) {
+      throw new Error("PLATFORM_OPERATOR_PRIVATE_KEY is not configured")
+    }
+    if (amountWei <= 0n) {
+      throw new Error("Amount must be positive")
+    }
+
+    const operatorAccount = privateKeyToAccount(operatorKey as `0x${string}`)
+    const operatorWalletClient = createWalletClient({
+      account: operatorAccount,
+      chain: baseSepolia,
+      transport: http(config.ALCHEMY_BASE_SEPOLIA_URL),
+    })
+
+    const hash = await operatorWalletClient.sendTransaction({
+      to,
+      value: amountWei,
+    })
+    await this.publicClient.waitForTransactionReceipt({ hash })
+    return hash
+  }
 }
