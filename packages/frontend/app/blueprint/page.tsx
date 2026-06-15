@@ -530,6 +530,7 @@ export default function BlueprintPage() {
       "accountabstraction",
       "backend",
       "frontend",
+      "revenue",
       "extension",
       "deployment",
       "security",
@@ -549,6 +550,7 @@ export default function BlueprintPage() {
     { id: "accountabstraction", label: "AA Flow", icon: <Wallet className="h-3 w-3" /> },
     { id: "backend", label: "Backend", icon: <Server className="h-3 w-3" /> },
     { id: "frontend", label: "Frontend", icon: <Globe className="h-3 w-3" /> },
+    { id: "revenue", label: "Revenue", icon: <Coins className="h-3 w-3" /> },
     { id: "extension", label: "Extension", icon: <Puzzle className="h-3 w-3" /> },
     { id: "deployment", label: "Deployment", icon: <Terminal className="h-3 w-3" /> },
     { id: "security", label: "Security", icon: <Shield className="h-3 w-3" /> },
@@ -1489,7 +1491,131 @@ export default function BlueprintPage() {
           </div>
         </section>
 
-        {/* ─── 9. Browser Extension ─── */}
+        {/* ─── 9. Revenue Model and Institution as Employer ─── */}
+        <SectionDivider label="Revenue Model" icon={<Coins className="h-5 w-5" />} />
+        <section id="revenue" className="container mx-auto max-w-6xl px-4 md:px-6">
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold md:text-3xl">Revenue Sharing Architecture</h2>
+              <p className="text-muted text-sm leading-relaxed">
+                Every verification credit consumed generates revenue that is split three ways
+                automatically. The split is calculated at the service layer by the EarningsService
+                and recorded in the EarningTransaction model. No manual reconciliation required.
+              </p>
+
+              <div className="border-surface-border bg-surface-card rounded-xl border p-5">
+                <h3 className="mb-4 text-sm font-bold">Revenue Split per Credit</h3>
+                <div className="space-y-4">
+                  {[
+                    { party: "Platform", share: "70 percent", desc: "Covers infrastructure, gas costs, development, and operations. The platform operator manages the Alchemy RPC, Neon database, Upstash Redis, and smart contract deployment." },
+                    { party: "Institution", share: "20 percent", desc: "Earned by the issuing university. Accrues in an earnings balance. Institutions can withdraw via crypto or fiat (where supported). The institution also earns on self verifications through the institution as employer feature." },
+                    { party: "Gas Pool", share: "10 percent", desc: "Accumulated in a dedicated pool used to subsidize on chain gas costs for FREE tier institutions. This ensures the platform can continue offering sponsored gas to new institutions." },
+                  ].map(({ party, share, desc }) => (
+                    <div key={party} className="border-surface-border bg-surface rounded-lg border p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-foreground font-bold text-sm">{party}</span>
+                        <span className="text-accent font-mono text-sm font-bold">{share}</span>
+                      </div>
+                      <p className="text-muted text-xs leading-relaxed">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-surface-border bg-surface-card rounded-xl border p-5">
+                <h3 className="mb-4 text-sm font-bold">Batch Upload Pricing</h3>
+                <div className="space-y-2 text-xs">
+                  {[
+                    { range: "1,001 to 5,000 records", price: "$20" },
+                    { range: "5,001 to 10,000 records", price: "$30" },
+                    { range: "10,001 to 25,000 records", price: "$90" },
+                    { range: "25,001 to 50,000 records", price: "$170" },
+                  ].map(({ range, price }) => (
+                    <div key={range} className="border-surface-border bg-surface flex items-center justify-between rounded-lg border p-3">
+                      <span className="text-muted">{range}</span>
+                      <span className="text-accent font-mono font-bold">{price}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="border-surface-border bg-surface-card rounded-xl border p-5">
+                <h3 className="mb-4 text-sm font-bold">Verification Credit Packs</h3>
+                <div className="space-y-2 text-xs">
+                  {[
+                    { credits: "10 credits", price: "$15", perCredit: "$1.50 per credit" },
+                    { credits: "50 credits", price: "$65", perCredit: "$1.30 per credit" },
+                    { credits: "100 credits", price: "$120", perCredit: "$1.20 per credit" },
+                    { credits: "250 credits", price: "$275", perCredit: "$1.10 per credit" },
+                    { credits: "500 credits", price: "$550", perCredit: "$1.10 per credit" },
+                  ].map(({ credits, price, perCredit }) => (
+                    <div key={credits} className="border-surface-border bg-surface flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <span className="text-foreground font-semibold">{credits}</span>
+                        <span className="text-muted-subtle ml-2 text-[10px]">{perCredit}</span>
+                      </div>
+                      <span className="text-accent font-mono font-bold">{price}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-surface-border bg-surface-card rounded-xl border p-5">
+                <h3 className="mb-4 text-sm font-bold">Institution as Employer Feature</h3>
+                <p className="text-muted text-xs leading-relaxed mb-4">
+                  Institutions can optionally enable employer access through their settings page.
+                  When enabled, the institution gets a linked employer profile that allows them
+                  to verify credentials directly from the Institution portal. This is useful for
+                  internal verification departments, postgraduate admissions, and interuniversity
+                  transfers.
+                </p>
+                <ul className="space-y-2 text-xs">
+                  {[
+                    "Controlled by the alsoEmployer boolean field on the Institution model",
+                    "Toggled during registration or through the Settings page",
+                    "Backend automatically creates a linked Employer record on enable",
+                    "Institution earns 20 percent even on self verifications",
+                    "Requires at least one admin to be configured",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <div className="bg-accent/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
+                      <span className="text-muted">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="border-surface-border bg-surface-card rounded-xl border p-5">
+                <h3 className="mb-4 text-sm font-bold">Earnings and Withdrawal Flow</h3>
+                <ol className="text-muted space-y-2 text-xs">
+                  {[
+                    "Employer consumes a verification credit",
+                    "EarningsService.creditVerification runs inside a Prisma transaction",
+                    "Transaction creates EarningTransaction with platform share, institution share, and gas pool share",
+                    "Institution balance and gas pool balance incremented atomically",
+                    "Institution views earnings summary on the Earnings page",
+                    "Institution initiates withdrawal through the WithdrawModal",
+                    "Withdrawal can be CRYPTO (ETH sent via blockchain service) or FIAT (future)",
+                    "Crypto withdrawal uses PLATFORM_OPERATOR_PRIVATE_KEY to send ETH",
+                    "Minimum withdrawal is $10. Rate is $1,669.30 per ETH",
+                    "Admin can view platform revenue and gas pool on the Admin Earnings page",
+                  ].map((step, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="bg-accent/10 text-accent mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded font-mono text-[8px]">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── 10. Browser Extension ─── */}
         <SectionDivider label="Browser Extension" icon={<Puzzle className="h-5 w-5" />} />
         <section id="extension" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="grid gap-8 lg:grid-cols-2">
@@ -1585,7 +1711,7 @@ export default function BlueprintPage() {
           </div>
         </section>
 
-        {/* ─── 10. Deployment ─── */}
+        {/* ─── 11. Deployment ─── */}
         <SectionDivider label="Deployment Topology" icon={<Terminal className="h-5 w-5" />} />
         <section id="deployment" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="grid gap-8 lg:grid-cols-2">
@@ -1691,7 +1817,7 @@ export default function BlueprintPage() {
           </div>
         </section>
 
-        {/* ─── 11. Security Model ─── */}
+        {/* ─── 12. Security Model ─── */}
         <SectionDivider label="Security Model" icon={<Shield className="h-5 w-5" />} />
         <section id="security" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="mb-8 space-y-4">
@@ -1741,7 +1867,7 @@ export default function BlueprintPage() {
           </div>
         </section>
 
-        {/* ─── 12. Protocol Directives ─── */}
+        {/* ─── 13. Protocol Directives ─── */}
         <SectionDivider label="Protocol Directives" icon={<ScrollText className="h-5 w-5" />} />
         <section id="directives" className="container mx-auto max-w-6xl px-4 md:px-6">
           <div className="border-error/20 bg-error/[0.02] rounded-xl border p-6 md:p-8">
