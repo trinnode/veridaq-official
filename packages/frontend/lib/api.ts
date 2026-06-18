@@ -4,7 +4,16 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
 
-const BASE_URL = process.env["NEXT_PUBLIC_BACKEND_URL"] ?? "http://localhost:4000"
+const rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+if (!rawUrl) {
+  throw new Error(
+    "NEXT_PUBLIC_BACKEND_URL is not set. " +
+      "Add it to your .env file or Vercel environment variables. " +
+      "Example: NEXT_PUBLIC_BACKEND_URL=https://your-backend.up.railway.app"
+  )
+}
+
+export const BASE_URL = rawUrl
 
 export const api = axios.create({
   baseURL: `${BASE_URL}/api`,

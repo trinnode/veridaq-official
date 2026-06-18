@@ -1,5 +1,5 @@
 "use client"
-import { api } from "@/lib/api"
+import { api, BASE_URL } from "@/lib/api"
 import { useEffect, useState } from "react"
 
 export function LiveMarquee() {
@@ -13,7 +13,7 @@ export function LiveMarquee() {
       .catch(() => {})
 
     // Establish the SSE pipe
-    const evtSource = new EventSource("http://localhost:4000/api/stats/streaming")
+    const evtSource = new EventSource(`${BASE_URL}/api/stats/streaming`)
     evtSource.addEventListener("stats_update", (e) => {
       try {
         setStats(JSON.parse(e.data))

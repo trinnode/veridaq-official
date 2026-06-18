@@ -23,7 +23,7 @@ COPY packages/frontend ./packages/frontend/
 COPY packages/extension ./packages/extension/
 
 ARG NEXT_PUBLIC_BACKEND_URL
-ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4000}
+ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
 ENV NODE_ENV=production
 
 RUN pnpm build:frontend
