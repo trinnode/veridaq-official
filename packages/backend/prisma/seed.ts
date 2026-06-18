@@ -164,6 +164,48 @@ async function main() {
     },
   })
 
+  // Audit log — seed entries so admin audit page isn't blank
+  // Clean existing seed audit entries first to make re-seeding safe
+  const admin = await prisma.admin.findUnique({ where: { email: "admin@veridaq.xyz" } })
+  const institution = await prisma.institution.findUnique({ where: { email: "futminna@veridaq.xyz" } })
+
+  await prisma.auditLog.deleteMany({})
+  await prisma.auditLog.create({
+    data: {
+      action: "INSTITUTION_REGISTERED",
+      details: { name: "Federal University of Technology Minna", tier: "FREE" },
+      institutionId: institution?.id ?? null,
+      adminId: admin?.id ?? null,
+      createdAt: new Date(Date.now() - 86400000 * 3),
+    },
+  })
+  await prisma.auditLog.create({
+    data: {
+      action: "INSTITUTION_REGISTERED",
+      details: { name: "First Bank Nigeria Ltd", tier: "FREE" },
+      employerId: (await prisma.employer.findUnique({ where: { email: "firstbank@veridaq.xyz" } }))?.id ?? null,
+      adminId: admin?.id ?? null,
+      createdAt: new Date(Date.now() - 86400000 * 2),
+    },
+  })
+  await prisma.auditLog.create({
+    data: {
+      action: "PAYMENT_INSTITUTION_UPGRADE",
+      details: { amountWei: "50000000000000000", fromTier: "FREE", toTier: "PAID" },
+      institutionId: institution?.id ?? null,
+      adminId: admin?.id ?? null,
+      createdAt: new Date(Date.now() - 86400000),
+    },
+  })
+  await prisma.auditLog.create({
+    data: {
+      action: "BATCH_CONFIRMED",
+      details: { count: 150, batchId: "batch-001" },
+      institutionId: institution?.id ?? null,
+      createdAt: new Date(Date.now() - 43200000),
+    },
+  })
+
   console.info("Seed complete.")
 }
 
