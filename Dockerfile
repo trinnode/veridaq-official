@@ -14,7 +14,9 @@ COPY packages/backend ./packages/backend/
 COPY packages/circuits/build ./packages/circuits/build/
 
 # Install all dependencies, generate Prisma client, compile
-RUN pnpm install --frozen-lockfile && \
+# DATABASE_URL dummy — Prisma validate needs it but doesn't connect during build
+RUN export DATABASE_URL="postgresql://dummy:dummy@dummy:5432/dummy" && \
+    pnpm install --frozen-lockfile && \
     pnpm db:generate && \
     pnpm build:backend
 
@@ -36,7 +38,7 @@ RUN sed -i '/"prepare"/d' package.json && pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/packages/backend/prisma ./packages/backend/prisma
 
 # Regenerate Prisma client for production target
-RUN pnpm db:generate
+RUN DATABASE_URL="postgresql://dummy:dummy@dummy:5432/dummy" pnpm db:generate
 
 # Compiled JavaScript
 COPY --from=builder /app/dist ./dist
@@ -49,5 +51,6 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
-# Apply pending migrations, seed database, then start the server
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy --schema=packages/backend/prisma/schema.prisma && node dist/backend/prisma/seed.js && node dist/backend/src/server.js"]
+# Apply pending migrations, then start the server
+# Run seed manually after first deploy: node dist/backend/prisma/seed.js
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy --schema=packages/backend/prisma/schema.prisma && node dist/backend/src/server.js"]
