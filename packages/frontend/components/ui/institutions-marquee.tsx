@@ -1,5 +1,5 @@
 "use client"
-import { api } from "@/lib/api"
+import { api, BASE_URL } from "@/lib/api"
 import { Building2 } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -16,7 +16,7 @@ export function InstitutionsMarquee() {
       })
       .catch(() => {})
 
-    const evtSource = new EventSource("http://localhost:4000/api/stats/streaming")
+    const evtSource = new EventSource(`${BASE_URL}/api/stats/streaming`)
     evtSource.addEventListener("stats_update", (e) => {
       try {
         const liveStats = JSON.parse(e.data)

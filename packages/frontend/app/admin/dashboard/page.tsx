@@ -1,7 +1,7 @@
 "use client"
 import { AdminLayout } from "@/components/admin/layout"
 import { StatCard } from "@/components/ui/stat-card"
-import { api } from "@/lib/api"
+import { api, BASE_URL } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { Activity, Settings, ShieldCheck } from "lucide-react"
 import Link from "next/link"
@@ -27,7 +27,7 @@ export default function AdminDashboard() {
       .finally(() => setLoading(false))
 
     // Server-Sent Events for realtime updates from /api/stats/streaming
-    const evtSource = new EventSource("http://localhost:4000/api/stats/streaming")
+    const evtSource = new EventSource(`${BASE_URL}/api/stats/streaming`)
 
     evtSource.addEventListener("stats_update", (e) => {
       try {
