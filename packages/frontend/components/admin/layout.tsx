@@ -88,7 +88,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
               </div>
               <div className="text-right">
                 <div className="text-xs font-medium text-foreground">{user.name}</div>
-                <div className="text-[10px] text-muted">{user.role}</div>
+                <div className="text-[10px] text-muted">Administrator</div>
               </div>
             </div>
             <button

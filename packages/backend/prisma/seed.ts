@@ -34,7 +34,7 @@ async function main() {
     create: {
       email: "admin@veridaq.xyz",
       passwordHash: adminHash,
-      name: "Platform Administrator",
+      name: "VERIDAQ ADMIN",
     },
   })
 
