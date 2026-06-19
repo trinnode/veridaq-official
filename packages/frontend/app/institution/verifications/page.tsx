@@ -5,7 +5,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
-import { Check, X, Clock, CheckCircle2, XCircle } from "lucide-react"
+import { Check, X, Clock, CheckCircle2, XCircle } from "@/lib/icons"
 
 export default function VerificationsPage() {
   const { user } = useAuth()

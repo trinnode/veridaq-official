@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
 import { CreditPurchaseModal } from "./credit-purchase-modal"
 import { motion } from "framer-motion"
-import { Loader2, CheckCircle2, XCircle, FileText, Sparkles, AlertTriangle } from "lucide-react"
+import { Loader2, CheckCircle2, XCircle, FileText, Sparkles, AlertTriangle } from "@/lib/icons"
 import { useEffect, useState } from "react"
 
 type Institution = {

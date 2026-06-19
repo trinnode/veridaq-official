@@ -4,7 +4,7 @@
  * Spinner — replaces the orbital loader with a clean, professional
  * single-ring spinner. No pulsing cores, no multiple rings.
  */
-import { Loader2 } from "lucide-react"
+import { Loader2 } from "@/lib/icons"
 
 export function OrbitalLoader({ label, size = 120 }: { label?: string; size?: number }) {
   // Map the old size prop to a sensible icon size

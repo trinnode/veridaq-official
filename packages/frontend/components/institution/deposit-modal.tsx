@@ -2,7 +2,7 @@
 import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
 import { CrossmintCheckout } from "@/components/payment/crossmint-checkout"
-import { Wallet, Loader2, CheckCircle2, ArrowUpCircle, Copy } from "lucide-react"
+import { Wallet, Loader2, CheckCircle2, ArrowUpCircle, Copy } from "@/lib/icons"
 import { useState } from "react"
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from "wagmi"
 import { parseEther, type Address } from "viem"

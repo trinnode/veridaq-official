@@ -2,7 +2,7 @@
 import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { api } from "@/lib/api"
-import { CheckCircle2, LockKeyhole } from "lucide-react"
+import { CheckCircle2, LockKeyhole } from "@/lib/icons"
 
 function ResetPasswordForm() {
   const router = useRouter()

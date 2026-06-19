@@ -1,7 +1,7 @@
 "use client"
 
 import { useTheme } from "next-themes"
-import { Sun, Moon, Monitor } from "lucide-react"
+import { Sun, Moon, Monitor } from "@/lib/icons"
 import { useEffect, useState } from "react"
 
 export function ThemeToggle({ className = "" }: { className?: string }) {

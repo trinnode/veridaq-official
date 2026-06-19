@@ -2,7 +2,7 @@
 
 import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
-import { Loader2, X } from "lucide-react"
+import { Loader2, X } from "@/lib/icons"
 import { useState } from "react"
 
 type Props = {

@@ -3,7 +3,7 @@ import {
   BookOpen, ChevronRight, CodeSquare, Database, Github, Layers, Shield, Cpu, FileCode2,
   Workflow, Terminal, Lock, Zap, BookMarked, ExternalLink, FileText, Search, HelpCircle,
   Globe, Wifi, Wallet, Hash, Network, Key, UserCheck, ScrollText, Library
-} from "lucide-react"
+} from "@/lib/icons"
 import Link from "next/link"
 import { AppHeader } from "@/components/ui/app-header"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"

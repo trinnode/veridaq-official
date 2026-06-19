@@ -15,7 +15,7 @@
 
 import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
-import { AlertCircle, CheckCircle2, Download, FileUp, Loader2, Upload, X } from "lucide-react"
+import { AlertCircle, CheckCircle2, Download, FileUp, Loader2, Upload, X } from "@/lib/icons"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useDropzone } from "react-dropzone"
 

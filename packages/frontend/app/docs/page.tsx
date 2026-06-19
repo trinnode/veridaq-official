@@ -8,7 +8,7 @@ import {
   UserCheck, Route, ScrollText, CircuitBoard, Key, Globe, Zap, Fingerprint,
   Shield, Network, Hash, EyeOff, DollarSign, TrendingUp, BarChart, AlertTriangle,
   CheckCircle2, GitBranch, ExternalLink, GanttChartSquare, Binary
-} from "lucide-react"
+} from "@/lib/icons"
 import { AppHeader } from "@/components/ui/app-header"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"
 import { FloatingShapes } from "@/components/parallax/floating-shapes"

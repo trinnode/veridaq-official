@@ -53,9 +53,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Exo 2", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["IBM Plex Mono", "ui-monospace", "monospace"],
-        display: ["Orbitron", "Exo 2", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-orbitron)", "var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       boxShadow: {
         "glow-sm": "0 0 20px var(--color-accent-glow)",

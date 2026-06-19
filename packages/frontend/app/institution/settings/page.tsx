@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/components/institution/layout"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
-import { Loader2 } from "lucide-react"
+import { Loader2 } from "@/lib/icons"
 import { useState } from "react"
 
 export default function InstitutionSettingsPage() {

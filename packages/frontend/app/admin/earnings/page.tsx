@@ -4,7 +4,7 @@ import { AdminLayout } from "@/components/admin/layout"
 import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2 } from "@/lib/icons"
 
 type PoolSummary = {
   availableUsd: number

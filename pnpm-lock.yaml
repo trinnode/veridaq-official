@@ -32,6 +32,9 @@ importers:
       '@fastify/swagger-ui':
         specifier: ^5.2.2
         version: 5.2.5
+      '@phosphor-icons/react':
+        specifier: ^2.1.10
+        version: 2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@prisma/client':
         specifier: ^6.8.2
         version: 6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3)
@@ -1118,6 +1121,13 @@ packages:
   '@paulmillr/qr@0.2.1':
     resolution: {integrity: sha512-IHnV6A+zxU7XwmKFinmYjUcwlyK9+xkG3/s9KcQhI9BjQKycrJ1JRO+FbNYPwZiPKW3je/DR0k7w8/gLa5eaxQ==}
     deprecated: 'Switch to "qr" (new package name) for security updates: npm install qr'
+
+  '@phosphor-icons/react@2.1.10':
+    resolution: {integrity: sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: '>= 16.8'
+      react-dom: '>= 16.8'
 
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
@@ -7543,6 +7553,11 @@ snapshots:
   '@nolyfill/is-core-module@1.0.39': {}
 
   '@paulmillr/qr@0.2.1': {}
+
+  '@phosphor-icons/react@2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   '@pinojs/redact@0.4.0': {}
 
