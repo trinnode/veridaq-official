@@ -2,7 +2,7 @@
 import { AdminLayout } from "@/components/admin/layout"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X } from "@/lib/icons"
+import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, ExternalLink, Key, Building2, Clock, Hash } from "@/lib/icons"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
 import { formatEther } from "viem"
@@ -12,6 +12,7 @@ export default function InstitutionsPage() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [approvingId, setApprovingId] = useState<string | null>(null)
+  const [reviewTarget, setReviewTarget] = useState<any>(null)
   const [fundTarget, setFundTarget] = useState<any>(null)
   const [fundAmount, setFundAmount] = useState("")
   const [fundError, setFundError] = useState("")
@@ -38,12 +39,14 @@ export default function InstitutionsPage() {
 
   async function approve(id: string) {
     setApprovingId(id)
+    setReviewTarget(null)
     try {
       await api.post(`/admin/institutions/${id}/approve`)
       toast.success("Institution approved and registered on-chain")
       load()
     } catch (err: any) {
-      toast.error(err?.response?.data?.error ?? "Approval failed")
+      const msg = err?.response?.data?.error ?? err?.message ?? "Approval failed"
+      toast.error(msg)
     } finally {
       setApprovingId(null)
     }
@@ -95,7 +98,7 @@ export default function InstitutionsPage() {
           <h3 className="mb-2 text-lg font-medium text-foreground">No Institutions Found</h3>
         </div>
       ) : (
-        <div className="bg-surface-card border-surface-border group [perspective:500px] hover:[transform:rotateX(0.5deg)] overflow-x-auto rounded-xl border transition-all duration-500">
+        <div className="bg-surface-card border-surface-border overflow-x-auto rounded-xl border">
           <table className="w-full text-left text-sm text-foreground">
             <thead className="text-muted border-surface-border border-b text-xs uppercase">
               <tr>
@@ -146,11 +149,10 @@ export default function InstitutionsPage() {
                     <div className="flex items-center justify-end gap-2">
                       {!inst.kycApproved ? (
                         <button
-                          onClick={() => approve(inst.id)}
-                          disabled={approvingId === inst.id}
-                          className="bg-accent text-void px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                          onClick={() => setReviewTarget(inst)}
+                          className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
                         >
-                          {approvingId === inst.id ? "Submitting TX..." : "Approve KYC"}
+                          <Eye className="h-3 w-3" /> Review & Approve
                         </button>
                       ) : (
                         <span className="text-muted text-xs">On-Chain</span>
@@ -184,52 +186,147 @@ export default function InstitutionsPage() {
         </div>
       )}
 
+      {/* ── Review & Approve Modal ── */}
+      {reviewTarget && (
+        <div className="bg-void/80 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg">
+            <div className="border-surface-border bg-surface-card relative overflow-hidden rounded-xl border p-6 shadow-elevated">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-foreground">
+                  <Building2 className="text-accent h-4 w-4" />
+                  <span className="text-sm font-semibold tracking-wide">Review Institution</span>
+                </div>
+                <button onClick={() => setReviewTarget(null)} className="text-muted hover:text-foreground transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                  <span className="text-muted text-xs">Name</span>
+                  <span className="text-foreground text-xs font-medium">{reviewTarget.name}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                  <span className="text-muted text-xs">Email</span>
+                  <span className="text-foreground text-xs font-medium">{reviewTarget.email}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                  <span className="text-muted text-xs">Tier</span>
+                  <span className={`text-xs font-medium ${reviewTarget.tier === 'FREE' ? 'text-orange-400' : 'text-blue-400'}`}>
+                    {reviewTarget.tier}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                  <span className="text-muted text-xs flex items-center gap-1">
+                    <Wallet className="h-3 w-3" /> Wallet
+                  </span>
+                  <span className="text-foreground max-w-[200px] truncate font-mono text-xs">
+                    {reviewTarget.adminWallet}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                  <span className="text-muted text-xs flex items-center gap-1">
+                    <Key className="h-3 w-3" /> Public Key
+                  </span>
+                  <span className="text-foreground max-w-[200px] truncate font-mono text-xs">
+                    {reviewTarget.publicKey?.slice(0, 30)}...
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                  <span className="text-muted text-xs flex items-center gap-1">
+                    <Hash className="h-3 w-3" /> On-Chain ID
+                  </span>
+                  <span className="text-foreground max-w-[200px] truncate font-mono text-xs">
+                    {reviewTarget.onChainId?.slice(0, 30)}...
+                  </span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                  <span className="text-muted text-xs flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Registered
+                  </span>
+                  <span className="text-foreground text-xs">
+                    {new Date(reviewTarget.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-muted mt-4 text-xs leading-relaxed">
+                Approving will register this institution on the InstitutionRegistry contract on
+                Base Sepolia. The admin wallet must hold sufficient ETH for gas.
+              </p>
+
+              <div className="mt-5 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setReviewTarget(null)}
+                  className="border-surface-border rounded-lg border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => approve(reviewTarget.id)}
+                  disabled={approvingId === reviewTarget.id}
+                  className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {approvingId === reviewTarget.id ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-void/30 border-t-void" />
+                      Submitting Tx...
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Confirm & Approve
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Fund Modal ── */}
       {fundTarget && (
         <div className="bg-void/80 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="[perspective:500px] group w-full max-w-lg">
-            <div className="border-surface-border bg-surface-card hover:[transform:rotateX(0.5deg)] relative overflow-hidden rounded-xl border p-6 shadow-elevated transition-all duration-500">
-              <div className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.03] to-transparent" />
+          <div className="w-full max-w-lg">
+            <div className="border-surface-border bg-surface-card relative overflow-hidden rounded-xl border p-6 shadow-elevated">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-foreground">
+                  <Wallet className="text-accent h-4 w-4" />
+                  <span className="text-sm font-semibold tracking-wide">Fund Institution</span>
+                </div>
+                <button onClick={() => setFundTarget(null)} className="text-muted hover:text-foreground transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <div className="relative">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-foreground">
-                    <Wallet className="text-accent h-4 w-4" />
-                    <span className="font-display text-sm font-semibold tracking-wide">Fund Institution</span>
-                  </div>
-                  <button onClick={() => setFundTarget(null)} className="text-muted hover:text-foreground transition-colors">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <p className="text-muted mt-2 text-xs">{fundTarget.name}</p>
+              <p className="text-muted mt-2 text-xs">{fundTarget.name}</p>
 
-                <div className="mt-4">
-                  <label className="text-muted text-xs">Amount in ETH</label>
-                  <input
-                    value={fundAmount}
-                    onChange={(e) => setFundAmount(e.target.value)}
-                    className="border-surface-border bg-void mt-2 w-full rounded border px-3 py-2 text-sm text-foreground transition-colors focus:border-accent focus:outline-none"
-                    placeholder="0.01"
-                  />
-                </div>
+              <div className="mt-4">
+                <label className="text-muted text-xs">Amount in ETH</label>
+                <input
+                  value={fundAmount}
+                  onChange={(e) => setFundAmount(e.target.value)}
+                  className="border-surface-border bg-void mt-2 w-full rounded border px-3 py-2 text-sm text-foreground transition-colors focus:border-accent focus:outline-none"
+                  placeholder="0.01"
+                />
+              </div>
 
-                {fundError && <p className="mt-3 text-xs text-red-400">{fundError}</p>}
-                {fundTxHash && <p className="text-muted mt-3 text-xs font-mono">Tx: {fundTxHash.slice(0, 42)}...</p>}
+              {fundError && <p className="mt-3 text-xs text-red-400">{fundError}</p>}
+              {fundTxHash && <p className="text-muted mt-3 break-all font-mono text-xs">Tx: {fundTxHash}</p>}
 
-                <div className="mt-6 flex justify-end gap-3">
-                  <button
-                    onClick={() => setFundTarget(null)}
-                    className="border-surface-border rounded border px-3 py-2 text-xs text-foreground transition-colors hover:bg-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={fundInstitution}
-                    className="bg-accent text-void rounded px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
-                  >
-                    Send Funds
-                  </button>
-                </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={() => setFundTarget(null)}
+                  className="border-surface-border rounded-lg border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={fundInstitution}
+                  className="bg-accent text-void rounded-lg px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+                >
+                  Send Funds
+                </button>
               </div>
             </div>
           </div>
