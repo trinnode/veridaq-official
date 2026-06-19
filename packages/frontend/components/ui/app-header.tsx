@@ -1,12 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { LogoMark } from "@/components/ui/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Menu, X } from "@/lib/icons"
 
 export function AppHeader() {
+  const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -39,22 +41,29 @@ export function AppHeader() {
           </span>
         </Link>
 
-        <div className="hidden items-center gap-0.5 sm:flex">
-          {links.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className="rounded-full px-3.5 py-1.5 text-xs font-medium text-muted transition-all duration-200 hover:bg-surface-card hover:text-foreground"
-            >
-              {label}
-            </Link>
-          ))}
+        <div className="hidden items-center gap-0.5 md:flex">
+          {links.map(({ href, label }) => {
+            const isActive = pathname === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200 ${
+                  isActive
+                    ? "bg-accent/10 text-accent"
+                    : "text-muted hover:bg-surface-card hover:text-foreground"
+                }`}
+              >
+                {label}
+              </Link>
+            )
+          })}
         </div>
 
         <div className="flex items-center gap-1 pl-1">
           <ThemeToggle />
           <button
-            className="text-muted hover:text-foreground sm:hidden"
+            className="text-muted hover:text-foreground p-1 md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X size={16} /> : <Menu size={16} />}
@@ -63,18 +72,25 @@ export function AppHeader() {
       </div>
 
       {mobileOpen && (
-        <div className="absolute left-4 right-4 top-16 rounded-2xl border border-surface-border bg-surface-card/95 p-3 shadow-elevated backdrop-blur-xl sm:hidden">
+        <div className="absolute left-4 right-4 top-16 rounded-2xl border border-surface-border bg-surface-card/95 p-3 shadow-elevated backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-1">
-            {links.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
-              >
-                {label}
-              </Link>
-            ))}
+            {links.map(({ href, label }) => {
+              const isActive = pathname === href
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-accent/10 text-accent"
+                      : "text-muted hover:bg-surface hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </Link>
+              )
+            })}
           </div>
         </div>
       )}

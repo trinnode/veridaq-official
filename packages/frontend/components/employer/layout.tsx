@@ -97,33 +97,35 @@ export function EmployerLayout({ children, title }: { children: React.ReactNode;
         </div>
 
         {isMenuOpen && (
-          <div className="bg-surface-card border-surface-border animate-slide-down absolute left-0 right-0 top-14 z-30 border-b shadow-elevated lg:hidden">
-            <div className="flex flex-col gap-1 p-3">
-              {nav.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setIsMenuOpen(false)}
-                   className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                    pathname === href
-                      ? "bg-accent/10 text-accent"
-                      : "text-muted hover:bg-surface hover:text-foreground"
-                  }`}
+          <div className="absolute left-4 right-4 top-16 z-30 lg:hidden">
+            <div className="rounded-2xl border border-surface-border bg-surface-card/95 p-3 shadow-elevated backdrop-blur-xl">
+              <div className="flex flex-col gap-1">
+                {nav.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                      pathname === href
+                        ? "bg-accent/10 text-accent"
+                        : "text-muted hover:bg-surface hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                ))}
+                <div className="border-surface-border my-1 border-t" />
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    handleLogout()
+                  }}
+                  className="text-muted hover:text-error flex items-center gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-error/5"
                 >
-                  {label}
-                </Link>
-              ))}
-              <div className="border-surface-border my-1 border-t" />
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false)
-                  handleLogout()
-                }}
-                className="text-muted hover:text-error flex items-center gap-2 rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-error/5"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                Sign out
-              </button>
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign out
+                </button>
+              </div>
             </div>
           </div>
         )}

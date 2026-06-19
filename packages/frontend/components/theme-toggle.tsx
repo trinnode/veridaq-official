@@ -13,10 +13,10 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   if (!mounted) {
     return (
       <button
-        className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${className}`}
+        className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${className}`}
         disabled
       >
-        <div className="h-4 w-4" />
+        <div className="h-3.5 w-3.5" />
       </button>
     )
   }
@@ -30,7 +30,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   return (
     <button
       onClick={cycle}
-      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200 hover:scale-105 ${className}`}
+      className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 hover:scale-105 ${className}`}
       style={{
         backgroundColor: "var(--color-surface-card)",
         border: "1px solid var(--color-surface-border)",
@@ -39,9 +39,9 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       title={`Current theme: ${theme}. Click to cycle.`}
       aria-label={`Switch theme (currently ${theme})`}
     >
-      {theme === "dark" && <Moon className="h-4 w-4" />}
-      {theme === "light" && <Sun className="h-4 w-4" />}
-      {theme === "system" && <Monitor className="h-4 w-4" />}
+      {theme === "dark" && <Moon className="h-3.5 w-3.5" />}
+      {theme === "light" && <Sun className="h-3.5 w-3.5" />}
+      {theme === "system" && <Monitor className="h-3.5 w-3.5" />}
     </button>
   )
 }
