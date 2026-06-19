@@ -114,7 +114,7 @@ model Institution {
   institutionKeyTag       String
   active                  Boolean         @default(true)
   tier                    InstitutionTier @default(FREE)
-  // Whether the institution has been KYC approved by the platform admin
+  // Whether the institution has been KYC approved by the VERIDAQ Admin
   kycApproved             Boolean         @default(false)
   // Deactivation status
   deactivatedAt           DateTime?
