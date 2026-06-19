@@ -67,15 +67,18 @@ export class AdminService {
     return { total, page, limit, items }
   }
 
-  async approveInstitution(institutionId: string, adminId: string) {
+  async approveInstitution(institutionId: string, adminId: string, adminWalletOverride?: string) {
     const inst = await this.prisma.institution.findUnique({ where: { id: institutionId } })
     if (!inst) return null
+
+    // Allow admin to override the wallet before on-chain registration
+    const effectiveWallet = adminWalletOverride ?? inst.adminWallet
 
     // Register on-chain if missing, then set tier
     try {
       const alreadyRegistered = await this.blockchainSvc.isInstitutionRegistered(inst.onChainId as `0x${string}`)
       if (!alreadyRegistered) {
-        await this.blockchainSvc.registerInstitution(inst.onChainId as `0x${string}`, inst.name, inst.adminWallet as `0x${string}`, inst.publicKey)
+        await this.blockchainSvc.registerInstitution(inst.onChainId as `0x${string}`, inst.name, effectiveWallet as `0x${string}`, inst.publicKey)
       }
       const onChainTier = await this.blockchainSvc.getInstitutionTier(inst.onChainId as `0x${string}`)
       const desiredTier = inst.tier === "FREE" ? 0 : 1
@@ -84,13 +87,17 @@ export class AdminService {
       }
     } catch (err) {
       log.error({ err, institutionId }, "Failed to register institution on-chain")
-      return null
+      const msg = err instanceof Error ? err.message : "Unknown blockchain error"
+      throw new Error(msg)
     }
+
+    const updateData: Record<string, unknown> = { kycApproved: true }
+    if (adminWalletOverride) updateData.adminWallet = adminWalletOverride
 
     await this.prisma.$transaction([
       this.prisma.institution.update({
         where: { id: institutionId },
-        data: { kycApproved: true },
+        data: updateData,
       }),
       this.prisma.auditLog.create({
         data: {
@@ -251,7 +258,8 @@ export class AdminService {
       }
     } catch (err) {
       log.error({ err, employerId }, "Failed to initialise employer on-chain")
-      return null
+      const msg = err instanceof Error ? err.message : "Unknown blockchain error"
+      throw new Error(msg)
     }
 
     await this.prisma.$transaction([
