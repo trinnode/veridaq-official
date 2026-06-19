@@ -3,7 +3,6 @@ import { Providers } from "@/components/providers"
 import { Footer } from "@/components/ui/footer"
 import { ScrollProgressBar } from "@/components/ui/scroll-progress"
 import { ScrollEffectsProvider } from "@/components/ui/scroll-effects"
-import { ScrollIndicator } from "@/components/ui/scroll-indicator"
 import { ToastContainer } from "@/components/ui/toast"
 import type { Metadata, Viewport } from "next"
 import "./globals.css"
@@ -45,7 +44,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ScrollEffectsProvider />
           <div className="flex min-w-0 flex-1 shrink-0 flex-col">{children}</div>
           <Footer />
-          <ScrollIndicator />
           <ToastContainer />
         </Providers>
       </body>
