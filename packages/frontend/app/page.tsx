@@ -238,7 +238,7 @@ export default function LandingPage() {
               <h1 className="font-display mb-6 text-5xl font-bold leading-[1.08] tracking-tight md:mb-8 md:text-7xl lg:text-8xl">
                 <span className="text-foreground">Censor Resistant</span>
                 <br />
-                <span className="text-gradient">Academic Truth.</span>
+                <span className="text-gradient-glow">Academic Truth.</span>
               </h1>
             </ScrollReveal>
 

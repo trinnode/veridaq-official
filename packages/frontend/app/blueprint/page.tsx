@@ -606,7 +606,7 @@ export default function BlueprintPage() {
             </motion.div>
 
             <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight md:text-6xl lg:text-7xl">
-              The Veridaq <span className="text-gradient">Protocol Blueprint</span>
+              The Veridaq <span className="text-gradient-glow">Protocol Blueprint</span>
             </h1>
 
             <p className="text-muted mx-auto mb-10 max-w-2xl text-base leading-relaxed md:text-lg">
