@@ -51,6 +51,6 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
-# Apply pending migrations, then start the server
+# Sync database schema (safe for existing DBs with migration mismatches), then start
 # Run seed manually after first deploy: node dist/backend/prisma/seed.js
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy --schema=packages/backend/prisma/schema.prisma && node dist/backend/src/server.js"]
+CMD ["sh", "-c", "pnpm exec prisma db push --schema=packages/backend/prisma/schema.prisma && node dist/backend/src/server.js"]
