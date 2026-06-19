@@ -13,6 +13,7 @@ export default function InstitutionsPage() {
   const [loading, setLoading] = useState(true)
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [reviewTarget, setReviewTarget] = useState<any>(null)
+  const [reviewWallet, setReviewWallet] = useState("")
   const [fundTarget, setFundTarget] = useState<any>(null)
   const [fundAmount, setFundAmount] = useState("")
   const [fundError, setFundError] = useState("")
@@ -37,11 +38,11 @@ export default function InstitutionsPage() {
     }
   }, [user])
 
-  async function approve(id: string) {
+  async function approve(id: string, walletOverride?: string) {
     setApprovingId(id)
     setReviewTarget(null)
     try {
-      await api.post(`/admin/institutions/${id}/approve`)
+      await api.post(`/admin/institutions/${id}/approve`, walletOverride ? { adminWallet: walletOverride } : {})
       toast.success("Institution approved and registered on-chain")
       load()
     } catch (err: any) {
@@ -149,7 +150,10 @@ export default function InstitutionsPage() {
                     <div className="flex items-center justify-end gap-2">
                       {!inst.kycApproved ? (
                         <button
-                          onClick={() => setReviewTarget(inst)}
+                          onClick={() => {
+                            setReviewTarget(inst)
+                            setReviewWallet(inst.adminWallet ?? "")
+                          }}
                           className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
                         >
                           <Eye className="h-3 w-3" /> Review & Approve
@@ -216,13 +220,19 @@ export default function InstitutionsPage() {
                     {reviewTarget.tier}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
-                  <span className="text-muted text-xs flex items-center gap-1">
-                    <Wallet className="h-3 w-3" /> Wallet
-                  </span>
-                  <span className="text-foreground max-w-[200px] truncate font-mono text-xs">
-                    {reviewTarget.adminWallet}
-                  </span>
+                <div>
+                  <label className="text-muted mb-1 flex items-center gap-1 text-xs">
+                    <Wallet className="h-3 w-3" /> Admin Wallet
+                  </label>
+                  <input
+                    value={reviewWallet}
+                    onChange={(e) => setReviewWallet(e.target.value)}
+                    className="border-surface-border bg-void w-full rounded-lg border px-3 py-2 font-mono text-xs text-foreground transition-colors focus:border-accent focus:outline-none"
+                    placeholder={reviewTarget.adminWallet}
+                  />
+                  <p className="text-muted mt-1 text-[10px]">
+                    Leave as-is if correct, or override before approving
+                  </p>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
                   <span className="text-muted text-xs flex items-center gap-1">
@@ -263,7 +273,7 @@ export default function InstitutionsPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => approve(reviewTarget.id)}
+                  onClick={() => approve(reviewTarget.id, reviewWallet !== reviewTarget.adminWallet ? reviewWallet : undefined)}
                   disabled={approvingId === reviewTarget.id}
                   className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
                 >

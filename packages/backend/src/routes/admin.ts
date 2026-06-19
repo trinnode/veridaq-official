@@ -43,9 +43,15 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
 
   app.post("/institutions/:id/approve", async (req, rep) => {
     const { id } = req.params as { id: string }
-    const result = await adminSvc.approveInstitution(id, req.jwtPayload.sub)
-    if (!result) return rep.code(404).send({ error: "Institution not found" })
-    return { ok: true }
+    const body = req.body as { adminWallet?: string } | null
+    try {
+      const result = await adminSvc.approveInstitution(id, req.jwtPayload.sub, body?.adminWallet)
+      if (!result) return rep.code(404).send({ error: "Institution not found" })
+      return { ok: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Approval failed"
+      return rep.code(500).send({ error: msg })
+    }
   })
 
   app.post("/institutions/:id/tier", async (req, rep) => {
