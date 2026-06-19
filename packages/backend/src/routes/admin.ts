@@ -47,6 +47,9 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     try {
       const result = await adminSvc.approveInstitution(id, req.jwtPayload.sub, body?.adminWallet)
       if (!result) return rep.code(404).send({ error: "Institution not found" })
+      if (typeof result === "object" && "blockchainStatus" in result) {
+        return rep.code(202).send(result)
+      }
       return { ok: true }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Approval failed"

@@ -116,6 +116,8 @@ model Institution {
   tier                    InstitutionTier @default(FREE)
   // Whether the institution has been KYC approved by the VERIDAQ Admin
   kycApproved             Boolean         @default(false)
+  // Blockchain registration status
+  blockchainStatus        String          @default("NOT_REGISTERED")
   // Deactivation status
   deactivatedAt           DateTime?
   deactivationReason      String?

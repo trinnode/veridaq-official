@@ -277,7 +277,7 @@ VERIDAQ Platform
   }
 
   /**
-   * Alert the platform admin that a new entity has registered and awaits KYC review.
+   * Alert the VERIDAQ Admin that a new entity has registered and awaits KYC review.
    */
   async sendNewRegistrationAdminAlert(opts: NewRegistrationAdminAlertOptions): Promise<void> {
     const transport = await this.getTransport()

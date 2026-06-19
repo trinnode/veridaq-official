@@ -62,6 +62,7 @@ export class AdminService {
           adminWallet: true,
           publicKey: true,
           onChainId: true,
+          blockchainStatus: true,
           _count: { select: { batches: true } },
         },
       }),
@@ -98,6 +99,12 @@ export class AdminService {
       })
     }
 
+    // Update blockchainStatus to PENDING immediately so UI can show loading state
+    await this.prisma.institution.update({
+      where: { id: institutionId },
+      data: { blockchainStatus: "PENDING" },
+    })
+
     // Register on-chain if missing, then set tier
     try {
       const alreadyRegistered = await this.blockchainSvc.isInstitutionRegistered(inst.onChainId as `0x${string}`)
@@ -111,9 +118,20 @@ export class AdminService {
       }
     } catch (err) {
       log.error({ err, institutionId }, "Failed to register institution on-chain")
+      // Update status to FAILED but keep kycApproved as true (admin can retry)
+      await this.prisma.institution.update({
+        where: { id: institutionId },
+        data: { blockchainStatus: "FAILED" },
+      })
       const msg = err instanceof Error ? err.message : "Unknown blockchain error"
       throw new Error(msg)
     }
+
+    // On success, update to REGISTERED
+    await this.prisma.institution.update({
+      where: { id: institutionId },
+      data: { blockchainStatus: "REGISTERED" },
+    })
 
     const updateData: Record<string, unknown> = { kycApproved: true }
     if (adminWalletOverride) {
@@ -151,7 +169,9 @@ export class AdminService {
       role: "institution",
     })
 
-    return true
+    // Return the current blockchain status
+    const updated = await this.prisma.institution.findUnique({ where: { id: institutionId } })
+    return { ok: true, blockchainStatus: updated?.blockchainStatus ?? "UNKNOWN" }
   }
 
   async setInstitutionTier(institutionId: string, tier: "FREE" | "PAID") {
