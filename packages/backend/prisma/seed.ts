@@ -1,20 +1,16 @@
 /**
  * Database seed script.
- * Creates default admin, one institution, and one employer for local development.
+ * Creates only the default admin so the user can test the full flow
+ * (register institution, KYC approval, batch upload) from scratch.
  *
- * Credentials (all for development only — change these before any deployment):
- *   Admin:       admin@veridaq.xyz       / Admin@2026!
- *   Institution: futminna@veridaq.xyz    / Inst@2026!
- *   Employer:    firstbank@veridaq.xyz   / Emp@2026!
+ * Credentials (development only — change before any deployment):
+ *   Admin: admin@veridaq.xyz / Admin2026!@#
  *
  * Run with: pnpm db:seed
  */
 
 import { PrismaClient } from "@prisma/client"
 import bcryptjs from "bcryptjs"
-import { randomBytes } from "crypto"
-import { privateKeyToAccount } from "viem/accounts"
-import { encrypt } from "../src/utils/crypto.js"
 
 const prisma = new PrismaClient()
 const COST = 12
@@ -22,16 +18,11 @@ const COST = 12
 async function main() {
   console.info("Seeding database...")
 
-  const adminHash = await bcryptjs.hash("Admin@2026!", COST)
-  const instHash = await bcryptjs.hash("Inst@2026!", COST)
-  const empHash = await bcryptjs.hash("Emp@2026!", COST)
-  const institutionKeyHex = randomBytes(32).toString("hex")
-  const { encryptedData, encryptedIv, encryptedTag } = encrypt(institutionKeyHex)
-
-  // Admin
+  // ── Admin only ────────────────────────────────────────────────────────
+  const adminHash = await bcryptjs.hash("Admin2026!@#", COST)
   await prisma.admin.upsert({
     where: { email: "admin@veridaq.xyz" },
-    update: {},
+    update: { passwordHash: adminHash },
     create: {
       email: "admin@veridaq.xyz",
       passwordHash: adminHash,
@@ -39,185 +30,7 @@ async function main() {
     },
   })
 
-  // Generate a dedicated EOA wallet for the seeded institution
-  const seedAdminKey = "0x" + randomBytes(32).toString("hex")
-  const seedAdminAccount = privateKeyToAccount(seedAdminKey as `0x${string}`)
-  const { encryptedData: seedKeyEnc, encryptedIv: seedKeyIv, encryptedTag: seedKeyTag } = encrypt(seedAdminKey.slice(2))
-
-  // Institution — Federal University of Technology Minna
-  const inst = await prisma.institution.upsert({
-    where: { email: "futminna@veridaq.xyz" },
-    update: {
-      institutionKeyEncrypted: encryptedData,
-      institutionKeyIv: encryptedIv,
-      institutionKeyTag: encryptedTag,
-      publicKey: "0x04aabbcc",
-      adminWallet: seedAdminAccount.address,
-      adminKeyEncrypted: seedKeyEnc,
-      adminKeyIv: seedKeyIv,
-      adminKeyTag: seedKeyTag,
-      active: true,
-      tier: "FREE",
-      kycApproved: true,
-      alsoEmployer: true,
-    },
-    create: {
-      onChainId: "0x" + Buffer.from("futminna").toString("hex").padStart(64, "0"),
-      name: "Federal University of Technology Minna",
-      email: "futminna@veridaq.xyz",
-      passwordHash: instHash,
-      adminWallet: seedAdminAccount.address,
-      adminKeyEncrypted: seedKeyEnc,
-      adminKeyIv: seedKeyIv,
-      adminKeyTag: seedKeyTag,
-      publicKey: "0x04aabbcc",
-      institutionKeyEncrypted: encryptedData,
-      institutionKeyIv: encryptedIv,
-      institutionKeyTag: encryptedTag,
-      active: true,
-      tier: "FREE",
-      kycApproved: true,
-      alsoEmployer: true,
-    },
-  })
-
-  // Default claim definitions for the institution
-  await prisma.claimDefinition.createMany({
-    skipDuplicates: true,
-    data: [
-      {
-        institutionId: inst.id,
-        label: "Programme Completion",
-        claimCode: 1,
-        threshold: 0,
-        reviewType: "AUTO",
-      },
-      {
-        institutionId: inst.id,
-        label: "Minimum Lower Second Class (2.2)",
-        claimCode: 2,
-        threshold: 0,
-        reviewType: "AUTO",
-      },
-      {
-        institutionId: inst.id,
-        label: "Minimum Upper Second Class (2.1)",
-        claimCode: 3,
-        threshold: 0,
-        reviewType: "AUTO",
-      },
-      {
-        institutionId: inst.id,
-        label: "First Class Honours",
-        claimCode: 4,
-        threshold: 0,
-        reviewType: "AUTO",
-      },
-      {
-        institutionId: inst.id,
-        label: "CGPA above 3.50",
-        claimCode: 5,
-        threshold: 350,
-        reviewType: "AUTO",
-      },
-      {
-        institutionId: inst.id,
-        label: "Course-Specific Completion",
-        claimCode: 6,
-        threshold: 0,
-        reviewType: "MANUAL",
-      },
-    ],
-  })
-
-  // Linked employer profile for FUTMinna (alsoEmployer)
-  await prisma.employer.upsert({
-    where: { email: "futminna-employer@veridaq.xyz" },
-    update: {},
-    create: {
-      name: "Federal University of Technology Minna (Employer)",
-      cacNumber: "INST-FUTMINNA",
-      email: "futminna-employer@veridaq.xyz",
-      passwordHash: instHash,
-      walletAddress: "0x0000000000000000000000000000000000000010",
-      active: true,
-      kycApproved: true,
-      freeVerificationsRemaining: 3,
-      institutionId: inst.id,
-    },
-  })
-
-  // Gas pool — initial balance for sponsor gas
-  await prisma.gasPool.upsert({
-    where: { id: "default" },
-    update: {},
-    create: {
-      id: "default",
-      availableUsd: 100,
-      availableWei: 0,
-      totalDepositedUsd: 100,
-      totalDepositedWei: 0,
-    },
-  })
-
-  // Employer — First Bank Nigeria
-  await prisma.employer.upsert({
-    where: { email: "firstbank@veridaq.xyz" },
-    update: {},
-    create: {
-      name: "First Bank Nigeria Ltd",
-      cacNumber: "RC000001",
-      email: "firstbank@veridaq.xyz",
-      passwordHash: empHash,
-      walletAddress: "0x0000000000000000000000000000000000000002",
-      active: true,
-      kycApproved: true,
-      freeVerificationsRemaining: 3,
-    },
-  })
-
-  // Audit log — seed entries so admin audit page isn't blank
-  // Clean existing seed audit entries first to make re-seeding safe
-  const admin = await prisma.admin.findUnique({ where: { email: "admin@veridaq.xyz" } })
-  const institution = await prisma.institution.findUnique({ where: { email: "futminna@veridaq.xyz" } })
-
-  await prisma.auditLog.deleteMany({})
-  await prisma.auditLog.create({
-    data: {
-      action: "INSTITUTION_REGISTERED",
-      details: { name: "Federal University of Technology Minna", tier: "FREE" },
-      institutionId: institution?.id ?? null,
-      adminId: admin?.id ?? null,
-      createdAt: new Date(Date.now() - 86400000 * 3),
-    },
-  })
-  await prisma.auditLog.create({
-    data: {
-      action: "INSTITUTION_REGISTERED",
-      details: { name: "First Bank Nigeria Ltd", tier: "FREE" },
-      employerId: (await prisma.employer.findUnique({ where: { email: "firstbank@veridaq.xyz" } }))?.id ?? null,
-      adminId: admin?.id ?? null,
-      createdAt: new Date(Date.now() - 86400000 * 2),
-    },
-  })
-  await prisma.auditLog.create({
-    data: {
-      action: "PAYMENT_INSTITUTION_UPGRADE",
-      details: { amountWei: "50000000000000000", fromTier: "FREE", toTier: "PAID" },
-      institutionId: institution?.id ?? null,
-      adminId: admin?.id ?? null,
-      createdAt: new Date(Date.now() - 86400000),
-    },
-  })
-  await prisma.auditLog.create({
-    data: {
-      action: "BATCH_CONFIRMED",
-      details: { count: 150, batchId: "batch-001" },
-      institutionId: institution?.id ?? null,
-      createdAt: new Date(Date.now() - 43200000),
-    },
-  })
-
+  console.info("Seeded: admin@veridaq.xyz / Admin2026!@#")
   console.info("Seed complete.")
 }
 
