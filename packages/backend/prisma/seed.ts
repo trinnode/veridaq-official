@@ -13,6 +13,7 @@
 import { PrismaClient } from "@prisma/client"
 import bcryptjs from "bcryptjs"
 import { randomBytes } from "crypto"
+import { privateKeyToAccount } from "viem/accounts"
 import { encrypt } from "../src/utils/crypto.js"
 
 const prisma = new PrismaClient()
@@ -38,6 +39,11 @@ async function main() {
     },
   })
 
+  // Generate a dedicated EOA wallet for the seeded institution
+  const seedAdminKey = "0x" + randomBytes(32).toString("hex")
+  const seedAdminAccount = privateKeyToAccount(seedAdminKey as `0x${string}`)
+  const { encryptedData: seedKeyEnc, encryptedIv: seedKeyIv, encryptedTag: seedKeyTag } = encrypt(seedAdminKey.slice(2))
+
   // Institution — Federal University of Technology Minna
   const inst = await prisma.institution.upsert({
     where: { email: "futminna@veridaq.xyz" },
@@ -46,7 +52,10 @@ async function main() {
       institutionKeyIv: encryptedIv,
       institutionKeyTag: encryptedTag,
       publicKey: "0x04aabbcc",
-      adminWallet: "0x0000000000000000000000000000000000000001",
+      adminWallet: seedAdminAccount.address,
+      adminKeyEncrypted: seedKeyEnc,
+      adminKeyIv: seedKeyIv,
+      adminKeyTag: seedKeyTag,
       active: true,
       tier: "FREE",
       kycApproved: true,
@@ -57,7 +66,10 @@ async function main() {
       name: "Federal University of Technology Minna",
       email: "futminna@veridaq.xyz",
       passwordHash: instHash,
-      adminWallet: "0x0000000000000000000000000000000000000001",
+      adminWallet: seedAdminAccount.address,
+      adminKeyEncrypted: seedKeyEnc,
+      adminKeyIv: seedKeyIv,
+      adminKeyTag: seedKeyTag,
       publicKey: "0x04aabbcc",
       institutionKeyEncrypted: encryptedData,
       institutionKeyIv: encryptedIv,

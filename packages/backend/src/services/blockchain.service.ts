@@ -351,7 +351,8 @@ function buildClients() {
   const key = rawKey.startsWith("0x") ? (rawKey as `0x${string}`) : (`0x${rawKey}` as `0x${string}`)
   const account = privateKeyToAccount(key)
 
-  const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL)
+  // Increase timeout from default 60s to 120s for slow Base Sepolia blocks
+  const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL, { timeout: 120_000 })
 
   const publicClient = createPublicClient({ chain: baseSepolia, transport })
   const walletClient = createWalletClient({ account, chain: baseSepolia, transport })
@@ -538,18 +539,22 @@ export class BlockchainService {
     nullifiers: `0x${string}`[],
     graduationYear: number,
     degreeTypeCode: number,
-    txRef: `0x${string}`
+    txRef: `0x${string}`,
+    institutionWallet?: { walletClient: import("viem").WalletClient; account: import("viem").Account }
   ): Promise<{ txHash: Hash }> {
     if (commitments.length !== nullifiers.length) {
       throw new Error("Commitments and nullifiers length mismatch")
     }
 
-    const hash = await this.walletClient.writeContract({
+    const signer = (institutionWallet?.walletClient ?? this.walletClient) as import("viem").WalletClient
+
+    const hash = await signer.writeContract({
+      chain: baseSepolia,
       address: config.CREDENTIAL_REGISTRY_ADDRESS as Address,
       abi: credentialRegistryAbi,
       functionName: "registerBatch",
       args: [institutionId, commitments, nullifiers, graduationYear, degreeTypeCode, txRef],
-    })
+    } as any)
 
     const receipt = await this.publicClient.waitForTransactionReceipt({ hash })
 
@@ -1167,6 +1172,19 @@ export class BlockchainService {
     // Strip hyphens and left-pad to 32 bytes (64 hex chars)
     const hex = uuid.replace(/-/g, "").padStart(64, "0")
     return `0x${hex}`
+  }
+
+  /**
+   * Create a viem wallet client for an institution's dedicated EOA.
+   * The private key hex (without 0x prefix) is decrypted from the DB.
+   * Used by the batch processor to sign registerBatch transactions.
+   */
+  static createInstitutionWallet(privateKeyHex: string) {
+    const key = (privateKeyHex.startsWith("0x") ? privateKeyHex : `0x${privateKeyHex}`) as `0x${string}`
+    const account = privateKeyToAccount(key)
+    const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL, { timeout: 120_000 })
+    const walletClient = createWalletClient({ account, chain: baseSepolia, transport })
+    return { walletClient, account }
   }
 
   /**

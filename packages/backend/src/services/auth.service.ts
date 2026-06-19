@@ -11,6 +11,7 @@ import bcryptjs from "bcryptjs"
 import crypto from "crypto"
 import jwt from "jsonwebtoken"
 import pino from "pino"
+import { privateKeyToAccount } from "viem/accounts"
 import { encrypt } from "../utils/crypto.js"
 import { config } from "../config/index.js"
 import { EmailService } from "./email.service.js"
@@ -125,8 +126,11 @@ export class AuthService {
 
     const { encryptedData, encryptedIv, encryptedTag } = encrypt(institutionKeyHex)
 
-    const adminWallet = config.PLATFORM_ADMIN_ADDRESS
-      ?? "0x0000000000000000000000000000000000000001"
+    // Generate a dedicated EOA wallet for this institution
+    const adminPrivateKey = "0x" + crypto.randomBytes(32).toString("hex")
+    const adminAccount = privateKeyToAccount(adminPrivateKey as `0x${string}`)
+    const adminWallet = adminAccount.address
+    const { encryptedData: adminKeyEnc, encryptedIv: adminKeyIv, encryptedTag: adminKeyTag } = encrypt(adminPrivateKey.slice(2))
 
     const alsoEmployer = data.alsoEmployer ?? false
 
@@ -135,6 +139,9 @@ export class AuthService {
         name: data.name,
         email: data.email,
         adminWallet,
+        adminKeyEncrypted: adminKeyEnc,
+        adminKeyIv,
+        adminKeyTag,
         publicKey: data.publicKey,
         institutionKeyEncrypted: encryptedData,
         institutionKeyIv: encryptedIv,
