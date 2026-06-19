@@ -75,7 +75,7 @@ contract PaymasterVault is AccessControl, ReentrancyGuard {
 
   /// @notice An institution admin withdraws unused ETH from their own balance.
   ///         The caller must be the admin wallet registered for this institution
-  ///         in the InstitutionRegistry. The platform admin can also withdraw
+  ///         in the InstitutionRegistry. The VERIDAQ Admin can also withdraw
   ///         on behalf of an institution (e.g. for key recovery).
   ///
   ///         We accept an InstitutionRegistry reference so we can verify the
@@ -86,7 +86,7 @@ contract PaymasterVault is AccessControl, ReentrancyGuard {
     uint256 amount,
     address institutionRegistry
   ) external nonReentrant {
-    // Allow either the institution's own admin wallet or the platform admin.
+    // Allow either the institution's own admin wallet or the VERIDAQ Admin.
     bool isPlatformAdmin = hasRole(PLATFORM_ADMIN_ROLE, msg.sender);
     if (!isPlatformAdmin) {
       // Verify caller is the institution's registered admin wallet.
@@ -175,7 +175,7 @@ contract PaymasterVault is AccessControl, ReentrancyGuard {
 
   // ── Emergency ─────────────────────────────────────────────────────────────
 
-  /// @notice Platform admin withdraws the entire sponsored pool (emergency).
+  /// @notice VERIDAQ Admin withdraws the entire sponsored pool (emergency).
   ///         Used when decommissioning or migrating to a new paymaster.
   function emergencyWithdrawSponsoredPool(
     address payable to
