@@ -10,7 +10,6 @@ import { useAuth } from "@/lib/auth"
 import { useScrollSpy } from "@/lib/use-scroll-spy"
 import { AnimatePresence, motion } from "framer-motion"
 import {
-  ArrowRight,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -37,7 +36,7 @@ import {
   Workflow,
   X,
   Zap,
-} from "lucide-react"
+} from "@/lib/icons"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 
@@ -58,27 +57,6 @@ const navLinks = [
   { href: "#extension", label: "Extension" },
   { href: "#compliance", label: "Compliance" },
 ]
-
-function NavLink({ href, title, active }: { href: string; title: string; active: boolean }) {
-  return (
-    <a
-      href={href}
-      onClick={(e) => scrollToId(e, href.replace("#", ""))}
-      className={`relative py-2 text-sm font-medium transition-colors duration-200 ${
-        active ? "text-foreground" : "text-muted hover:text-foreground"
-      }`}
-    >
-      {title}
-      {active && (
-        <motion.span
-          layoutId="nav-indicator"
-          className="bg-accent absolute bottom-0 left-0 h-px w-full"
-          transition={{ type: "spring", stiffness: 350, damping: 35 }}
-        />
-      )}
-    </a>
-  )
-}
 
 export default function LandingPage() {
   const { user } = useAuth()
@@ -118,64 +96,83 @@ export default function LandingPage() {
       <ParallaxBg />
       <FloatingShapes count={20} />
 
-      {/* ─── Navbar ─── */}
-      <nav
-        className={`fixed left-0 right-0 top-0 z-50 transition-all duration-500 ${
-          scrolled ? "bg-void/80 border-surface-border border-b backdrop-blur-xl" : "bg-transparent"
-        }`}
-      >
-        <div className="container pointer-events-auto mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <LogoMark className="h-8 w-8 rounded-lg" />
-            <span className="font-display text-sm font-bold tracking-widest">VERIDAQ</span>
+      {/* ─── Pill Navbar ─── */}
+      <nav className="fixed left-0 right-0 top-0 z-50 flex justify-center pt-3 sm:pt-4">
+        <div
+          className={`flex items-center gap-1 rounded-full border px-2 py-1.5 backdrop-blur-2xl transition-all duration-500 sm:px-3 sm:py-2 ${
+            scrolled
+              ? "border-surface-border bg-void/70 shadow-elevated"
+              : "border-transparent bg-void/20"
+          }`}
+        >
+          <Link href="/" className="flex items-center gap-2 pl-1 pr-2">
+            <LogoMark className="h-6 w-6 rounded-md" />
+            <span className="hidden text-xs font-bold tracking-widest sm:inline">
+              VERIDAQ
+            </span>
           </Link>
-          <div className="hidden items-center gap-6 lg:flex">
+
+          <div className="hidden items-center gap-0.5 lg:flex">
             {navLinks.map(({ href, label }) => (
-              <NavLink
+              <a
                 key={href}
                 href={href}
-                title={label}
-                active={activeSection === href.replace("#", "")}
-              />
+                onClick={(e) => scrollToId(e, href.replace("#", ""))}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200 ${
+                  activeSection === href.replace("#", "")
+                    ? "bg-accent/10 text-accent"
+                    : "text-muted hover:bg-surface-card hover:text-foreground"
+                }`}
+              >
+                {label}
+              </a>
             ))}
           </div>
-          <div className="hidden items-center gap-3 lg:flex">
+
+          <div className="flex items-center gap-1 pl-1">
             <ThemeToggle />
             {user ? (
-              <Link href={`/${user.role.toLowerCase()}/dashboard`} className="btn-primary text-xs">
-                Dashboard <ArrowRight className="h-3 w-3" />
+              <Link
+                href={`/${user.role.toLowerCase()}/dashboard`}
+                className="rounded-full bg-accent px-3 py-1.5 text-[11px] font-semibold text-void transition-all hover:bg-accent-dim"
+              >
+                Dashboard
               </Link>
             ) : (
               <>
                 <Link
-                  href="/institution/login"
-                  className="text-muted hover:text-foreground text-sm font-medium transition-colors"
-                >
-                  Institution
-                </Link>
-                <Link
                   href="/employer/login"
-                  className="text-muted hover:text-foreground text-sm font-medium transition-colors"
+                  className="rounded-full px-3 py-1.5 text-[11px] font-medium text-muted transition-colors hover:bg-surface-card hover:text-foreground"
                 >
                   Employer
                 </Link>
+                <Link
+                  href="/institution/login"
+                  className="rounded-full bg-accent px-3 py-1.5 text-[11px] font-semibold text-void transition-all hover:bg-accent-dim"
+                >
+                  Institution
+                </Link>
               </>
             )}
+            <button
+              className="text-muted hover:text-foreground p-1.5 lg:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
           </div>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 lg:hidden">
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </div>
+
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
               key="mobile-menu"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-void/95 border-surface-border overflow-hidden border-b backdrop-blur-xl lg:hidden"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="absolute left-4 right-4 top-16 rounded-2xl border border-surface-border bg-surface-card/95 p-3 shadow-elevated backdrop-blur-xl lg:hidden"
             >
-              <div className="container mx-auto flex flex-col gap-1 p-4">
+              <div className="flex flex-col gap-1">
                 {navLinks.map(({ href, label }) => (
                   <a
                     key={href}
@@ -184,29 +181,32 @@ export default function LandingPage() {
                       setIsMenuOpen(false)
                     }}
                     href={href}
-                    className="text-muted hover:bg-surface rounded-lg px-4 py-3 text-sm font-medium transition-colors hover:text-inherit"
+                    className="rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
                   >
                     {label}
                   </a>
                 ))}
-                <div className="border-surface-border my-2 border-t" />
+                <div className="border-surface-border my-1 border-t" />
                 {user ? (
                   <Link
                     href={`/${user.role.toLowerCase()}/dashboard`}
-                    className="btn-primary justify-center text-sm"
+                    className="rounded-xl bg-accent px-4 py-2.5 text-center text-sm font-semibold text-void"
                   >
-                    Go to Dashboard <ArrowRight className="h-4 w-4" />
+                    Dashboard
                   </Link>
                 ) : (
                   <>
-                    <Link href="/employer/login" className="btn-primary justify-center text-sm">
-                      Verify Credentials
+                    <Link
+                      href="/employer/login"
+                      className="rounded-xl bg-accent px-4 py-2.5 text-center text-sm font-semibold text-void"
+                    >
+                      Employer Login
                     </Link>
                     <Link
                       href="/institution/login"
-                      className="btn-secondary justify-center text-sm"
+                      className="rounded-xl border border-surface-border px-4 py-2.5 text-center text-sm font-medium text-muted"
                     >
-                      Institution Portal
+                      Institution Login
                     </Link>
                   </>
                 )}
@@ -216,7 +216,7 @@ export default function LandingPage() {
         </AnimatePresence>
       </nav>
 
-      <main className="space-y-32 pb-20 pt-24 md:space-y-48 md:pb-32">
+      <main className="space-y-32 pb-20 pt-20 md:space-y-48 md:pb-32">
         {/* ════════════════════════ HERO ════════════════════════ */}
         <section
           ref={heroRef}

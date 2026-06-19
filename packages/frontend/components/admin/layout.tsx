@@ -1,7 +1,7 @@
 "use client"
 import { OrbitalLoader } from "@/components/ui/orbital-loader"
 import { useAuth } from "@/lib/auth"
-import { LogOut, Menu, X, ChevronRight, Shield } from "lucide-react"
+import { LogOut, Menu, X, ChevronRight, Shield } from "@/lib/icons"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -68,11 +68,11 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
                 <Link
                   key={href}
                   href={href}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
-                    pathname === href
-                      ? "bg-accent/10 text-accent"
-                      : "text-muted hover:bg-surface hover:text-foreground"
-                  }`}
+                   className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
+                     pathname === href
+                       ? "bg-accent/10 text-accent"
+                       : "text-muted hover:bg-surface hover:text-foreground"
+                   }`}
                 >
                   {label}
                 </Link>
@@ -109,7 +109,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
                   key={href}
                   href={href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                   className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                     pathname === href
                       ? "bg-accent/10 text-accent"
                       : "text-muted hover:bg-surface hover:text-foreground"

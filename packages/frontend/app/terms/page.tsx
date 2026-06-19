@@ -1,5 +1,5 @@
 "use client"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight } from "@/lib/icons"
 import Link from "next/link"
 import { AppHeader } from "@/components/ui/app-header"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"

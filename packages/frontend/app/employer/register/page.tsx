@@ -3,7 +3,7 @@
 import { toast } from "@/components/ui/toast"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { Briefcase, ArrowRight, Eye, EyeOff } from "lucide-react"
+import { Briefcase, ArrowRight, Eye, EyeOff } from "@/lib/icons"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"

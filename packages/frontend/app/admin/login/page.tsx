@@ -1,7 +1,7 @@
 "use client"
 import { toast } from "@/components/ui/toast"
 import { useAuth } from "@/lib/auth"
-import { Shield, ArrowRight, Eye, EyeOff } from "lucide-react"
+import { Shield, ArrowRight, Eye, EyeOff } from "@/lib/icons"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"

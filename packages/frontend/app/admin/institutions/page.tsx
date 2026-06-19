@@ -2,7 +2,7 @@
 import { AdminLayout } from "@/components/admin/layout"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X } from "lucide-react"
+import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X } from "@/lib/icons"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
 import { formatEther } from "viem"

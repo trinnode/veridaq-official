@@ -2,7 +2,7 @@
 import { AdminLayout } from "@/components/admin/layout"
 import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
-import { Activity } from "lucide-react"
+import { Activity } from "@/lib/icons"
 import { useEffect, useState } from "react"
 
 type AuditEntry = {

@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
 import { UpgradeModal } from "@/components/institution/upgrade-modal"
 import { DepositModal } from "@/components/institution/deposit-modal"
-import { ArrowUpCircle, CreditCard, RefreshCcw, Shield, Wallet, Sparkles } from "lucide-react"
+import { ArrowUpCircle, CreditCard, RefreshCcw, Shield, Wallet, Sparkles } from "@/lib/icons"
 import { useEffect, useState } from "react"
 
 type BillingData = {

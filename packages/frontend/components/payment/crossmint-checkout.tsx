@@ -1,7 +1,7 @@
 "use client"
 import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
-import { CreditCard, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { CreditCard, Loader2, CheckCircle2, XCircle } from "@/lib/icons"
 import { useState, useRef, useEffect } from "react"
 
 type CrossmintCheckoutProps = {

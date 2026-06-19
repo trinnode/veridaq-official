@@ -1,5 +1,5 @@
 "use client"
-import { ChevronRight, Cpu, Hash, Key, Lock, Network, Shield, Zap, Eye, EyeOff, CircuitBoard, Binary, GanttChartSquare, Workflow, FileCode2, Activity } from "lucide-react"
+import { ChevronRight, Cpu, Hash, Key, Lock, Network, Shield, Zap, Eye, EyeOff, CircuitBoard, Binary, GanttChartSquare, Workflow, FileCode2, Activity } from "@/lib/icons"
 import Link from "next/link"
 import { AppHeader } from "@/components/ui/app-header"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"

@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    optimizePackageImports: ["@phosphor-icons/react"],
+  },
   webpack(config) {
     config.resolve = config.resolve ?? {}
     config.resolve.alias = {

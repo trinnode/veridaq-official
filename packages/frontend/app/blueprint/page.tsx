@@ -35,7 +35,7 @@ import {
   Users,
   Wallet,
   Zap,
-} from "lucide-react"
+} from "@/lib/icons"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 

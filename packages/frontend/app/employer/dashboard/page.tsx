@@ -8,7 +8,7 @@ import { StatCard } from "@/components/ui/stat-card"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
-import { Sparkles } from "lucide-react"
+import { Sparkles } from "@/lib/icons"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 

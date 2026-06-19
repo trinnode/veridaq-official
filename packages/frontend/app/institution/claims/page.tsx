@@ -2,7 +2,7 @@
 import { DashboardLayout } from "@/components/institution/layout"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { Edit, Info, Plus, Settings, X } from "lucide-react"
+import { Edit, Info, Plus, Settings, X } from "@/lib/icons"
 import { useEffect, useState } from "react"
 import { toast } from "@/components/ui/toast"
 

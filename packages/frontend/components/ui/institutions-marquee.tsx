@@ -1,6 +1,6 @@
 "use client"
 import { api, BASE_URL } from "@/lib/api"
-import { Building2 } from "lucide-react"
+import { Building2 } from "@/lib/icons"
 import { useEffect, useState } from "react"
 
 export function InstitutionsMarquee() {

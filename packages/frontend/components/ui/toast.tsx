@@ -6,7 +6,7 @@
  */
 
 import * as React from "react"
-import { X, CheckCircle2, AlertCircle, Info } from "lucide-react"
+import { X, CheckCircle2, AlertCircle, Info } from "@/lib/icons"
 import { create } from "zustand"
 import { cn } from "@/lib/utils"
 
