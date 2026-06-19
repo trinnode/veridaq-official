@@ -5,7 +5,7 @@
  * Every method is async and returns plain objects so callers don't need to know
  * anything about viem's internals.
  *
- * Important: the private key for the platform admin wallet is read from config
+ * Important: the private key for the VERIDAQ Admin wallet is read from config
  * at construction time. It is never logged, never sent to the client, and never
  * written to the database. If config is missing, the constructor throws so the
  * server fails loudly at startup rather than silently sending unsigned txs.

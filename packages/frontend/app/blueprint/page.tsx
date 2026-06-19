@@ -828,7 +828,7 @@ export default function BlueprintPage() {
                 "Two ETH pools: sponsoredPool (platform funded) and per institution institutionBalances",
                 "validatePaymasterUserOp decodes paymasterAndData to extract institutionId and batchSize",
                 "postOp reconciles actual gas cost, refunds unused reserve",
-                "Institution admin or platform admin can withdraw institution balances",
+                "Institution admin or VERIDAQ Admin can withdraw institution balances",
                 "emergencyWithdrawSponsoredPool for decommissioning",
               ]}
             />
@@ -1793,7 +1793,7 @@ export default function BlueprintPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-accent/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />
-                    <span>BUNDLER_ROLE granted to platform admin on SubscriptionManager</span>
+                    <span>BUNDLER_ROLE granted to VERIDAQ Admin on SubscriptionManager</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="bg-accent/20 mt-1 h-1.5 w-1.5 shrink-0 rounded-full" />

@@ -2,7 +2,7 @@
 import { AdminLayout } from "@/components/admin/layout"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, ExternalLink, Key, Building2, Clock, Hash } from "@/lib/icons"
+import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, Key, Building2, Clock, Hash, Loader2 } from "@/lib/icons"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
 import { formatEther } from "viem"
@@ -14,6 +14,7 @@ export default function InstitutionsPage() {
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [reviewTarget, setReviewTarget] = useState<any>(null)
   const [reviewWallet, setReviewWallet] = useState("")
+  const [polling, setPolling] = useState(false)
   const [fundTarget, setFundTarget] = useState<any>(null)
   const [fundAmount, setFundAmount] = useState("")
   const [fundError, setFundError] = useState("")
@@ -37,6 +38,19 @@ export default function InstitutionsPage() {
       load()
     }
   }, [user])
+
+  // Auto-poll when there are PENDING institutions
+  useEffect(() => {
+    if (!data?.items) return
+    const hasPending = data.items.some((i: any) => i.blockchainStatus === "PENDING")
+    if (hasPending && !polling) {
+      setPolling(true)
+      const interval = setInterval(() => load(), 10000)
+      return () => { clearInterval(interval); setPolling(false) }
+    } else if (!hasPending && polling) {
+      setPolling(false)
+    }
+  }, [data?.items, polling])
 
   async function approve(id: string, walletOverride?: string) {
     setApprovingId(id)
@@ -101,17 +115,18 @@ export default function InstitutionsPage() {
       ) : (
         <div className="bg-surface-card border-surface-border overflow-x-auto rounded-xl border">
           <table className="w-full text-left text-sm text-foreground">
-            <thead className="text-muted border-surface-border border-b text-xs uppercase">
-              <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="hidden px-4 py-3 font-medium lg:table-cell">Wallet (Admin)</th>
-                <th className="px-4 py-3 font-medium">Tier</th>
-                <th className="hidden px-4 py-3 font-medium md:table-cell">Credit</th>
-                <th className="px-4 py-3 font-medium">KYC Status</th>
-                <th className="hidden px-4 py-3 font-medium md:table-cell">Date Joined</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
-              </tr>
-            </thead>
+              <thead className="text-muted border-surface-border border-b text-xs uppercase">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Name</th>
+                  <th className="hidden px-4 py-3 font-medium lg:table-cell">Wallet (Admin)</th>
+                  <th className="px-4 py-3 font-medium">Tier</th>
+                  <th className="hidden px-4 py-3 font-medium md:table-cell">Credit</th>
+                  <th className="px-4 py-3 font-medium">KYC Status</th>
+                  <th className="hidden px-4 py-3 font-medium md:table-cell">Blockchain Status</th>
+                  <th className="hidden px-4 py-3 font-medium md:table-cell">Date Joined</th>
+                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
             <tbody className="divide-surface-border divide-y">
               {data?.items?.map((inst: any) => (
                 <tr key={inst.id} className="hover:bg-void/30 transition-colors">
@@ -140,6 +155,29 @@ export default function InstitutionsPage() {
                     ) : (
                       <span className="flex items-center gap-1 text-xs font-medium text-orange-400">
                         <ShieldAlert className="h-3 w-3" /> PENDING
+                      </span>
+                    )}
+                  </td>
+                  <td className="hidden px-4 py-3 md:table-cell">
+                    {inst.blockchainStatus === "REGISTERED" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-900/30 text-blue-400 rounded-full text-xs">
+                        <ShieldCheck className="w-3 h-3" />
+                        Registered
+                      </span>
+                    ) : inst.blockchainStatus === "PENDING" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-900/30 text-orange-400 rounded-full text-xs">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Pending
+                      </span>
+                    ) : inst.blockchainStatus === "FAILED" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-900/30 text-red-400 rounded-full text-xs">
+                        <X className="w-3 h-3" />
+                        Failed
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-900/30 text-gray-400 rounded-full text-xs">
+                        <Clock className="w-3 h-3" />
+                        Not Started
                       </span>
                     )}
                   </td>

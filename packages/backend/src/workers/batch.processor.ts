@@ -245,7 +245,7 @@ async function processJob(job: Job<BatchJobData>) {
     return { batchId: batch.id, credentials: 0, errors: errors.length }
   }
 
-  // Use the institution's dedicated wallet if available, otherwise fall back to platform admin
+  // Use the institution's dedicated wallet if available, otherwise fall back to VERIDAQ Admin
   let institutionWallet:
     | { walletClient: import("viem").WalletClient; account: import("viem").Account }
     | undefined
@@ -263,7 +263,7 @@ async function processJob(job: Job<BatchJobData>) {
     institutionWallet = BlockchainService.createInstitutionWallet(adminKeyHex)
     log.info({ address: institutionWallet.account.address }, "Using institution wallet for batch")
   } else {
-    log.warn("No institution admin key found, falling back to platform admin")
+    log.warn("No institution admin key found, falling back to VERIDAQ Admin")
   }
 
   const bSvc = new BlockchainService()
