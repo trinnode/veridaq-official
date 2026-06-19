@@ -33,7 +33,7 @@ export function GuardKyc({ children }: { children: ReactNode }) {
           <h2 className="mb-2 text-xl font-semibold text-foreground">Verification Pending</h2>
           <p className="text-muted mb-6 text-sm">
             Your {user.role.toLowerCase()} account has been registered successfully but is currently
-            undergoing KYC review by the platform administrator. You will receive an email once
+            undergoing KYC review by the VERIDAQ admin team. You will receive an email once
             approved.
           </p>
           <div className="border-surface-border flex w-full items-center justify-center space-x-2 rounded border bg-surface-card py-3 text-xs opacity-70">

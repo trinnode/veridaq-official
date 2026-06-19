@@ -7,10 +7,13 @@
  */
 
 import { PrismaClient } from "@prisma/client"
+import crypto from "crypto"
 import pino from "pino"
 import { formatEther, parseEther } from "viem"
+import { privateKeyToAccount } from "viem/accounts"
 import { BlockchainService } from "./blockchain.service.js"
 import { EmailService } from "./email.service.js"
+import { encrypt } from "../utils/crypto.js"
 
 const log = pino({ name: "admin-service" })
 
@@ -71,14 +74,35 @@ export class AdminService {
     const inst = await this.prisma.institution.findUnique({ where: { id: institutionId } })
     if (!inst) return null
 
-    // Allow admin to override the wallet before on-chain registration
-    const effectiveWallet = adminWalletOverride ?? inst.adminWallet
+    // Allow admin to override the wallet before on-chain registration.
+    // This lets the platform admin correct a dummy wallet before going on-chain.
+    const walletForChain = adminWalletOverride ?? inst.adminWallet
+
+    // If the institution has no admin wallet override and no generated wallet,
+    // generate one now so we never register a dummy address on-chain.
+    let finalWallet = walletForChain
+    if (!inst.adminKeyEncrypted && !adminWalletOverride) {
+      const pk = "0x" + crypto.randomBytes(32).toString("hex")
+      const acct = privateKeyToAccount(pk as `0x${string}`)
+      finalWallet = acct.address
+      const { encryptedData: ek, encryptedIv: eiv, encryptedTag: etag } = encrypt(pk.slice(2))
+      // Persist the generated key immediately so the batch processor can use it
+      await this.prisma.institution.update({
+        where: { id: institutionId },
+        data: {
+          adminWallet: finalWallet as string,
+          adminKeyEncrypted: ek,
+          adminKeyIv: eiv,
+          adminKeyTag: etag,
+        },
+      })
+    }
 
     // Register on-chain if missing, then set tier
     try {
       const alreadyRegistered = await this.blockchainSvc.isInstitutionRegistered(inst.onChainId as `0x${string}`)
       if (!alreadyRegistered) {
-        await this.blockchainSvc.registerInstitution(inst.onChainId as `0x${string}`, inst.name, effectiveWallet as `0x${string}`, inst.publicKey)
+        await this.blockchainSvc.registerInstitution(inst.onChainId as `0x${string}`, inst.name, finalWallet as `0x${string}`, inst.publicKey)
       }
       const onChainTier = await this.blockchainSvc.getInstitutionTier(inst.onChainId as `0x${string}`)
       const desiredTier = inst.tier === "FREE" ? 0 : 1
@@ -92,7 +116,18 @@ export class AdminService {
     }
 
     const updateData: Record<string, unknown> = { kycApproved: true }
-    if (adminWalletOverride) updateData.adminWallet = adminWalletOverride
+    if (adminWalletOverride) {
+      updateData.adminWallet = adminWalletOverride
+      // If the institution doesn't have a generated key yet, generate one for this wallet
+      if (!inst.adminKeyEncrypted) {
+        const pk = "0x" + crypto.randomBytes(32).toString("hex")
+        const acct = privateKeyToAccount(pk as `0x${string}`)
+        const { encryptedData: ek, encryptedIv: eiv, encryptedTag: etag } = encrypt(pk.slice(2))
+        updateData.adminKeyEncrypted = ek
+        updateData.adminKeyIv = eiv
+        updateData.adminKeyTag = etag
+      }
+    }
 
     await this.prisma.$transaction([
       this.prisma.institution.update({

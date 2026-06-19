@@ -311,7 +311,7 @@ Please log in to the Admin Portal to review their application.
     const text = `
 Hello ${opts.orgName},
 
-Your institution account on VERIDAQ has been officially deactivated by the platform administrators as of ${opts.date}.
+Your institution account on VERIDAQ has been officially deactivated by the VERIDAQ admin team as of ${opts.date}.
 
 Reason provided: 
 ${opts.reason}
@@ -343,7 +343,7 @@ VERIDAQ Platform
     const text = `
 Hello ${opts.orgName},
 
-Your employer account on VERIDAQ has been officially deactivated by the platform administrators as of ${opts.date}.
+Your employer account on VERIDAQ has been officially deactivated by the VERIDAQ admin team as of ${opts.date}.
 
 Reason provided: 
 ${opts.reason}

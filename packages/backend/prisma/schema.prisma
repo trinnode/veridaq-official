@@ -102,6 +102,10 @@ model Institution {
   passwordHash            String
   // The admin wallet address used to sign batch transactions
   adminWallet             String
+  // Encrypted private key for the institution's dedicated EOA wallet
+  adminKeyEncrypted       String?
+  adminKeyIv              String?
+  adminKeyTag             String?
   // The institution's public signing key (hex string)
   publicKey               String
   // Institution secret used for nullifier derivation, stored encrypted at rest

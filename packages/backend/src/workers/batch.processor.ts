@@ -245,6 +245,27 @@ async function processJob(job: Job<BatchJobData>) {
     return { batchId: batch.id, credentials: 0, errors: errors.length }
   }
 
+  // Use the institution's dedicated wallet if available, otherwise fall back to platform admin
+  let institutionWallet:
+    | { walletClient: import("viem").WalletClient; account: import("viem").Account }
+    | undefined
+
+  if (
+    institution.adminKeyEncrypted &&
+    institution.adminKeyIv &&
+    institution.adminKeyTag
+  ) {
+    const adminKeyHex = decrypt(
+      institution.adminKeyEncrypted,
+      institution.adminKeyIv,
+      institution.adminKeyTag
+    )
+    institutionWallet = BlockchainService.createInstitutionWallet(adminKeyHex)
+    log.info({ address: institutionWallet.account.address }, "Using institution wallet for batch")
+  } else {
+    log.warn("No institution admin key found, falling back to platform admin")
+  }
+
   const bSvc = new BlockchainService()
 
   // Actually execute the on-chain registration to CredentialRegistry.
@@ -284,7 +305,8 @@ async function processJob(job: Job<BatchJobData>) {
           nullifiers,
           batch.graduationYear,
           batch.degreeTypeCode,
-          txRef
+          txRef,
+          institutionWallet
         )
         txHash = directResult.txHash
       }
@@ -295,7 +317,8 @@ async function processJob(job: Job<BatchJobData>) {
         nullifiers,
         batch.graduationYear,
         batch.degreeTypeCode,
-        txRef
+        txRef,
+        institutionWallet
       )
       txHash = directResult.txHash
     }
