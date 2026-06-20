@@ -74,6 +74,20 @@ const institutionRegistryAbi = [
       { name: "name", type: "string", indexed: false },
     ],
   },
+  {
+    name: "deactivateInstitution",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "institutionId", type: "bytes32" }],
+    outputs: [],
+  },
+  {
+    name: "reactivateInstitution",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "institutionId", type: "bytes32" }],
+    outputs: [],
+  },
 ] as const
 
 const credentialRegistryAbi = [
@@ -510,7 +524,7 @@ export class BlockchainService {
       functionName: "registerInstitution",
       args: [institutionId, name, adminWallet, normalizedPublicKey],
     })
-    await this.publicClient.waitForTransactionReceipt({ hash })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
     return hash
   }
 
@@ -526,6 +540,34 @@ export class BlockchainService {
     })
     const registeredAt = (institution as { registeredAt: bigint }).registeredAt
     return registeredAt > 0n
+  }
+
+  /**
+   * Deactivate an institution on-chain. Only callable by platform admin.
+   */
+  async deactivateInstitutionOnChain(institutionId: `0x${string}`): Promise<Hash> {
+    const hash = await this.walletClient.writeContract({
+      address: config.INSTITUTION_REGISTRY_ADDRESS as Address,
+      abi: institutionRegistryAbi,
+      functionName: "deactivateInstitution",
+      args: [institutionId],
+    })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
+    return hash
+  }
+
+  /**
+   * Reactivate an institution on-chain. Only callable by platform admin.
+   */
+  async reactivateInstitutionOnChain(institutionId: `0x${string}`): Promise<Hash> {
+    const hash = await this.walletClient.writeContract({
+      address: config.INSTITUTION_REGISTRY_ADDRESS as Address,
+      abi: institutionRegistryAbi,
+      functionName: "reactivateInstitution",
+      args: [institutionId],
+    })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
+    return hash
   }
 
   /**
@@ -556,7 +598,7 @@ export class BlockchainService {
       args: [institutionId, commitments, nullifiers, graduationYear, degreeTypeCode, txRef],
     } as any)
 
-    const receipt = await this.publicClient.waitForTransactionReceipt({ hash })
+    const receipt = await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
 
     if (receipt.status !== "success") {
       throw new Error("Batch registration transaction reverted")
@@ -988,15 +1030,23 @@ export class BlockchainService {
 
   /**
    * Revoke a credential by its nullifier. Only callable by authorized accounts.
+   * If institutionWallet is provided, signs with the institution's dedicated EOA
+   * (required because RevocationRegistry checks msg.sender == institutionAdminWallet).
    */
-  async revokeCredential(nullifier: bigint, reasonCode: number): Promise<Hash> {
-    const hash = await this.walletClient.writeContract({
+  async revokeCredential(
+    nullifier: bigint,
+    reasonCode: number,
+    institutionWallet?: { walletClient: import("viem").WalletClient; account: import("viem").Account }
+  ): Promise<Hash> {
+    const signer = (institutionWallet?.walletClient ?? this.walletClient) as import("viem").WalletClient
+    const hash = await signer.writeContract({
+      chain: baseSepolia,
       address: config.REVOCATION_REGISTRY_ADDRESS as Address,
       abi: revocationRegistryAbi,
       functionName: "revokeCredential",
       args: [BlockchainService.bigintToBytes32(nullifier), reasonCode],
-    })
-    await this.publicClient.waitForTransactionReceipt({ hash })
+    } as any)
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
     return hash
   }
 
@@ -1182,7 +1232,7 @@ export class BlockchainService {
   static createInstitutionWallet(privateKeyHex: string) {
     const key = (privateKeyHex.startsWith("0x") ? privateKeyHex : `0x${privateKeyHex}`) as `0x${string}`
     const account = privateKeyToAccount(key)
-    const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL, { timeout: 120_000 })
+  const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL, { timeout: 180_000 })
     const walletClient = createWalletClient({ account, chain: baseSepolia, transport })
     return { walletClient, account }
   }

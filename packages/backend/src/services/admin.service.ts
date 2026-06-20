@@ -11,6 +11,7 @@ import crypto from "crypto"
 import pino from "pino"
 import { formatEther, parseEther } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
+import { config } from "../config/index.js"
 import { BlockchainService } from "./blockchain.service.js"
 import { EmailService } from "./email.service.js"
 import { encrypt } from "../utils/crypto.js"
@@ -118,22 +119,17 @@ export class AdminService {
       if (onChainTier !== desiredTier) {
         await this.blockchainSvc.setInstitutionTier(inst.onChainId as `0x${string}`, inst.tier)
       }
+      await this.prisma.institution.update({
+        where: { id: institutionId },
+        data: { blockchainStatus: "REGISTERED" },
+      })
     } catch (err) {
-      log.error({ err, institutionId }, "Failed to register institution on-chain")
-      // Update status to FAILED but keep kycApproved as true (admin can retry)
+      log.error({ err, institutionId }, "On-chain registration failed — DB approved with FAILED status")
       await this.prisma.institution.update({
         where: { id: institutionId },
         data: { blockchainStatus: "FAILED" },
       })
-      const msg = err instanceof Error ? err.message : "Unknown blockchain error"
-      throw new Error(msg)
     }
-
-    // On success, update to REGISTERED
-    await this.prisma.institution.update({
-      where: { id: institutionId },
-      data: { blockchainStatus: "REGISTERED" },
-    })
 
     const updateData: Record<string, unknown> = { kycApproved: true }
     if (adminWalletOverride) {
@@ -367,6 +363,15 @@ export class AdminService {
       }),
     ])
 
+    if (inst.onChainId && config.INSTITUTION_REGISTRY_ADDRESS) {
+      try {
+        await this.blockchainSvc.deactivateInstitutionOnChain(inst.onChainId as `0x${string}`)
+        log.info({ institutionId }, "Institution deactivated on-chain")
+      } catch (err) {
+        log.error({ err, institutionId }, "Failed to deactivate institution on-chain (DB already updated)")
+      }
+    }
+
     await this.emailService.sendInstitutionDeactivationAlert({
       to: inst.email,
       orgName: inst.name,
@@ -411,18 +416,25 @@ export class AdminService {
     return true
   }
 
-  async updateInstitution(institutionId: string, data: { email?: string; adminWallet?: string }, adminId: string) {
+  async updateInstitution(institutionId: string, data: { email?: string; adminWallet?: string; active?: boolean; deactivationReason?: string }, adminId: string) {
     const inst = await this.prisma.institution.findUnique({ where: { id: institutionId } })
     if (!inst) return null
 
     const updateData: Record<string, unknown> = {}
     if (data.email) updateData.email = data.email
     if (data.adminWallet) updateData.adminWallet = data.adminWallet
+    if (typeof data.active === "boolean") {
+      updateData.active = data.active
+      updateData.deactivatedAt = data.active ? null : new Date()
+      if (!data.active && data.deactivationReason) {
+        updateData.deactivationReason = data.deactivationReason
+      }
+    }
 
     if (Object.keys(updateData).length === 0) return { ok: true }
 
     const details = {
-      previous: { email: inst.email, adminWallet: inst.adminWallet },
+      previous: { email: inst.email, adminWallet: inst.adminWallet, active: inst.active },
       updated: Object.fromEntries(Object.entries(updateData)),
     }
 
@@ -433,7 +445,7 @@ export class AdminService {
       }),
       this.prisma.auditLog.create({
         data: {
-          action: "INSTITUTION_UPDATED",
+          action: updateData.active === false ? "INSTITUTION_DEACTIVATED" : updateData.active === true ? "INSTITUTION_REACTIVATED" : "INSTITUTION_UPDATED",
           details: details as any,
           adminId,
           institutionId: inst.id,
@@ -515,6 +527,16 @@ export class AdminService {
           },
         }),
       ])
+
+      if (inst.employerProfile.walletAddress) {
+        try {
+          await this.blockchainSvc.initialiseEmployer(inst.employerProfile.walletAddress as `0x${string}`)
+          log.info({ institutionId, wallet: inst.employerProfile.walletAddress }, "Employer initialised on-chain")
+        } catch (err) {
+          log.error({ err, institutionId }, "Failed to initialise employer on-chain (DB already updated)")
+        }
+      }
+
       return { ok: true, message: "Employer access approved" }
     }
 
@@ -552,6 +574,13 @@ export class AdminService {
         },
       }),
     ])
+
+    try {
+      await this.blockchainSvc.initialiseEmployer(acct.address)
+      log.info({ institutionId, wallet: acct.address }, "New employer initialised on-chain")
+    } catch (err) {
+      log.error({ err, institutionId }, "Failed to initialise new employer on-chain (DB already updated)")
+    }
 
     return { ok: true, message: "Employer access granted with new profile" }
   }

@@ -62,4 +62,50 @@ export const employerRoutes: FastifyPluginAsync = async (app) => {
     })
     return { id: updated.id, name: updated.name }
   })
+
+  // ── Employer Dashboard ──────────────────────────────────────────────────
+
+  app.get("/dashboard", async (req) => {
+    const emp = await app.prisma.employer.findUnique({
+      where: { id: req.jwtPayload.sub },
+      select: {
+        id: true, name: true, email: true, kycApproved: true,
+        freeVerificationsRemaining: true, walletAddress: true,
+        _count: { select: { verificationRequests: true } },
+      },
+    })
+    if (!emp) return { error: "Not found" }
+
+    const recentVerifications = await app.prisma.verificationRequest.findMany({
+      where: { employerId: req.jwtPayload.sub },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, status: true, result: true, claimType: true, createdAt: true },
+    })
+
+    return {
+      profile: { name: emp.name, email: emp.email, kycApproved: emp.kycApproved },
+      freeVerificationsRemaining: emp.freeVerificationsRemaining,
+      walletAddress: emp.walletAddress,
+      totalVerifications: emp._count.verificationRequests,
+      recentVerifications,
+    }
+  })
+
+  // ── Employer Credits ────────────────────────────────────────────────────
+
+  app.get("/credits", async (req) => {
+    const emp = await app.prisma.employer.findUnique({
+      where: { id: req.jwtPayload.sub },
+      select: {
+        freeVerificationsRemaining: true,
+        verificationCredits: true,
+      },
+    })
+    if (!emp) return { freeVerificationsRemaining: 0, purchasedCredits: 0 }
+    return {
+      freeTrialsRemaining: emp.freeVerificationsRemaining,
+      purchasedCredits: emp.verificationCredits,
+    }
+  })
 }

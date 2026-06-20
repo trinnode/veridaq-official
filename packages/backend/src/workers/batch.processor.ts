@@ -307,6 +307,35 @@ async function processJob(job: Job<BatchJobData>) {
             { err: paymasterErr, batchId: batch.id },
             "Paymaster AA failed, falling back to direct registerBatch"
           )
+          try {
+            const directResult = await bSvc.registerBatch(
+              institution.onChainId as `0x${string}`,
+              chunk.commitments,
+              chunk.nullifiers,
+              batch.graduationYear,
+              batch.degreeTypeCode,
+              txRef,
+              institutionWallet
+            )
+            txHash = directResult.txHash
+          } catch (directErr) {
+            log.warn(
+              { err: directErr, batchId: batch.id },
+              "Institution wallet failed, falling back to platform admin wallet"
+            )
+            const adminResult = await bSvc.registerBatch(
+              institution.onChainId as `0x${string}`,
+              chunk.commitments,
+              chunk.nullifiers,
+              batch.graduationYear,
+              batch.degreeTypeCode,
+              txRef
+            )
+            txHash = adminResult.txHash
+          }
+        }
+      } else {
+        try {
           const directResult = await bSvc.registerBatch(
             institution.onChainId as `0x${string}`,
             chunk.commitments,
@@ -317,18 +346,25 @@ async function processJob(job: Job<BatchJobData>) {
             institutionWallet
           )
           txHash = directResult.txHash
+        } catch (directErr) {
+          if (institutionWallet) {
+            log.warn(
+              { err: directErr, batchId: batch.id },
+              "Institution wallet failed, falling back to platform admin wallet"
+            )
+            const adminResult = await bSvc.registerBatch(
+              institution.onChainId as `0x${string}`,
+              chunk.commitments,
+              chunk.nullifiers,
+              batch.graduationYear,
+              batch.degreeTypeCode,
+              txRef
+            )
+            txHash = adminResult.txHash
+          } else {
+            throw directErr
+          }
         }
-      } else {
-        const directResult = await bSvc.registerBatch(
-          institution.onChainId as `0x${string}`,
-          chunk.commitments,
-          chunk.nullifiers,
-          batch.graduationYear,
-          batch.degreeTypeCode,
-          txRef,
-          institutionWallet
-        )
-        txHash = directResult.txHash
       }
     }
 

@@ -338,6 +338,11 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
     if (ext !== "xlsx") return rep.code(400).send({ error: "Only .xlsx files are accepted" })
 
     const buffer = await data.toBuffer()
+    const headerSnippet = buffer.slice(0, 4).toString("hex")
+    if (headerSnippet !== "504b0304") {
+      return rep.code(400).send({ error: "File is not a valid .xlsx (ZIP) archive" })
+    }
+
     const job = await batchQueue.enqueue({ institutionId, fileBuffer: buffer.toString("base64") })
 
     return rep.code(202).send({ jobId: job.id, message: "File received. Validation in progress." })
@@ -405,7 +410,8 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
   })
 
   app.get("/claims", async (req) => {
-    return instSvc.listClaims(req.jwtPayload.sub)
+    const items = await instSvc.listClaims(req.jwtPayload.sub)
+    return { items }
   })
 
   app.patch("/claims/:id", async (req, rep) => {
@@ -427,11 +433,18 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
   // ── Revocation ──────────────────────────────────────────────────────────
 
   app.post("/revoke", async (req, rep) => {
-    const { nullifier, reasonCode } = revokeBody.parse(req.body)
-    const institutionId = req.jwtPayload.sub
-    const result = await instSvc.revokeCredential(institutionId, nullifier, reasonCode)
-    if (!result.ok) return rep.code(400).send({ error: result.error })
-    return { ok: true }
+    try {
+      const { nullifier, reasonCode } = revokeBody.parse(req.body)
+      const institutionId = req.jwtPayload.sub
+      const result = await instSvc.revokeCredential(institutionId, nullifier, reasonCode)
+      if (!result.ok) return rep.code(400).send({ error: result.error })
+      return { ok: true }
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return rep.code(400).send({ error: "Validation failed", details: err.errors })
+      }
+      throw err
+    }
   })
 
   // ── Verifications ───────────────────────────────────────────────────────

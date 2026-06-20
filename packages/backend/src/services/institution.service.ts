@@ -191,11 +191,36 @@ export class InstitutionService {
       return { ok: false, error: "Credential is already revoked" }
     }
 
+    const institution = await this.prisma.institution.findUnique({
+      where: { id: institutionId },
+      select: { adminKeyEncrypted: true, adminKeyIv: true, adminKeyTag: true },
+    })
+
+    let institutionWallet: { walletClient: import("viem").WalletClient; account: import("viem").Account } | undefined
+    if (institution?.adminKeyEncrypted && institution?.adminKeyIv && institution?.adminKeyTag) {
+      try {
+        const adminKeyHex = decrypt(institution.adminKeyEncrypted, institution.adminKeyIv, institution.adminKeyTag)
+        institutionWallet = BlockchainService.createInstitutionWallet(adminKeyHex)
+      } catch {
+        log.warn({ institutionId }, "Failed to decrypt institution admin key, using platform admin wallet")
+      }
+    }
+
     try {
-      await this.blockchainSvc.revokeCredential(BigInt(nullifier), reasonCode)
+      await this.blockchainSvc.revokeCredential(BigInt(nullifier), reasonCode, institutionWallet)
     } catch (err) {
-      log.error({ err, nullifier }, "Failed to revoke credential on-chain")
-      return { ok: false, error: "On-chain revocation failed" }
+      if (institutionWallet) {
+        log.warn({ err, nullifier }, "Institution wallet revoke failed, trying platform admin wallet")
+        try {
+          await this.blockchainSvc.revokeCredential(BigInt(nullifier), reasonCode)
+        } catch (err2) {
+          log.error({ err: err2, nullifier }, "Platform admin wallet revoke also failed")
+          return { ok: false, error: "On-chain revocation failed" }
+        }
+      } else {
+        log.error({ err, nullifier }, "Failed to revoke credential on-chain")
+        return { ok: false, error: "On-chain revocation failed" }
+      }
     }
 
     await this.prisma.credential.update({
