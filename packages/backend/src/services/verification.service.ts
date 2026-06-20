@@ -138,18 +138,31 @@ export class VerificationService {
     })
 
     if (!isManual) {
+      let isFreeVerification = true
       try {
         const remaining = await this.blockchainSvc.getRemainingFreeVerifications(
           employer.walletAddress as `0x${string}`
         )
         if (remaining <= 0) {
-          // No on-chain credits — check DB for purchased top-up credits
+          // No on-chain credits — check DB for free trials
           const dbRemaining = employer.freeVerificationsRemaining
-          if (dbRemaining <= 0) return { error: "NO_FREE_VERIFICATIONS" as const }
-          await this.prisma.employer.update({
-            where: { id: employer.id },
-            data: { freeVerificationsRemaining: { decrement: 1 } },
-          })
+          if (dbRemaining <= 0) {
+            // Free trials exhausted — check paid credits
+            if ((employer.verificationCredits ?? 0) > 0) {
+              await this.prisma.employer.update({
+                where: { id: employer.id },
+                data: { verificationCredits: { decrement: 1 } },
+              })
+              isFreeVerification = false
+            } else {
+              return { error: "NO_FREE_VERIFICATIONS" as const }
+            }
+          } else {
+            await this.prisma.employer.update({
+              where: { id: employer.id },
+              data: { freeVerificationsRemaining: { decrement: 1 } },
+            })
+          }
         } else {
           await this.blockchainSvc.consumeFreeVerification(employer.walletAddress as `0x${string}`)
         }
@@ -172,10 +185,6 @@ export class VerificationService {
         institution.institutionKeyTag
       )
       const institutionKey = hexToField(institutionKeyHex).toString()
-
-      // This verification consumed a free trial → no revenue share.
-      // When paid credits are implemented, this will be false for credit-based verifications.
-      const isFreeVerification = true
 
       // Proof generation runs asynchronously — the client polls /request/:id for status.
       this.runProofGeneration(request.id, credential, institutionKey, input, institution.id, isFreeVerification).catch((err) => {

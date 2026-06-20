@@ -14,10 +14,12 @@ export const PAYMASTER_VAULT_ADDRESS = config.PAYMASTER_VAULT_ADDRESS
 
 // Credit packs for employer verification purchases
 export const CREDIT_PACKS = [
+  { label: "5 Verifications", amountWei: parseEther("0.005").toString(), eth: "0.005", credits: 5, usd: 7 },
   { label: "10 Verifications", amountWei: parseEther("0.01").toString(), eth: "0.01", credits: 10, usd: 15 },
-  { label: "25 Verifications", amountWei: parseEther("0.02").toString(), eth: "0.02", credits: 25, usd: 30 },
-  { label: "50 Verifications", amountWei: parseEther("0.05").toString(), eth: "0.05", credits: 50, usd: 50 },
-  { label: "100 Verifications", amountWei: parseEther("0.1").toString(), eth: "0.1", credits: 100, usd: 90 },
+  { label: "25 Verifications", amountWei: parseEther("0.02").toString(), eth: "0.02", credits: 25, usd: 35 },
+  { label: "50 Verifications", amountWei: parseEther("0.035").toString(), eth: "0.035", credits: 50, usd: 65 },
+  { label: "100 Verifications", amountWei: parseEther("0.06").toString(), eth: "0.06", credits: 100, usd: 120 },
+  { label: "500 Verifications", amountWei: parseEther("0.38").toString(), eth: "0.38", credits: 500, usd: 550 },
 ] as const
 
 export class PaymentService {

@@ -272,8 +272,15 @@ async function processJob(job: Job<BatchJobData>) {
   let txRef: `0x${string}` | undefined
 
   try {
-    const commitments = credentials.map((c) => c.commitment as `0x${string}`)
-    const nullifiers = credentials.map((c) => c.nullifier as `0x${string}`)
+    const CHUNK_SIZE = config.MAX_BATCH_CHUNK_SIZE || 200
+    const chunks: { commitments: `0x${string}`[]; nullifiers: `0x${string}`[] }[] = []
+    for (let i = 0; i < credentials.length; i += CHUNK_SIZE) {
+      chunks.push({
+        commitments: credentials.slice(i, i + CHUNK_SIZE).map((c) => c.commitment as `0x${string}`),
+        nullifiers: credentials.slice(i, i + CHUNK_SIZE).map((c) => c.nullifier as `0x${string}`),
+      })
+    }
+
     txRef = `0x${createHash("sha256").update(batch.id).digest("hex")}` as `0x${string}`
 
     const usePaymaster = Boolean(
@@ -282,27 +289,40 @@ async function processJob(job: Job<BatchJobData>) {
       config.AA_SIMPLE_ACCOUNT_FACTORY_ADDRESS
     )
 
-    let txHash: string | undefined
-    if (usePaymaster) {
-      try {
-        const paymasterResult = await bSvc.registerBatchWithPaymaster(
-          institution.onChainId as `0x${string}`,
-          commitments,
-          nullifiers,
-          batch.graduationYear,
-          batch.degreeTypeCode,
-          txRef
-        )
-        txHash = paymasterResult.txHash
-      } catch (paymasterErr) {
-        log.warn(
-          { err: paymasterErr, batchId: batch.id },
-          "Paymaster AA failed, falling back to direct registerBatch"
-        )
+    let txHash: string | null = null
+    for (const chunk of chunks) {
+      if (usePaymaster) {
+        try {
+          const paymasterResult = await bSvc.registerBatchWithPaymaster(
+            institution.onChainId as `0x${string}`,
+            chunk.commitments,
+            chunk.nullifiers,
+            batch.graduationYear,
+            batch.degreeTypeCode,
+            txRef
+          )
+          txHash = paymasterResult.txHash
+        } catch (paymasterErr) {
+          log.warn(
+            { err: paymasterErr, batchId: batch.id },
+            "Paymaster AA failed, falling back to direct registerBatch"
+          )
+          const directResult = await bSvc.registerBatch(
+            institution.onChainId as `0x${string}`,
+            chunk.commitments,
+            chunk.nullifiers,
+            batch.graduationYear,
+            batch.degreeTypeCode,
+            txRef,
+            institutionWallet
+          )
+          txHash = directResult.txHash
+        }
+      } else {
         const directResult = await bSvc.registerBatch(
           institution.onChainId as `0x${string}`,
-          commitments,
-          nullifiers,
+          chunk.commitments,
+          chunk.nullifiers,
           batch.graduationYear,
           batch.degreeTypeCode,
           txRef,
@@ -310,17 +330,24 @@ async function processJob(job: Job<BatchJobData>) {
         )
         txHash = directResult.txHash
       }
-    } else {
-      const directResult = await bSvc.registerBatch(
-        institution.onChainId as `0x${string}`,
-        commitments,
-        nullifiers,
-        batch.graduationYear,
-        batch.degreeTypeCode,
-        txRef,
-        institutionWallet
-      )
-      txHash = directResult.txHash
+    }
+
+    // Deduct from gas pool for FREE tier batches
+    if (institution.tier === "FREE") {
+      try {
+        const { EarningsService } = await import("../services/earnings.service.js")
+        const earningsSvc = new EarningsService(prisma)
+        const gasCostPerCredentialUsd = 0.0014
+        const estimatedGasUsd = parseFloat((credentials.length * gasCostPerCredentialUsd).toFixed(4))
+        await earningsSvc.sponsorGas(
+          estimatedGasUsd,
+          "0",
+          `FREE_TIER_BATCH-${institution.id}`,
+          batch.id
+        )
+      } catch (err) {
+        log.warn({ err, batchId: batch.id }, "Failed to deduct gas pool for FREE tier batch")
+      }
     }
 
     // After success, save it as CONFIRMED.
