@@ -152,23 +152,20 @@ async function main() {
   console.info("Seeded: firstbank@veridaq.xyz / Emp@2026! (KYC approved, 50 credits)")
 
   // ── Claim Definitions (pre-seeded for FUTMINNA) ───────────────────────
-  // These map to circuit claim types 1-6 in credential.circom:
+  // These map 1:1 to the 6 circuit claim types in credential.circom:
   //   1 = Programme completion (year 1960-2030)
   //   2 = Minimum Lower Second Class (classification >= 2)
   //   3 = Minimum Upper Second Class (classification >= 3)
   //   4 = First Class (classification == 4)
-  //   5 = CGPA above threshold (cgpa >= threshold)
+  //   5 = CGPA above threshold (employer specifies threshold)
   //   6 = Programme-specific completion (course + year valid)
   const claimDefs = [
-    { label: "Programme Completion", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed their programme (graduation year in valid range)" },
-    { label: "Minimum Lower Second Class", claimCode: 2, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Lower division" },
-    { label: "Minimum Upper Second Class", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Upper division" },
-    { label: "First Class Honours", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved First Class honours" },
-    { label: "CGPA ≥ 2.0", claimCode: 5, threshold: 200, reviewType: "AUTO" as const, description: "Verify CGPA is at least 2.00" },
-    { label: "CGPA ≥ 3.0", claimCode: 5, threshold: 300, reviewType: "AUTO" as const, description: "Verify CGPA is at least 3.00" },
-    { label: "CGPA ≥ 3.5", claimCode: 5, threshold: 350, reviewType: "AUTO" as const, description: "Verify CGPA is at least 3.50" },
-    { label: "Programme-Specific Completion", claimCode: 6, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed a specific programme and graduated" },
-    { label: "CGPA ≥ 4.0 — Manual Review", claimCode: 5, threshold: 400, reviewType: "MANUAL" as const, description: "Verify CGPA is at least 4.00 — requires manual institution confirmation" },
+    { label: "Programme Completion", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student graduated in a valid year (1960–2030)" },
+    { label: "Minimum Lower Second Class", claimCode: 2, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Lower (classification ≥ 2)" },
+    { label: "Minimum Upper Second Class", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Upper (classification ≥ 3)" },
+    { label: "First Class Honours", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved First Class (classification == 4)" },
+    { label: "CGPA Above Threshold", claimCode: 5, threshold: 350, reviewType: "AUTO" as const, description: "Verify CGPA meets a minimum threshold (employer sets the value)" },
+    { label: "Programme-Specific Completion", claimCode: 6, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed a specific programme of study" },
   ]
 
   for (const cd of claimDefs) {

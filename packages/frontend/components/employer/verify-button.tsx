@@ -22,8 +22,9 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
   const [selectedInst, setSelectedInst] = useState("")
   const [matric, setMatric] = useState("")
   const [claimType, setClaimType] = useState(1)
-  const [threshold] = useState(0)
+  const [threshold, setThreshold] = useState(0)
   const [courseName, setCourseName] = useState("")
+  const [gradYear, setGradYear] = useState(new Date().getFullYear())
   const [loading, setLoading] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [result, setResult] = useState<Result | null>(null)
@@ -176,13 +177,33 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
 
       <div>
         <label className="label">Academic Claim</label>
-        <select className="input" value={claimType} onChange={(e) => setClaimType(Number(e.target.value))}>
+        <select className="input" value={claimType} onChange={(e) => {
+          const code = Number(e.target.value)
+          setClaimType(code)
+          const match = claims.find(c => c.claimCode === code)
+          if (match) setThreshold(match.threshold || 0)
+        }}>
           {claims.map((c) => (
             <option key={c.id} value={c.claimCode}>{c.label}</option>
           ))}
           {claims.length === 0 && <option value={1}>Programme Completion</option>}
         </select>
       </div>
+
+      {claimType === 1 && (
+        <div className="animate-fade-in">
+          <label className="label">Graduation Year</label>
+          <input className="input" type="number" min={1960} max={2030} value={gradYear} onChange={(e) => setGradYear(Number(e.target.value))} placeholder="e.g. 2024" />
+        </div>
+      )}
+
+      {claimType === 5 && (
+        <div className="animate-fade-in">
+          <label className="label">CGPA Threshold (× 100)</label>
+          <input className="input" type="number" min={100} max={500} step={50} value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} placeholder="e.g. 350 = CGPA ≥ 3.50" />
+          <p className="text-muted mt-1 text-xs">{threshold > 0 ? `= CGPA ≥ ${(threshold / 100).toFixed(2)}` : "Enter threshold as CGPA × 100"}</p>
+        </div>
+      )}
 
       {claimType === 6 && (
         <div className="animate-fade-in">

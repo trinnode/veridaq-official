@@ -28,6 +28,16 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
   // or an institution with alsoEmployer=true
   app.addHook("preHandler", app.requireEmployerOrInstitutionEmployer)
 
+  // Helper: resolve employer ID from JWT (handles institution-as-employer)
+  async function resolveEmployerId(req: { jwtPayload: { sub: string; role: string } }): Promise<string> {
+    if (req.jwtPayload.role === "EMPLOYER") return req.jwtPayload.sub
+    const inst = await app.prisma.institution.findUnique({
+      where: { id: req.jwtPayload.sub },
+      select: { employerProfile: { select: { id: true } } },
+    })
+    return inst?.employerProfile?.id ?? req.jwtPayload.sub
+  }
+
   // ── Submit a request ────────────────────────────────────────────────────
 
   app.post("/request", async (req, rep) => {
@@ -74,7 +84,7 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
 
   app.get("/request/:id", async (req, rep) => {
     const { id } = req.params as { id: string }
-    const employerId = req.jwtPayload.sub
+    const employerId = await resolveEmployerId(req)
 
     const request = await verifySvc.getRequest(id, employerId)
     if (!request) return rep.code(404).send({ error: "Request not found" })
@@ -85,7 +95,7 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
   // ── History ─────────────────────────────────────────────────────────────
 
   app.get("/history", async (req) => {
-    const employerId = req.jwtPayload.sub
+    const employerId = await resolveEmployerId(req)
     const query = req.query as { page?: string; limit?: string }
     const page = Math.max(1, Number(query.page ?? 1))
     const limit = Math.min(50, Math.max(1, Number(query.limit ?? 20)))
@@ -97,7 +107,7 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
 
   app.get("/report/:id", async (req, rep) => {
     const { id } = req.params as { id: string }
-    const employerId = req.jwtPayload.sub
+    const employerId = await resolveEmployerId(req)
 
     const result = await reportSvc.buildVerificationReport(id, employerId)
     if (result.error === "NOT_FOUND") return rep.code(404).send({ error: "Request not found" })

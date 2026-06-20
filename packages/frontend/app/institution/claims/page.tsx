@@ -46,10 +46,9 @@ export default function ClaimsPage() {
     if (l.includes("first class") || l.includes("first honours")) return 4
     if (l.includes("upper second")) return 3
     if (l.includes("lower second")) return 2
-    if (l.includes("third class")) return 2
     if (l.includes("programme completion") || l.includes("program completion") || l.includes("graduated")) return 1
     if (l.includes("programme-specific") || l.includes("course")) return 6
-    if (l.includes("cgpa")) return 5
+    if (l.includes("cgpa") || l.includes("threshold")) return 5
     return 1
   }
 
