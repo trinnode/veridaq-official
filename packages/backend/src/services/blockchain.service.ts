@@ -366,7 +366,7 @@ function buildClients() {
   const account = privateKeyToAccount(key)
 
   // Increase timeout from default 60s to 120s for slow Base Sepolia blocks
-  const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL, { timeout: 120_000 })
+  const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL, { timeout: 30_000 })
 
   const publicClient = createPublicClient({ chain: baseSepolia, transport })
   const walletClient = createWalletClient({ account, chain: baseSepolia, transport })
@@ -524,7 +524,7 @@ export class BlockchainService {
       functionName: "registerInstitution",
       args: [institutionId, name, adminWallet, normalizedPublicKey],
     })
-    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
@@ -552,7 +552,7 @@ export class BlockchainService {
       functionName: "deactivateInstitution",
       args: [institutionId],
     })
-    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
@@ -566,7 +566,7 @@ export class BlockchainService {
       functionName: "reactivateInstitution",
       args: [institutionId],
     })
-    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
@@ -598,7 +598,7 @@ export class BlockchainService {
       args: [institutionId, commitments, nullifiers, graduationYear, degreeTypeCode, txRef],
     } as any)
 
-    const receipt = await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
+    const receipt = await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
 
     if (receipt.status !== "success") {
       throw new Error("Batch registration transaction reverted")
@@ -1046,7 +1046,7 @@ export class BlockchainService {
       functionName: "revokeCredential",
       args: [BlockchainService.bigintToBytes32(nullifier), reasonCode],
     } as any)
-    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 

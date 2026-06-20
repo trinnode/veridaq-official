@@ -412,7 +412,37 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
   })
 
   app.get("/claims", async (req) => {
-    const items = await instSvc.listClaims(req.jwtPayload.sub)
+    const institutionId = req.jwtPayload.sub
+    let items = await instSvc.listClaims(institutionId)
+    // Auto-create default claims if institution has none (covers pre-existing institutions)
+    if (items.length === 0) {
+      const defaults = [
+        { label: "Programme Completion", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed their programme" },
+        { label: "Minimum Lower Second Class", claimCode: 2, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Lower division" },
+        { label: "Minimum Upper Second Class", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Upper division" },
+        { label: "First Class Honours", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved First Class honours" },
+        { label: "CGPA ≥ 2.0", claimCode: 5, threshold: 200, reviewType: "AUTO" as const, description: "Verify CGPA is at least 2.00" },
+        { label: "CGPA ≥ 3.0", claimCode: 5, threshold: 300, reviewType: "AUTO" as const, description: "Verify CGPA is at least 3.00" },
+        { label: "CGPA ≥ 3.5", claimCode: 5, threshold: 350, reviewType: "AUTO" as const, description: "Verify CGPA is at least 3.50" },
+        { label: "Programme-Specific Completion", claimCode: 6, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed a specific programme and graduated" },
+        { label: "CGPA ≥ 4.0 — Manual Review", claimCode: 5, threshold: 400, reviewType: "MANUAL" as const, description: "Verify CGPA is at least 4.00 — requires manual institution confirmation" },
+      ]
+      try {
+        await app.prisma.claimDefinition.createMany({
+          data: defaults.map((cd) => ({
+            institutionId,
+            label: cd.label,
+            claimCode: cd.claimCode,
+            threshold: cd.threshold,
+            reviewType: cd.reviewType,
+            description: cd.description,
+            active: true,
+          })),
+          skipDuplicates: true,
+        })
+        items = await instSvc.listClaims(institutionId)
+      } catch { /* ignore */ }
+    }
     return { items }
   })
 
