@@ -170,7 +170,7 @@ async function processJob(job: Job<BatchJobData>) {
       })
       return
     }
-    const courseHash = hashToField(d.courseName)
+    const courseHash = hashToField(d.courseName.trim().toLowerCase())
     // Random 128-bit blinding factor generated per credential
     const blindingFactor = randomFieldElement(16)
 

@@ -76,9 +76,28 @@ function extractError(err: unknown): string {
     const resp = e["response"] as Record<string, unknown> | undefined
     const data = resp?.["data"] as Record<string, unknown> | undefined
     if (typeof data?.["error"] === "string") return data["error"]
+    if (Array.isArray(data?.["errors"]) && (data["errors"] as Array<unknown>).length > 0) {
+      const first = (data["errors"] as Array<Record<string, unknown>>)[0]!
+      return `Row ${first["row"] ?? "?"}: ${first["error"] ?? "Validation error"}`
+    }
     if (typeof e["message"] === "string") return e["message"]
   }
   return "An unexpected error occurred."
+}
+
+function extractErrors(err: unknown): { row: number; error: string }[] {
+  if (typeof err === "object" && err !== null) {
+    const e = err as Record<string, unknown>
+    const resp = e["response"] as Record<string, unknown> | undefined
+    const data = resp?.["data"] as Record<string, unknown> | undefined
+    if (Array.isArray(data?.["errors"])) {
+      return (data["errors"] as Array<Record<string, unknown>>).map((r) => ({
+        row: Number(r["row"]) || 0,
+        error: String(r["error"] ?? "Unknown error"),
+      }))
+    }
+  }
+  return [{ row: 0, error: extractError(err) }]
 }
 
 function StepIndicator({ current }: { current: Step }) {
@@ -255,14 +274,13 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
       const res = await api.post("/institution/batch/validate", fd)
       setValidation(res.data)
     } catch (err: unknown) {
-      const extracted = extractError(err)
       setValidation({
         valid: false,
         totalRecords: 0,
         gasSponsored: false,
         simulation: null,
         simulationError: null,
-        errors: [{ row: 0, error: extracted }],
+        errors: extractErrors(err),
       })
     } finally {
       setBusy(false)
@@ -590,7 +608,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                 <div className="flex flex-col gap-4">
                   <Alert variant="error">
                     <span className="font-medium">Validation failed</span> — fix the errors
-                    below and re-upload.
+                    below and re-upload. ({validation?.errors?.length ?? 0} issue{(validation?.errors?.length ?? 0) !== 1 ? "s" : ""})
                   </Alert>
                   <div className="border-surface-border max-h-56 overflow-y-auto rounded-lg border">
                     <table className="w-full text-left text-xs">
@@ -603,7 +621,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                       <tbody>
                         {validation?.errors?.map((e, i) => (
                           <tr key={i} className="border-surface-border/40 border-b">
-                            <td className="px-3 py-2 text-muted">{e.row || "—"}</td>
+                            <td className="px-3 py-2 font-mono text-muted">{e.row > 0 ? `Row ${e.row}` : "—"}</td>
                             <td className="px-3 py-2 text-red-400">{e.error}</td>
                           </tr>
                         ))}

@@ -113,8 +113,17 @@ export class ReportService {
       doc.on("end", () => resolve(Buffer.concat(chunks)))
       doc.on("error", reject)
 
-      doc.registerFont("Orbitron", ORBITRON_PATH)
-      doc.registerFont("Cambria", CAMBRIA_TTC, "Cambria")
+      // Register fonts with graceful fallback
+      try {
+        doc.registerFont("Orbitron", ORBITRON_PATH)
+      } catch {
+        // Font not available — PDFDocument will use Helvetica as fallback
+      }
+      try {
+        doc.registerFont("Cambria", CAMBRIA_TTC, "Cambria")
+      } catch {
+        // Font not available — PDFDocument will use Helvetica as fallback
+      }
 
       const M = 40
       const CW = doc.page.width - M * 2
