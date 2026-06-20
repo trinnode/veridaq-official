@@ -317,6 +317,16 @@ export default function InstitutionsPage() {
                           >
                             <ShieldCheck className="h-3 w-3" /> Approve
                           </button>
+                        ) : inst.blockchainStatus === "PENDING" || inst.blockchainStatus === "FAILED" ? (
+                          <button
+                            onClick={() => {
+                              setReviewTarget(inst)
+                              setReviewWallet(inst.adminWallet ?? "")
+                            }}
+                            className="bg-orange-500/20 text-orange-400 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
+                          >
+                            <RefreshCcw className="h-3 w-3" /> Re-register
+                          </button>
                         ) : (
                           <span className="text-muted text-xs">On-Chain</span>
                         )}
