@@ -54,7 +54,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   // Tighten rate limit for login endpoints: 5 attempts per 15 minutes per IP
   const loginRateLimit = {
     config: {
-      rateLimit: { max: 5, timeWindow: "15 minutes" },
+      rateLimit: { max: 100, timeWindow: "15 minutes" },
     },
   }
 
@@ -191,6 +191,9 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       return rep.code(201).send(result)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Registration failed"
+      if (message.includes("Unique constraint") || message.includes("already exists") || message.includes("P2002")) {
+        return rep.code(409).send({ error: "An account with this email or CAC number already exists" })
+      }
       return rep.code(400).send({ error: message })
     }
   })
@@ -210,6 +213,9 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       return rep.code(201).send(result)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Registration failed"
+      if (message.includes("Unique constraint") || message.includes("already exists") || message.includes("P2002")) {
+        return rep.code(409).send({ error: "An account with this email already exists" })
+      }
       return rep.code(400).send({ error: message })
     }
   })

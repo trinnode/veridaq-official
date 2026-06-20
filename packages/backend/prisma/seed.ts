@@ -11,6 +11,7 @@
  * Run with: pnpm db:seed
  */
 
+import "dotenv/config"
 import { PrismaClient } from "@prisma/client"
 import bcryptjs from "bcryptjs"
 import crypto from "crypto"

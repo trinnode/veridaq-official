@@ -101,9 +101,24 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     return result
   })
 
+  app.get("/institutions/:id", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const inst = await app.prisma.institution.findUnique({
+      where: { id },
+      select: {
+        id: true, name: true, email: true, tier: true, kycApproved: true, active: true,
+        onChainId: true, adminWallet: true, alsoEmployer: true, createdAt: true,
+        employerProfile: { select: { id: true, name: true, kycApproved: true, walletAddress: true } },
+        _count: { select: { batches: true, verificationRequests: true } },
+      },
+    })
+    if (!inst) return rep.code(404).send({ error: "Institution not found" })
+    return inst
+  })
+
   app.patch("/institutions/:id", async (req, rep) => {
     const { id } = req.params as { id: string }
-    const body = req.body as { email?: string; adminWallet?: string } | null
+    const body = req.body as { email?: string; adminWallet?: string; active?: boolean; deactivationReason?: string } | null
     if (!body || (Object.keys(body).length === 0)) {
       return rep.code(400).send({ error: "No fields to update" })
     }
@@ -193,6 +208,19 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     const result = await adminSvc.deactivateEmployer(id, req.jwtPayload.sub, reason)
     if (!result) return rep.code(404).send({ error: "Employer not found" })
     return { ok: true }
+  })
+
+  app.patch("/employers/:id", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as { active?: boolean; name?: string } | null
+    if (!body || Object.keys(body).length === 0) {
+      return rep.code(400).send({ error: "No fields to update" })
+    }
+    const data: Record<string, unknown> = {}
+    if (typeof body.active === "boolean") data.active = body.active
+    if (body.name) data.name = body.name
+    const updated = await app.prisma.employer.update({ where: { id }, data })
+    return { id: updated.id, name: updated.name, active: updated.active }
   })
 
   app.get("/stats", async () => adminSvc.getPlatformStats())
