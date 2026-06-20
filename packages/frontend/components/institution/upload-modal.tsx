@@ -193,10 +193,9 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
       .catch(() => {})
   }, [])
 
-  const needsTopUp = Boolean(
-    validation?.simulation &&
-      (!validation.simulation.hasEnoughFunds || !validation.simulation.hasEnoughEntryPointDeposit)
-  )
+  // Batch registration uses the platform admin wallet directly (not the paymaster),
+  // so paymaster fund checks should not block the upload button.
+  const needsTopUp = false
 
   const onDrop = useCallback((accepted: File[]) => {
     setFileError("")
