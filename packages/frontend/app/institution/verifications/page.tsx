@@ -12,6 +12,7 @@ export default function VerificationsPage() {
   const [requests, setRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [polling, setPolling] = useState(false)
 
   const fetchVerifications = () => {
     api.get("/institution/verifications")
@@ -27,6 +28,20 @@ export default function VerificationsPage() {
     if (!user) return
     fetchVerifications()
   }, [user])
+
+  // Poll every 10s when there are requests needing attention
+  useEffect(() => {
+    const hasActive = requests.some(
+      (r) => r.status === "AWAITING_INSTITUTION" || r.status === "PROCESSING"
+    )
+    if (hasActive && !polling) {
+      setPolling(true)
+      const interval = setInterval(() => fetchVerifications(), 10000)
+      return () => { clearInterval(interval); setPolling(false) }
+    } else if (!hasActive && polling) {
+      setPolling(false)
+    }
+  }, [requests, polling])
 
   const handleApprove = async (id: string) => {
     setProcessingId(id)

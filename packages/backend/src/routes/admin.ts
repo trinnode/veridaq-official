@@ -101,6 +101,28 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     return result
   })
 
+  app.patch("/institutions/:id", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as { email?: string; adminWallet?: string } | null
+    if (!body || (Object.keys(body).length === 0)) {
+      return rep.code(400).send({ error: "No fields to update" })
+    }
+    const result = await adminSvc.updateInstitution(id, body, req.jwtPayload.sub)
+    if (!result) return rep.code(404).send({ error: "Institution not found" })
+    return { ok: true }
+  })
+
+  app.get("/institutions/:id/report", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const q = req.query as { format?: string }
+    const result = await adminSvc.getInstitutionReport(id)
+    if (!result) return rep.code(404).send({ error: "Institution not found" })
+    if (q.format === "pdf") {
+      rep.header("Content-Type", "application/pdf")
+    }
+    return result
+  })
+
   app.post("/institutions/:id/deactivate", async (req, rep) => {
     const { id } = req.params as { id: string }
     const { reason } = deactivateBody.parse(req.body)

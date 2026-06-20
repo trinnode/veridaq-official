@@ -18,6 +18,7 @@ export default function InstitutionRegisterPage() {
     email: "",
     publicKey: "",
     password: "",
+    alsoEmployer: false,
   })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -30,7 +31,13 @@ export default function InstitutionRegisterPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      await api.post("/auth/register/institution", formData)
+      await api.post("/auth/register/institution", {
+        name: formData.name,
+        email: formData.email,
+        publicKey: formData.publicKey,
+        password: formData.password,
+        alsoEmployer: formData.alsoEmployer,
+      })
       toast.success("Registration submitted! Awaiting KYC approval.")
       router.push("/institution/login?registered=true")
     } catch (err: unknown) {
@@ -151,6 +158,24 @@ export default function InstitutionRegisterPage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+            </div>
+
+            <div className="border-surface-border bg-void/50 rounded-lg border p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 rounded border-surface-border text-accent focus:ring-accent"
+                  checked={formData.alsoEmployer}
+                  onChange={(e) => setFormData({ ...formData, alsoEmployer: e.target.checked })}
+                />
+                <div>
+                  <p className="font-medium text-foreground">Also act as an employer</p>
+                  <p className="text-muted text-xs mt-1">
+                    Verify credentials from other institutions (e.g., for postgraduate admissions).
+                    A linked employer profile will be created automatically upon KYC approval.
+                  </p>
+                </div>
+              </label>
             </div>
 
             <button

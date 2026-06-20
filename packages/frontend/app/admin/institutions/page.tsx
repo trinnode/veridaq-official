@@ -2,7 +2,7 @@
 import { AdminLayout } from "@/components/admin/layout"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, Key, Building2, Clock, Hash, Loader2 } from "@/lib/icons"
+import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, Key, Building2, Clock, Hash, Loader2, Edit, FileText, FileJson, Download, Trash2, Mail, User } from "@/lib/icons"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
 import { formatEther } from "viem"
@@ -20,6 +20,12 @@ export default function InstitutionsPage() {
   const [fundError, setFundError] = useState("")
   const [fundTxHash, setFundTxHash] = useState("")
   const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [detailTarget, setDetailTarget] = useState<any>(null)
+  const [detailTab, setDetailTab] = useState<"info" | "edit" | "audit" | "employer">("info")
+  const [editEmail, setEditEmail] = useState("")
+  const [editWallet, setEditWallet] = useState("")
+  const [auditLogs, setAuditLogs] = useState<any[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
 
   async function load(page = 1) {
     try {
@@ -96,6 +102,52 @@ export default function InstitutionsPage() {
       const msg = err?.response?.data?.error || "Funding failed"
       setFundError(msg)
       toast.error(msg)
+    }
+  }
+
+  async function loadAuditLogs(institutionId: string) {
+    setAuditLoading(true)
+    try {
+      const { data } = await api.get(`/admin/audit?page=1&limit=50`)
+      const filtered = data.items.filter((log: any) => log.institutionId === institutionId)
+      setAuditLogs(filtered)
+    } catch {
+      setAuditLogs([])
+    } finally {
+      setAuditLoading(false)
+    }
+  }
+
+  async function saveInstitutionEdit() {
+    if (!detailTarget) return
+    try {
+      await api.patch(`/admin/institutions/${detailTarget.id}`, {
+        email: editEmail,
+        adminWallet: editWallet,
+      })
+      toast.success("Institution updated")
+      setDetailTarget(null)
+      load()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? "Update failed")
+    }
+  }
+
+  async function exportReport(type: "json" | "pdf") {
+    if (!detailTarget) return
+    try {
+      const { data } = await api.get(`/admin/institutions/${detailTarget.id}/report?format=${type}`)
+      const blob = new Blob([type === "json" ? JSON.stringify(data, null, 2) : data], {
+        type: type === "json" ? "application/json" : "application/pdf"
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `veridaq-institution-${detailTarget.name}-${Date.now()}.${type === "json" ? "json" : "pdf"}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error("Export failed")
     }
   }
 
@@ -184,43 +236,55 @@ export default function InstitutionsPage() {
                   <td className="text-muted hidden whitespace-nowrap px-4 py-3 text-xs md:table-cell">
                     {new Date(inst.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {!inst.kycApproved ? (
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => {
-                            setReviewTarget(inst)
-                            setReviewWallet(inst.adminWallet ?? "")
+                            setDetailTarget(inst)
+                            setEditEmail(inst.email ?? "")
+                            setEditWallet(inst.adminWallet ?? "")
+                            loadAuditLogs(inst.id)
+                            setDetailTab("info")
                           }}
-                          className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
+                          className="btn-ghost text-xs"
                         >
-                          <Eye className="h-3 w-3" /> Review & Approve
+                          <Eye className="h-3 w-3" />
                         </button>
-                      ) : (
-                        <span className="text-muted text-xs">On-Chain</span>
-                      )}
-                      <button
-                        onClick={() => syncBalance(inst.id)}
-                        className="btn-ghost text-xs"
-                        disabled={syncingId === inst.id}
-                      >
-                        <RefreshCcw
-                          className={`h-3 w-3 ${syncingId === inst.id ? "animate-spin" : ""}`}
-                        />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setFundTarget(inst)
-                          setFundAmount("")
-                          setFundError("")
-                          setFundTxHash("")
-                        }}
-                        className="bg-surface-border hover:bg-surface-border/80 rounded px-2 py-1.5 text-xs text-foreground"
-                      >
-                        Fund
-                      </button>
-                    </div>
-                  </td>
+                        {!inst.kycApproved ? (
+                          <button
+                            onClick={() => {
+                              setReviewTarget(inst)
+                              setReviewWallet(inst.adminWallet ?? "")
+                            }}
+                            className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
+                          >
+                            <ShieldCheck className="h-3 w-3" /> Approve
+                          </button>
+                        ) : (
+                          <span className="text-muted text-xs">On-Chain</span>
+                        )}
+                        <button
+                          onClick={() => syncBalance(inst.id)}
+                          className="btn-ghost text-xs"
+                          disabled={syncingId === inst.id}
+                        >
+                          <RefreshCcw
+                            className={`h-3 w-3 ${syncingId === inst.id ? "animate-spin" : ""}`}
+                          />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setFundTarget(inst)
+                            setFundAmount("")
+                            setFundError("")
+                            setFundTxHash("")
+                          }}
+                          className="bg-surface-border hover:bg-surface-border/80 rounded px-2 py-1.5 text-xs text-foreground"
+                        >
+                          Fund
+                        </button>
+                      </div>
+                    </td>
                 </tr>
               ))}
             </tbody>
@@ -376,6 +440,210 @@ export default function InstitutionsPage() {
                   Send Funds
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Detail Modal ── */}
+      {detailTarget && (
+        <div className="bg-void/80 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="border-surface-border bg-surface-card relative overflow-hidden rounded-xl border p-6 shadow-elevated">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-foreground">
+                  <Building2 className="text-accent h-4 w-4" />
+                  <span className="text-sm font-semibold tracking-wide">{detailTarget.name}</span>
+                </div>
+                <button onClick={() => setDetailTarget(null)} className="text-muted hover:text-foreground transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Tab bar */}
+              <div className="border-surface-border mt-4 flex gap-1 border-b">
+                {(["info", "edit", "audit", "employer"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setDetailTab(tab)}
+                    className={`px-4 py-2 text-xs font-medium capitalize transition-colors ${
+                      detailTab === tab
+                        ? "border-accent text-accent border-b-2"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    {tab === "employer" ? "Employer Profile" : tab}
+                  </button>
+                ))}
+              </div>
+
+              {/* Info Tab */}
+              {detailTab === "info" && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">Name</span>
+                    <span className="text-foreground text-xs font-medium">{detailTarget.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">Email</span>
+                    <span className="text-foreground text-xs font-medium">{detailTarget.email}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">Tier</span>
+                    <span className={`text-xs font-medium ${detailTarget.tier === 'FREE' ? 'text-orange-400' : 'text-blue-400'}`}>
+                      {detailTarget.tier}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">KYC Status</span>
+                    <span className={`text-xs font-medium ${detailTarget.kycApproved ? 'text-accent' : 'text-orange-400'}`}>
+                      {detailTarget.kycApproved ? "VERIFIED" : "PENDING"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">Blockchain Status</span>
+                    <span className="text-foreground text-xs font-medium">{detailTarget.blockchainStatus}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">Admin Wallet</span>
+                    <span className="text-foreground max-w-[250px] truncate font-mono text-xs">
+                      {detailTarget.adminWallet}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">On-Chain ID</span>
+                    <span className="text-foreground max-w-[250px] truncate font-mono text-xs">
+                      {detailTarget.onChainId}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">Batches</span>
+                    <span className="text-foreground text-xs font-medium">{detailTarget._count?.batches ?? 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                    <span className="text-muted text-xs">Date Joined</span>
+                    <span className="text-foreground text-xs">{new Date(detailTarget.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => exportReport("json")}
+                      className="border-surface-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
+                    >
+                      <FileJson className="h-3.5 w-3.5" /> Export JSON
+                    </button>
+                    <button
+                      onClick={() => exportReport("pdf")}
+                      className="border-surface-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Export PDF
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit Tab */}
+              {detailTab === "edit" && (
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="text-muted flex items-center gap-1 text-xs">
+                      <Mail className="h-3 w-3" /> Email Address
+                    </label>
+                    <input
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className="border-surface-border bg-void mt-1.5 w-full rounded-lg border px-3 py-2 text-sm text-foreground transition-colors focus:border-accent focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-muted flex items-center gap-1 text-xs">
+                      <Wallet className="h-3 w-3" /> Admin Wallet
+                    </label>
+                    <input
+                      value={editWallet}
+                      onChange={(e) => setEditWallet(e.target.value)}
+                      className="border-surface-border bg-void mt-1.5 w-full rounded-lg border px-3 py-2 font-mono text-sm text-foreground transition-colors focus:border-accent focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      onClick={() => setDetailTarget(null)}
+                      className="border-surface-border rounded-lg border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveInstitutionEdit}
+                      className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+                    >
+                      <Edit className="h-3.5 w-3.5" /> Save Changes
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Audit Tab */}
+              {detailTab === "audit" && (
+                <div className="mt-4">
+                  {auditLoading ? (
+                    <div className="text-muted flex items-center justify-center py-8 text-xs">
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Loading audit logs...
+                    </div>
+                  ) : auditLogs.length === 0 ? (
+                    <div className="text-muted py-8 text-center text-xs">No audit logs found</div>
+                  ) : (
+                    <div className="max-h-[400px] overflow-y-auto">
+                      <table className="w-full text-left text-xs text-foreground">
+                        <thead className="text-muted border-surface-border sticky top-0 border-b bg-surface-card text-[10px] uppercase">
+                          <tr>
+                            <th className="px-3 py-2 font-medium">Action</th>
+                            <th className="px-3 py-2 font-medium">Details</th>
+                            <th className="px-3 py-2 font-medium">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-surface-border divide-y">
+                          {auditLogs.map((log: any) => (
+                            <tr key={log.id} className="hover:bg-void/30 transition-colors">
+                              <td className="px-3 py-2 font-medium text-foreground">{log.action}</td>
+                              <td className="text-muted px-3 py-2">
+                                {typeof log.details === "object" ? JSON.stringify(log.details) : String(log.details)}
+                              </td>
+                              <td className="text-muted whitespace-nowrap px-3 py-2">
+                                {new Date(log.createdAt).toLocaleString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Employer Profile Tab */}
+              {detailTab === "employer" && (
+                <div className="mt-4">
+                  {detailTarget.alsoEmployer ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 rounded-lg bg-void/40 px-3 py-2">
+                        <User className="text-accent h-4 w-4" />
+                        <span className="text-foreground text-xs font-medium">
+                          This institution has opted in as an employer
+                        </span>
+                      </div>
+                      <p className="text-muted text-xs leading-relaxed">
+                        An employer profile is automatically created upon KYC approval.
+                        Manage verification credits and employer settings from the employer management page.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-muted py-8 text-center text-xs">
+                      <User className="mx-auto mb-2 h-8 w-8 opacity-30" />
+                      <p>This institution has not opted in as an employer.</p>
+                      <p className="mt-1">Enable the "Also act as employer" option in the institution registration flow.</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

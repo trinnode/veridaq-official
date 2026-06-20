@@ -24,6 +24,32 @@ export class InstitutionService {
   ) {
     this.blockchainSvc = blockchainSvc ?? new BlockchainService()
   }
+
+  async getBilling(institutionId: string) {
+    const inst = await this.prisma.institution.findUnique({
+      where: { id: institutionId },
+      select: { 
+        id: true, 
+        onChainId: true, 
+        paymasterBalance: true, 
+        tier: true,
+        kycApproved: true,
+        alsoEmployer: true,
+        employerProfile: { select: { id: true, verificationCredits: true, freeVerificationsRemaining: true } },
+        _count: { select: { batches: true } }
+      },
+    })
+    if (!inst) return null
+
+    return {
+      tier: inst.tier,
+      kycApproved: inst.kycApproved,
+      alsoEmployer: inst.alsoEmployer,
+      employerCredits: inst.employerProfile?.verificationCredits ?? 0,
+      employerFreeRemaining: inst.employerProfile?.freeVerificationsRemaining ?? 0,
+      totalBatches: inst._count.batches,
+    }
+  }
   async deleteBatch(batchId: string, institutionId: string) {
     const batch = await this.prisma.batch.findFirst({
       where: { id: batchId, institutionId },
@@ -419,34 +445,6 @@ export class InstitutionService {
         _count: { select: { batches: true } },
       },
     })
-  }
-
-  async getBilling(institutionId: string) {
-    const inst = await this.prisma.institution.findUnique({
-      where: { id: institutionId },
-      select: { id: true, onChainId: true, paymasterBalance: true, tier: true },
-    })
-    if (!inst) return null
-
-    let sponsoredPoolBalance = "0"
-    let institutionBalance = "0"
-    try {
-      sponsoredPoolBalance = (await this.blockchainSvc.getPaymasterSponsoredPool()).toString()
-      if (inst.onChainId) {
-        institutionBalance = (
-          await this.blockchainSvc.getPaymasterInstitutionBalance(inst.onChainId as `0x${string}`)
-        ).toString()
-      }
-    } catch {
-      // balances unavailable, use chain data
-    }
-
-    return {
-      paymasterBalance: inst.paymasterBalance,
-      tier: inst.tier,
-      sponsoredPoolBalance,
-      institutionBalance,
-    }
   }
 
   async syncPaymasterBalance(institutionId: string) {

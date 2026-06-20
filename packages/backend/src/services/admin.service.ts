@@ -410,6 +410,87 @@ export class AdminService {
     return true
   }
 
+  async updateInstitution(institutionId: string, data: { email?: string; adminWallet?: string }, adminId: string) {
+    const inst = await this.prisma.institution.findUnique({ where: { id: institutionId } })
+    if (!inst) return null
+
+    const updateData: Record<string, unknown> = {}
+    if (data.email) updateData.email = data.email
+    if (data.adminWallet) updateData.adminWallet = data.adminWallet
+
+    if (Object.keys(updateData).length === 0) return { ok: true }
+
+    const details = {
+      previous: { email: inst.email, adminWallet: inst.adminWallet },
+      updated: Object.fromEntries(Object.entries(updateData)),
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.institution.update({
+        where: { id: institutionId },
+        data: updateData,
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          action: "INSTITUTION_UPDATED",
+          details: details as any,
+          adminId,
+          institutionId: inst.id,
+        },
+      }),
+    ])
+
+    return { ok: true }
+  }
+
+  async getInstitutionReport(institutionId: string) {
+    const inst = await this.prisma.institution.findUnique({
+      where: { id: institutionId },
+      include: {
+        _count: { select: { batches: true, verificationRequests: true, claims: true } },
+        batches: {
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          select: { id: true, status: true, studentCount: true, graduationYear: true, createdAt: true },
+        },
+        employerProfile: {
+          select: { id: true, name: true, email: true, kycApproved: true, freeVerificationsRemaining: true, verificationCredits: true },
+        },
+        earnings: true,
+      },
+    })
+    if (!inst) return null
+
+    const verifiedCount = await this.prisma.verificationRequest.count({
+      where: { institutionId, result: "VERIFIED" },
+    })
+
+    return {
+      id: inst.id,
+      name: inst.name,
+      email: inst.email,
+      tier: inst.tier,
+      active: inst.active,
+      kycApproved: inst.kycApproved,
+      blockchainStatus: inst.blockchainStatus,
+      adminWallet: inst.adminWallet,
+      onChainId: inst.onChainId,
+      alsoEmployer: inst.alsoEmployer,
+      createdAt: inst.createdAt,
+      deactivatedAt: inst.deactivatedAt,
+      deactivationReason: inst.deactivationReason,
+      stats: {
+        totalBatches: inst._count.batches,
+        totalVerifications: inst._count.verificationRequests,
+        verifiedVerifications: verifiedCount,
+        totalClaims: inst._count.claims,
+      },
+      recentBatches: inst.batches,
+      employerProfile: inst.employerProfile,
+      earnings: inst.earnings,
+    }
+  }
+
   async getPlatformStats() {
     let paymasterBalance = "0"
     let adminWalletBalance = "0"

@@ -16,18 +16,37 @@ export default function InstitutionDashboard() {
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [polling, setPolling] = useState(false)
+
+  async function loadDashboard() {
+    try {
+      const res = await api.get("/institution/dashboard")
+      setStats(res.data)
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? "Failed to load dashboard"
+      toast.error(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!user) return
-    api
-      .get("/institution/dashboard")
-      .then((res) => setStats(res.data))
-      .catch((err: any) => {
-        const msg = err?.response?.data?.error ?? "Failed to load dashboard"
-        toast.error(msg)
-      })
-      .finally(() => setLoading(false))
+    loadDashboard()
   }, [user])
+
+  // Poll every 15s while dashboard has active items
+  useEffect(() => {
+    if (!stats) return
+    const hasActive = (stats.pendingManual ?? 0) > 0 || (stats.requestsThisMonth ?? 0) > 0
+    if (hasActive && !polling) {
+      setPolling(true)
+      const interval = setInterval(() => loadDashboard(), 15000)
+      return () => { clearInterval(interval); setPolling(false) }
+    } else if (!hasActive && polling) {
+      setPolling(false)
+    }
+  }, [stats, polling])
 
   async function syncBalance() {
     setSyncing(true)

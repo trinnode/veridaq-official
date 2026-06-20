@@ -527,4 +527,26 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
       return rep.code(500).send({ error: message })
     }
   })
+
+  // ── Payment History ──────────────────────────────────────────────────────
+  app.get("/payments", async (req) => {
+    const q = req.query as { page?: string; limit?: string; status?: string }
+    const page = Math.max(1, Number(q.page ?? 1))
+    const limit = Math.min(50, Math.max(1, Number(q.limit ?? 20)))
+    const skip = (page - 1) * limit
+
+    const where: Record<string, unknown> = { payerId: req.jwtPayload.sub, payerRole: "INSTITUTION" }
+    if (q.status) where.status = q.status
+
+    const [total, items] = await app.prisma.$transaction([
+      app.prisma.payment.count({ where }),
+      app.prisma.payment.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+    ])
+    return { total, page, limit, items }
+  })
 }
