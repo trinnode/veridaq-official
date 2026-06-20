@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client"
-import { beforeAll, afterAll, describe, expect, it, vi } from "vitest"
+import { beforeAll, afterAll, describe, expect, it } from "vitest"
 import { EarningsService } from "../services/earnings.service.js"
 
 let prisma: PrismaClient

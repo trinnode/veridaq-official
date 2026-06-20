@@ -2,7 +2,7 @@
 import { AdminLayout } from "@/components/admin/layout"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, Key, Building2, Clock, Hash, Loader2, Edit, FileText, FileJson, Download, Trash2, Mail, User } from "@/lib/icons"
+import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, Key, Building2, Clock, Hash, Loader2, Edit, FileJson, Download, Mail, User } from "@/lib/icons"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
 import { formatEther } from "viem"
@@ -26,6 +26,11 @@ export default function InstitutionsPage() {
   const [editWallet, setEditWallet] = useState("")
   const [auditLogs, setAuditLogs] = useState<any[]>([])
   const [auditLoading, setAuditLoading] = useState(false)
+  const [generatingWallet, setGeneratingWallet] = useState(false)
+  const [approvingEmployer, setApprovingEmployer] = useState(false)
+  const [generatedWallet, setGeneratedWallet] = useState("")
+  const [manualWalletInput, setManualWalletInput] = useState("")
+  const [showManualWallet, setShowManualWallet] = useState(false)
 
   async function load(page = 1) {
     try {
@@ -148,6 +153,58 @@ export default function InstitutionsPage() {
       URL.revokeObjectURL(url)
     } catch {
       toast.error("Export failed")
+    }
+  }
+
+  async function generateWallet() {
+    if (!detailTarget) return
+    setGeneratingWallet(true)
+    setGeneratedWallet("")
+    try {
+      const { data } = await api.post(`/admin/institutions/${detailTarget.id}/wallet`, {})
+      setGeneratedWallet(data.walletAddress)
+      toast.success("Wallet generated successfully")
+      setEditWallet(data.walletAddress)
+      load()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? "Failed to generate wallet")
+    } finally {
+      setGeneratingWallet(false)
+    }
+  }
+
+  async function saveManualWallet() {
+    if (!detailTarget || !manualWalletInput) return
+    setGeneratingWallet(true)
+    try {
+      const { data } = await api.post(`/admin/institutions/${detailTarget.id}/wallet`, {
+        manualWallet: manualWalletInput,
+      })
+      setGeneratedWallet(data.walletAddress)
+      toast.success("Manual wallet saved")
+      setEditWallet(data.walletAddress)
+      setShowManualWallet(false)
+      setManualWalletInput("")
+      load()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? "Failed to save wallet")
+    } finally {
+      setGeneratingWallet(false)
+    }
+  }
+
+  async function approveEmployerAccess() {
+    if (!detailTarget) return
+    setApprovingEmployer(true)
+    try {
+      await api.post(`/admin/institutions/${detailTarget.id}/approve-employer`)
+      toast.success("Employer access granted")
+      load()
+      loadAuditLogs(detailTarget.id)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? "Failed to approve employer access")
+    } finally {
+      setApprovingEmployer(false)
     }
   }
 
@@ -558,12 +615,58 @@ export default function InstitutionsPage() {
                     <label className="text-muted flex items-center gap-1 text-xs">
                       <Wallet className="h-3 w-3" /> Admin Wallet
                     </label>
-                    <input
-                      value={editWallet}
-                      onChange={(e) => setEditWallet(e.target.value)}
-                      className="border-surface-border bg-void mt-1.5 w-full rounded-lg border px-3 py-2 font-mono text-sm text-foreground transition-colors focus:border-accent focus:outline-none"
-                    />
+                    <div className="flex gap-2 mt-1.5">
+                      <input
+                        value={editWallet}
+                        onChange={(e) => setEditWallet(e.target.value)}
+                        className="border-surface-border bg-void flex-1 rounded-lg border px-3 py-2 font-mono text-sm text-foreground transition-colors focus:border-accent focus:outline-none"
+                        placeholder="0x..."
+                      />
+                    </div>
                   </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={generateWallet}
+                      disabled={generatingWallet}
+                      className="border-surface-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface disabled:opacity-50"
+                    >
+                      {generatingWallet ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Key className="h-3.5 w-3.5" />
+                      )}
+                      {generatingWallet ? "Generating..." : "Generate New Wallet"}
+                    </button>
+                    <button
+                      onClick={() => setShowManualWallet(!showManualWallet)}
+                      className="border-surface-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface"
+                    >
+                      <Edit className="h-3.5 w-3.5" /> Manual Entry
+                    </button>
+                  </div>
+                  {showManualWallet && (
+                    <div className="flex gap-2">
+                      <input
+                        value={manualWalletInput}
+                        onChange={(e) => setManualWalletInput(e.target.value)}
+                        className="border-surface-border bg-void flex-1 rounded-lg border px-3 py-2 font-mono text-xs text-foreground transition-colors focus:border-accent focus:outline-none"
+                        placeholder="Enter wallet address manually..."
+                      />
+                      <button
+                        onClick={saveManualWallet}
+                        disabled={!manualWalletInput || generatingWallet}
+                        className="bg-accent text-void rounded-lg px-3 py-2 text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
+                  {generatedWallet && (
+                    <div className="bg-accent/5 border-accent/20 rounded-lg border p-3">
+                      <p className="text-accent text-xs font-medium">Wallet generated:</p>
+                      <p className="text-foreground mt-1 break-all font-mono text-xs">{generatedWallet}</p>
+                    </div>
+                  )}
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <button
                       onClick={() => setDetailTarget(null)}
@@ -630,16 +733,53 @@ export default function InstitutionsPage() {
                           This institution has opted in as an employer
                         </span>
                       </div>
-                      <p className="text-muted text-xs leading-relaxed">
-                        An employer profile is automatically created upon KYC approval.
-                        Manage verification credits and employer settings from the employer management page.
-                      </p>
+                      {detailTarget.employerProfile?.id ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                            <span className="text-muted text-xs">Employer Profile ID</span>
+                            <span className="text-foreground font-mono text-xs">{detailTarget.employerProfile.id}</span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                            <span className="text-muted text-xs">Status</span>
+                            <span className={`text-xs font-medium ${detailTarget.employerProfile.kycApproved ? 'text-accent' : 'text-orange-400'}`}>
+                              {detailTarget.employerProfile.kycApproved ? "Approved" : "Pending"}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                            <span className="text-muted text-xs">Free Verifications</span>
+                            <span className="text-foreground text-xs">{detailTarget.employerProfile.freeVerificationsRemaining}</span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                            <span className="text-muted text-xs">Paid Credits</span>
+                            <span className="text-foreground text-xs">{detailTarget.employerProfile.verificationCredits}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-muted text-xs leading-relaxed">
+                            Institution has opted in but no employer profile has been created yet.
+                            Approve employer access to create one automatically.
+                          </p>
+                          <button
+                            onClick={approveEmployerAccess}
+                            disabled={approvingEmployer}
+                            className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+                          >
+                            {approvingEmployer ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <User className="h-3.5 w-3.5" />
+                            )}
+                            {approvingEmployer ? "Creating..." : "Approve Employer Access"}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-muted py-8 text-center text-xs">
                       <User className="mx-auto mb-2 h-8 w-8 opacity-30" />
                       <p>This institution has not opted in as an employer.</p>
-                      <p className="mt-1">Enable the "Also act as employer" option in the institution registration flow.</p>
+                      <p className="mt-1">Institutions can enable this from their Settings page.</p>
                     </div>
                   )}
                 </div>

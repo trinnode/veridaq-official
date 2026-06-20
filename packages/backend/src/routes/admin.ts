@@ -131,6 +131,50 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     return { ok: true }
   })
 
+  // Approve employer access for an institution
+  app.post("/institutions/:id/approve-employer", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const result = await adminSvc.approveInstitutionEmployerAccess(id, req.jwtPayload.sub)
+    if (!result) return rep.code(404).send({ error: "Institution not found" })
+    return result
+  })
+
+  // Generate or set a wallet for an institution
+  app.post("/institutions/:id/wallet", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as { manualWallet?: string } | null
+    const result = await adminSvc.generateInstitutionWallet(id, req.jwtPayload.sub, body?.manualWallet)
+    if (!result) return rep.code(404).send({ error: "Institution not found" })
+    return result
+  })
+
+  // List institutions pending employer access
+  app.get("/institutions/employer-requests", async (req) => {
+    const q = req.query as { page?: string }
+    const page = Number(q.page ?? 1)
+    const limit = 20
+    const skip = (page - 1) * limit
+    const [total, items] = await app.prisma.$transaction([
+      app.prisma.institution.count({
+        where: { alsoEmployer: true, employerProfile: null },
+      }),
+      app.prisma.institution.findMany({
+        where: { alsoEmployer: true, employerProfile: null },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          createdAt: true,
+          alsoEmployer: true,
+        },
+      }),
+    ])
+    return { total, page, limit, items }
+  })
+
   app.get("/employers", async (req) => {
     const q = req.query as { page?: string }
     return adminSvc.listEmployers(Number(q.page ?? 1))

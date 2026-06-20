@@ -53,7 +53,7 @@ export const earningsRoutes: FastifyPluginAsync = async (app) => {
 
   // ── Set payout wallet ───────────────────────────────────────────────────
 
-  app.put("/wallet", async (req, rep) => {
+  app.put("/wallet", async (req, _rep) => {
     const body = walletBody.parse(req.body)
     await earningsSvc.setPayoutWallet(req.jwtPayload.sub, body.walletAddress)
     return { ok: true }

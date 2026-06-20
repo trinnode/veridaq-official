@@ -63,6 +63,8 @@ export class AdminService {
           publicKey: true,
           onChainId: true,
           blockchainStatus: true,
+          alsoEmployer: true,
+          employerProfile: { select: { id: true, kycApproved: true, freeVerificationsRemaining: true, verificationCredits: true } },
           _count: { select: { batches: true } },
         },
       }),
@@ -139,7 +141,6 @@ export class AdminService {
       // If the institution doesn't have a generated key yet, generate one for this wallet
       if (!inst.adminKeyEncrypted) {
         const pk = "0x" + crypto.randomBytes(32).toString("hex")
-        const acct = privateKeyToAccount(pk as `0x${string}`)
         const { encryptedData: ek, encryptedIv: eiv, encryptedTag: etag } = encrypt(pk.slice(2))
         updateData.adminKeyEncrypted = ek
         updateData.adminKeyIv = eiv
@@ -489,6 +490,114 @@ export class AdminService {
       employerProfile: inst.employerProfile,
       earnings: inst.earnings,
     }
+  }
+
+  async approveInstitutionEmployerAccess(institutionId: string, adminId: string) {
+    const inst = await this.prisma.institution.findUnique({
+      where: { id: institutionId },
+      include: { employerProfile: true },
+    })
+    if (!inst) return null
+
+    if (inst.employerProfile) {
+      // Reactivate existing employer profile
+      await this.prisma.$transaction([
+        this.prisma.employer.update({
+          where: { id: inst.employerProfile.id },
+          data: { active: true, kycApproved: true },
+        }),
+        this.prisma.auditLog.create({
+          data: {
+            action: "EMPLOYER_ACCESS_APPROVED",
+            details: { orgName: inst.name, employerId: inst.employerProfile.id },
+            adminId,
+            institutionId: inst.id,
+          },
+        }),
+      ])
+      return { ok: true, message: "Employer access approved" }
+    }
+
+    // No employer profile exists — create one
+    const pk = "0x" + crypto.randomBytes(32).toString("hex")
+    const acct = privateKeyToAccount(pk as `0x${string}`)
+    const empId = `emp-${institutionId}`
+
+    await this.prisma.$transaction([
+      this.prisma.employer.create({
+        data: {
+          id: empId,
+          name: `${inst.name} (Employer)`,
+          cacNumber: `AUTO-${inst.id.slice(0, 8)}`,
+          email: `employer-${inst.email}`,
+          passwordHash: inst.passwordHash,
+          walletAddress: acct.address,
+          kycApproved: true,
+          active: true,
+          freeVerificationsRemaining: 3,
+          verificationCredits: 0,
+          institutionId: inst.id,
+        },
+      }),
+      this.prisma.institution.update({
+        where: { id: institutionId },
+        data: { alsoEmployer: true },
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          action: "EMPLOYER_ACCESS_APPROVED",
+          details: { orgName: inst.name, employerId: empId, walletCreated: acct.address },
+          adminId,
+          institutionId: inst.id,
+        },
+      }),
+    ])
+
+    return { ok: true, message: "Employer access granted with new profile" }
+  }
+
+  async generateInstitutionWallet(institutionId: string, adminId: string, manualWallet?: string) {
+    const inst = await this.prisma.institution.findUnique({ where: { id: institutionId } })
+    if (!inst) return null
+
+    let walletAddress: string
+    let encryptedKey: string | null = null
+    let encryptedIv: string | null = null
+    let encryptedTag: string | null = null
+
+    if (manualWallet) {
+      walletAddress = manualWallet
+    } else {
+      const pk = "0x" + crypto.randomBytes(32).toString("hex")
+      const acct = privateKeyToAccount(pk as `0x${string}`)
+      walletAddress = acct.address
+      const { encryptedData, encryptedIv: iv, encryptedTag: tag } = encrypt(pk.slice(2))
+      encryptedKey = encryptedData
+      encryptedIv = iv
+      encryptedTag = tag
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.institution.update({
+        where: { id: institutionId },
+        data: {
+          adminWallet: walletAddress,
+          ...(encryptedKey ? { adminKeyEncrypted: encryptedKey } : {}),
+          ...(encryptedIv ? { adminKeyIv: encryptedIv } : {}),
+          ...(encryptedTag ? { adminKeyTag: encryptedTag } : {}),
+        },
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          action: "WALLET_GENERATED",
+          details: { orgName: inst.name, walletAddress, generatedBy: manualWallet ? "manual" : "auto" },
+          adminId,
+          institutionId: inst.id,
+        },
+      }),
+    ])
+
+    return { ok: true, walletAddress }
   }
 
   async getPlatformStats() {

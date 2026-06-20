@@ -5,7 +5,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
 import { UpgradeModal } from "@/components/institution/upgrade-modal"
-import { ArrowUpCircle, CreditCard, Shield, Sparkles, Wallet, Layers, FileText, ArrowDown } from "@/lib/icons"
+import { CreditCard, Shield, Sparkles, Wallet, Layers, FileText, ArrowDown } from "@/lib/icons"
 import { useEffect, useState } from "react"
 
 type BillingData = {
@@ -51,7 +51,8 @@ export default function InstitutionBilling() {
   async function loadPaymentHistory() {
     setHistoryLoading(true)
     try {
-      await api.get("/institution/payments")
+      const { data } = await api.get("/institution/payments")
+      setPaymentHistory(data?.items ?? [])
     } catch {
       // silently fail
     } finally {
