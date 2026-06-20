@@ -245,30 +245,11 @@ async function processJob(job: Job<BatchJobData>) {
     return { batchId: batch.id, credentials: 0, errors: errors.length }
   }
 
-  // Use the institution's dedicated wallet if available, otherwise fall back to VERIDAQ Admin
-  let institutionWallet:
-    | { walletClient: import("viem").WalletClient; account: import("viem").Account }
-    | undefined
-
-  if (
-    institution.adminKeyEncrypted &&
-    institution.adminKeyIv &&
-    institution.adminKeyTag
-  ) {
-    const adminKeyHex = decrypt(
-      institution.adminKeyEncrypted,
-      institution.adminKeyIv,
-      institution.adminKeyTag
-    )
-    institutionWallet = BlockchainService.createInstitutionWallet(adminKeyHex)
-    log.info({ address: institutionWallet.account.address }, "Using institution wallet for batch")
-  } else {
-    log.warn("No institution admin key found, falling back to VERIDAQ Admin")
-  }
-
   const bSvc = new BlockchainService()
 
-  // Actually execute the on-chain registration to CredentialRegistry.
+  // Execute on-chain registration to CredentialRegistry using the platform admin wallet.
+  // The platform admin is the BUNDLER_ROLE holder and signs all batch transactions.
+  // Institution wallets are only for receiving earnings — not for gas-paying txs.
   let txRef: `0x${string}` | undefined
 
   try {
@@ -305,66 +286,28 @@ async function processJob(job: Job<BatchJobData>) {
         } catch (paymasterErr) {
           log.warn(
             { err: paymasterErr, batchId: batch.id },
-            "Paymaster AA failed, falling back to direct registerBatch"
+            "Paymaster AA failed, falling back to platform admin wallet"
           )
-          try {
-            const directResult = await bSvc.registerBatch(
-              institution.onChainId as `0x${string}`,
-              chunk.commitments,
-              chunk.nullifiers,
-              batch.graduationYear,
-              batch.degreeTypeCode,
-              txRef,
-              institutionWallet
-            )
-            txHash = directResult.txHash
-          } catch (directErr) {
-            log.warn(
-              { err: directErr, batchId: batch.id },
-              "Institution wallet failed, falling back to platform admin wallet"
-            )
-            const adminResult = await bSvc.registerBatch(
-              institution.onChainId as `0x${string}`,
-              chunk.commitments,
-              chunk.nullifiers,
-              batch.graduationYear,
-              batch.degreeTypeCode,
-              txRef
-            )
-            txHash = adminResult.txHash
-          }
-        }
-      } else {
-        try {
           const directResult = await bSvc.registerBatch(
             institution.onChainId as `0x${string}`,
             chunk.commitments,
             chunk.nullifiers,
             batch.graduationYear,
             batch.degreeTypeCode,
-            txRef,
-            institutionWallet
+            txRef
           )
           txHash = directResult.txHash
-        } catch (directErr) {
-          if (institutionWallet) {
-            log.warn(
-              { err: directErr, batchId: batch.id },
-              "Institution wallet failed, falling back to platform admin wallet"
-            )
-            const adminResult = await bSvc.registerBatch(
-              institution.onChainId as `0x${string}`,
-              chunk.commitments,
-              chunk.nullifiers,
-              batch.graduationYear,
-              batch.degreeTypeCode,
-              txRef
-            )
-            txHash = adminResult.txHash
-          } else {
-            throw directErr
-          }
         }
+      } else {
+        const directResult = await bSvc.registerBatch(
+          institution.onChainId as `0x${string}`,
+          chunk.commitments,
+          chunk.nullifiers,
+          batch.graduationYear,
+          batch.degreeTypeCode,
+          txRef
+        )
+        txHash = directResult.txHash
       }
     }
 
