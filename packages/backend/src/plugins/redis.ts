@@ -9,7 +9,13 @@ declare module "fastify" {
 }
 
 export const redisPlugin = fp(async (app) => {
-  const redis = new Redis(config.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 3 })
+  const isSSL = config.REDIS_URL.startsWith("rediss://")
+  const redis = new Redis(config.REDIS_URL, {
+    lazyConnect: true,
+    maxRetriesPerRequest: 3,
+    tls: isSSL ? {} : undefined,
+    connectTimeout: 10_000,
+  })
   await redis.connect()
   app.decorate("redis", redis)
   app.addHook("onClose", async () => redis.quit())

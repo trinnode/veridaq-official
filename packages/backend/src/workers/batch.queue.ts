@@ -19,14 +19,31 @@ export class BatchQueue {
   private queue: Queue<BatchJobData>
 
   constructor(redisUrl: string) {
-    const url = new URL(redisUrl)
-    const connection = {
-      host: url.hostname,
-      port: Number(url.port || "6379"),
-      password: url.password || undefined,
-      connectTimeout: 10_000,
-      enableOfflineQueue: false,
+    const isSSL = redisUrl.startsWith("rediss://")
+    let connection: Record<string, unknown>
+
+    if (isSSL) {
+      // Upstash / cloud Redis: parse the URL and add TLS
+      const url = new URL(redisUrl)
+      connection = {
+        host: url.hostname,
+        port: Number(url.port || "6380"),
+        password: url.password || undefined,
+        tls: {},
+        connectTimeout: 10_000,
+        enableOfflineQueue: false,
+        maxRetriesPerRequest: null,
+      }
+    } else {
+      // Local Redis: pass URL string directly
+      connection = {
+        host: redisUrl,
+        connectTimeout: 10_000,
+        enableOfflineQueue: false,
+        maxRetriesPerRequest: null,
+      }
     }
+
     this.queue = new Queue("batch-processing", {
       connection,
       defaultJobOptions: {

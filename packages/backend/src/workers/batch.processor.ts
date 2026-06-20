@@ -32,12 +32,27 @@ import type { BatchJobData } from "./batch.queue.js"
 const log = pino({ name: "batch-processor" })
 
 const prisma = new PrismaClient()
-const redisUrl = new URL(config.REDIS_URL)
-const redisConnection = {
-  host: redisUrl.hostname,
-  port: Number(redisUrl.port || "6379"),
-  password: redisUrl.password || undefined,
-  connectTimeout: 10_000,
+const redisUrlStr = config.REDIS_URL
+const isSSL = redisUrlStr.startsWith("rediss://")
+let redisConnection: Record<string, unknown>
+
+if (isSSL) {
+  const url = new URL(redisUrlStr)
+  redisConnection = {
+    host: url.hostname,
+    port: Number(url.port || "6380"),
+    password: url.password || undefined,
+    tls: {},
+    connectTimeout: 10_000,
+  }
+} else {
+  const url = new URL(redisUrlStr)
+  redisConnection = {
+    host: url.hostname,
+    port: Number(url.port || "6379"),
+    password: url.password || undefined,
+    connectTimeout: 10_000,
+  }
 }
 
 // Excel row schema — every column is required.
