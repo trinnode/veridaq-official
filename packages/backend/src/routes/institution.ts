@@ -313,7 +313,9 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
           }
         }
 
-        simulationError = estimateError.message ?? "Simulation failed"
+        simulationError = estimateError.message?.includes("Invalid parameters")
+          ? "Gas estimation unavailable — institution may need on-chain re-approval"
+          : estimateError.message ?? "Simulation failed"
       }
 
       return rep.send({
