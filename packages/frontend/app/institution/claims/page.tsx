@@ -28,7 +28,7 @@ export default function ClaimsPage() {
     setLoading(true)
     api
       .get("/institution/claims")
-      .then(({ data }) => setClaims(data))
+      .then(({ data }) => setClaims(data.items ?? []))
       .catch((err: any) => {
         const msg = err?.response?.data?.error ?? "Failed to load claims"
         toast.error(msg)
@@ -43,12 +43,13 @@ export default function ClaimsPage() {
 
   const autoGenerateCode = (text: string) => {
     const l = text.toLowerCase()
-    if (l.includes("first class")) return 1
-    if (l.includes("upper second")) return 2
-    if (l.includes("lower second")) return 3
-    if (l.includes("third class")) return 4
+    if (l.includes("first class") || l.includes("first honours")) return 4
+    if (l.includes("upper second")) return 3
+    if (l.includes("lower second")) return 2
+    if (l.includes("third class")) return 2
+    if (l.includes("programme completion") || l.includes("program completion") || l.includes("graduated")) return 1
+    if (l.includes("programme-specific") || l.includes("course")) return 6
     if (l.includes("cgpa")) return 5
-    if (l.includes("graduated")) return 6
     return 1
   }
 
@@ -195,7 +196,7 @@ export default function ClaimsPage() {
                   {c.reviewType}
                 </span>
                 <span className="text-muted border-surface-border border px-2 py-0.5 text-xs">
-                  Code: {c.claimCode}
+                  Code: {c.claimCode}{c.threshold > 0 ? ` (≥ ${(c.threshold / 100).toFixed(2)} CGPA)` : ""}
                 </span>
               </div>
 
@@ -287,6 +288,27 @@ export default function ClaimsPage() {
                   />
                 </div>
               </div>
+
+              {Number(claimCode) === 5 && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    CGPA Threshold (× 100)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={500}
+                    step={50}
+                    value={threshold}
+                    onChange={(e) => setThreshold(Number(e.target.value))}
+                    placeholder="e.g. 350 for CGPA ≥ 3.50"
+                    className="bg-void border-surface-border focus:border-accent w-full border px-3 py-2 text-sm text-foreground focus:outline-none"
+                  />
+                  <p className="text-muted mt-1 text-xs">
+                    {threshold > 0 ? `= CGPA ≥ ${(threshold / 100).toFixed(2)}` : "Enter threshold as CGPA × 100 (e.g. 350 = 3.50)"}
+                  </p>
+                </div>
+              )}
 
               {editingClaim && (
                 <div className="border-surface-border mt-2 flex items-center gap-2 border-t pt-2">

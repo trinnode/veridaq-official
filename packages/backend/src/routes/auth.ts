@@ -68,7 +68,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     // Access token in response body; refresh token in httpOnly cookie
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
       secure: process.env["NODE_ENV"] === "production",
       path: "/api/auth/refresh",
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
@@ -86,7 +86,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
       secure: process.env["NODE_ENV"] === "production",
       path: "/api/auth/refresh",
       maxAge: 7 * 24 * 60 * 60,
@@ -104,7 +104,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
       secure: process.env["NODE_ENV"] === "production",
       path: "/api/auth/refresh",
       maxAge: 7 * 24 * 60 * 60,

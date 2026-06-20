@@ -28,6 +28,7 @@ export const employerRoutes: FastifyPluginAsync = async (app) => {
         kycApproved: true,
         walletAddress: true,
         freeVerificationsRemaining: true,
+        verificationCredits: true,
         createdAt: true,
       },
     })
