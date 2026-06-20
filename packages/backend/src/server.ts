@@ -108,6 +108,21 @@ async function bootstrap() {
     app.log.warn({ err }, "onChainId migration skipped — table may not exist yet")
   }
 
+  // Validate platform admin wallet at startup
+  try {
+    const { privateKeyToAccount } = await import("viem/accounts")
+    const rawKey = config.PLATFORM_ADMIN_PRIVATE_KEY
+    if (rawKey) {
+      const key = rawKey.startsWith("0x") ? rawKey : `0x${rawKey}`
+      const acct = privateKeyToAccount(key as `0x${string}`)
+      app.log.info({ address: acct.address }, "Platform admin wallet validated")
+    } else {
+      app.log.error("PLATFORM_ADMIN_PRIVATE_KEY is not set — batch registration will fail")
+    }
+  } catch (err) {
+    app.log.error({ err }, "CRITICAL: PLATFORM_ADMIN_PRIVATE_KEY is invalid — batch registration will fail")
+  }
+
   // Auth plugin — registers jwtVerify, jwtSign, and role-check decorators
   await app.register(authPlugin)
 
