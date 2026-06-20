@@ -317,7 +317,7 @@ export default function InstitutionsPage() {
                           >
                             <ShieldCheck className="h-3 w-3" /> Approve
                           </button>
-                        ) : inst.blockchainStatus === "PENDING" || inst.blockchainStatus === "FAILED" ? (
+                        ) : inst.blockchainStatus !== "REGISTERED" ? (
                           <button
                             onClick={() => {
                               setReviewTarget(inst)
