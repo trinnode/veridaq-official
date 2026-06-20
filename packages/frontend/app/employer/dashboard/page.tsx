@@ -18,6 +18,7 @@ export default function EmployerDashboard() {
   const [history, setHistory] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showPurchase, setShowPurchase] = useState(false)
+  const [polling, setPolling] = useState(false)
 
   function load() {
     if (!user) return
@@ -31,6 +32,19 @@ export default function EmployerDashboard() {
   }
 
   useEffect(() => { load() }, [user])
+
+  // Poll every 15s while there's a pending verification
+  useEffect(() => {
+    if (!history?.items) return
+    const hasPending = history.items.some((r: any) => r.status === "PENDING" || r.status === "PROCESSING")
+    if (hasPending && !polling) {
+      setPolling(true)
+      const interval = setInterval(() => load(), 15000)
+      return () => { clearInterval(interval); setPolling(false) }
+    } else if (!hasPending && polling) {
+      setPolling(false)
+    }
+  }, [history, polling])
 
   const totalAvailable = (profile?.freeVerificationsRemaining ?? 0) + (profile?.verificationCredits ?? 0)
 

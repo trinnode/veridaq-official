@@ -12,6 +12,7 @@ export default function BatchesPage() {
   const [batches, setBatches] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showUpload, setShowUpload] = useState(false)
+  const [polling, setPolling] = useState(false)
 
   async function load(page = 1) {
     try {
@@ -30,6 +31,21 @@ export default function BatchesPage() {
       load()
     }
   }, [user])
+
+  // Poll every 10s when there are active (processing/pending) batches
+  useEffect(() => {
+    if (!batches?.items) return
+    const hasActive = batches.items.some(
+      (b: any) => b.status === "PENDING" || b.status === "PROCESSING"
+    )
+    if (hasActive && !polling) {
+      setPolling(true)
+      const interval = setInterval(() => load(), 10000)
+      return () => { clearInterval(interval); setPolling(false) }
+    } else if (!hasActive && polling) {
+      setPolling(false)
+    }
+  }, [batches, polling])
 
   async function downloadTemplate() {
     try {
