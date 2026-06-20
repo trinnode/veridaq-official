@@ -35,9 +35,9 @@ function encryptValue(plaintext: string): { encryptedData: string; encryptedIv: 
   }
 }
 
-function bytes32FromUUID(uuid: string): string {
-  const hex = uuid.replace(/-/g, "")
-  return `0x${hex.padEnd(64, "0")}` as `0x${string}`
+function bytes32FromName(name: string): string {
+  const hex = crypto.createHash("sha256").update(name).digest("hex")
+  return `0x${hex}` as `0x${string}`
 }
 
 async function main() {
@@ -60,7 +60,7 @@ async function main() {
   const instPk = "0x" + crypto.randomBytes(32).toString("hex")
   const instAccount = privateKeyToAccount(instPk as `0x${string}`)
   const instId = "institution-futminna-001"
-  const instOnChainId = bytes32FromUUID(instId)
+  const instOnChainId = bytes32FromName("Federal University of Technology, Minna")
 
   const adminPk = "0x" + crypto.randomBytes(32).toString("hex")
   const adminKeyEnc = encryptValue(adminPk.slice(2))
@@ -72,6 +72,8 @@ async function main() {
     where: { email: "futminna@veridaq.xyz" },
     update: {
       passwordHash: instHash,
+      onChainId: instOnChainId,
+      adminWallet: instAccount.address,
       adminKeyEncrypted: adminKeyEnc.encryptedData,
       adminKeyIv: adminKeyEnc.encryptedIv,
       adminKeyTag: adminKeyEnc.encryptedTag,
@@ -150,15 +152,23 @@ async function main() {
   console.info("Seeded: firstbank@veridaq.xyz / Emp@2026! (KYC approved, 50 credits)")
 
   // ── Claim Definitions (pre-seeded for FUTMINNA) ───────────────────────
+  // These map to circuit claim types 1-6 in credential.circom:
+  //   1 = Programme completion (year 1960-2030)
+  //   2 = Minimum Lower Second Class (classification >= 2)
+  //   3 = Minimum Upper Second Class (classification >= 3)
+  //   4 = First Class (classification == 4)
+  //   5 = CGPA above threshold (cgpa >= threshold)
+  //   6 = Programme-specific completion (course + year valid)
   const claimDefs = [
-    { label: "Student graduated (auto)", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify that the student graduated from this institution" },
-    { label: "CGPA ≥ 2.0 (auto)", claimCode: 5, threshold: 200, reviewType: "AUTO" as const, description: "Verify CGPA is at least 2.0 (Second Class Lower minimum)" },
-    { label: "CGPA ≥ 3.0 (auto)", claimCode: 5, threshold: 300, reviewType: "AUTO" as const, description: "Verify CGPA is at least 3.0 (Second Class Upper minimum)" },
-    { label: "CGPA ≥ 3.5 (auto)", claimCode: 5, threshold: 350, reviewType: "AUTO" as const, description: "Verify CGPA is at least 3.5 (First Class minimum)" },
-    { label: "Graduation year (auto)", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student's graduation year" },
-    { label: "Course of study (auto)", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student's course of study" },
-    { label: "Manual KYC review", claimCode: 2, threshold: 0, reviewType: "MANUAL" as const, description: "Requires institution to manually verify the student's identity and status" },
-    { label: "CGPA ≥ 4.0 (manual review)", claimCode: 5, threshold: 400, reviewType: "MANUAL" as const, description: "Verify CGPA is at least 4.0 — requires manual institution confirmation" },
+    { label: "Programme Completion", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed their programme (graduation year in valid range)" },
+    { label: "Minimum Lower Second Class", claimCode: 2, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Lower division" },
+    { label: "Minimum Upper Second Class", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Upper division" },
+    { label: "First Class Honours", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved First Class honours" },
+    { label: "CGPA ≥ 2.0", claimCode: 5, threshold: 200, reviewType: "AUTO" as const, description: "Verify CGPA is at least 2.00" },
+    { label: "CGPA ≥ 3.0", claimCode: 5, threshold: 300, reviewType: "AUTO" as const, description: "Verify CGPA is at least 3.00" },
+    { label: "CGPA ≥ 3.5", claimCode: 5, threshold: 350, reviewType: "AUTO" as const, description: "Verify CGPA is at least 3.50" },
+    { label: "Programme-Specific Completion", claimCode: 6, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed a specific programme and graduated" },
+    { label: "CGPA ≥ 4.0 — Manual Review", claimCode: 5, threshold: 400, reviewType: "MANUAL" as const, description: "Verify CGPA is at least 4.00 — requires manual institution confirmation" },
   ]
 
   for (const cd of claimDefs) {
@@ -182,7 +192,7 @@ async function main() {
       },
     })
   }
-  console.info("Seeded: 8 claim definitions (6 auto + 2 manual)")
+  console.info(`Seeded: ${claimDefs.length} claim definitions`)
   console.info("Seed complete.")
 }
 
