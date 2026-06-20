@@ -37,6 +37,7 @@ const redisConnection = {
   host: redisUrl.hostname,
   port: Number(redisUrl.port || "6379"),
   password: redisUrl.password || undefined,
+  connectTimeout: 10_000,
 }
 
 // Excel row schema — every column is required.

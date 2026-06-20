@@ -345,9 +345,13 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
       return rep.code(400).send({ error: "File is not a valid .xlsx (ZIP) archive" })
     }
 
-    const job = await batchQueue.enqueue({ institutionId, fileBuffer: buffer.toString("base64") })
-
-    return rep.code(202).send({ jobId: job.id, message: "File received. Validation in progress." })
+    try {
+      const job = await batchQueue.enqueue({ institutionId, fileBuffer: buffer.toString("base64") })
+      return rep.code(202).send({ jobId: job.id, message: "File received. Validation in progress." })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Queue error"
+      return rep.code(500).send({ error: `Failed to enqueue batch: ${msg}` })
+    }
   })
 
   app.post("/aa/predeploy", async (_req, rep) => {
