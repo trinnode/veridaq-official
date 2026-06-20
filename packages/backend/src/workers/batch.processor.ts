@@ -247,6 +247,22 @@ async function processJob(job: Job<BatchJobData>) {
 
   const bSvc = new BlockchainService()
 
+  // Pre-check: verify institution is active on-chain before attempting registration
+  try {
+    const isActive = await bSvc.isInstitutionRegistered(institution.onChainId as `0x${string}`)
+    if (!isActive) {
+      const errMsg = `Institution is not registered on-chain (onChainId: ${institution.onChainId}). Admin must approve and register this institution on-chain first.`
+      log.error({ batchId: batch.id, onChainId: institution.onChainId }, errMsg)
+      await prisma.batch.update({
+        where: { id: batch.id },
+        data: { status: "FAILED", errorReport: [{ row: 0, error: errMsg }] },
+      })
+      return { batchId: batch.id, credentials: 0, errors: 1 }
+    }
+  } catch (err) {
+    log.warn({ err, batchId: batch.id }, "Could not verify on-chain status, proceeding with registration attempt")
+  }
+
   // Execute on-chain registration to CredentialRegistry using the platform admin wallet.
   // The platform admin is the BUNDLER_ROLE holder and signs all batch transactions.
   // Institution wallets are only for receiving earnings — not for gas-paying txs.
