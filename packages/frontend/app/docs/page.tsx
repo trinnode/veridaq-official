@@ -4,10 +4,10 @@ import React, { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ShieldCheck, Layers, FileCode2, ArrowLeft, Terminal, Database, Lock, X,
-  ChevronRight, Activity, Workflow, Code, Server, Cpu, Users, BookOpen, Wallet,
+  ChevronRight, Activity, Workflow, Code, Server, Cpu, Users, Wallet,
   UserCheck, Route, ScrollText, CircuitBoard, Key, Globe, Zap, Fingerprint,
-  Shield, Network, Hash, EyeOff, DollarSign, TrendingUp, BarChart, AlertTriangle,
-  CheckCircle2, GitBranch, ExternalLink, GanttChartSquare, Binary
+  Shield, EyeOff, DollarSign, TrendingUp, AlertTriangle,
+  GanttChartSquare, Binary
 } from "@/lib/icons"
 import { AppHeader } from "@/components/ui/app-header"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"

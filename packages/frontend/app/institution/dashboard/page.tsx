@@ -4,18 +4,16 @@ import { GuardKyc } from "@/components/ui/guard-kyc"
 import { StatCard } from "@/components/ui/stat-card"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { AlertCircle, ArrowRight, FileCheck2, RefreshCcw, ShieldCheck, Upload } from "@/lib/icons"
+import { ArrowRight, FileCheck2, ShieldCheck, Upload } from "@/lib/icons"
 import { EarningsSummary } from "@/components/institution/earnings-summary"
 import { toast } from "@/components/ui/toast"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { formatEther } from "viem"
 
 export default function InstitutionDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
   const [polling, setPolling] = useState(false)
 
   async function loadDashboard() {
@@ -47,23 +45,6 @@ export default function InstitutionDashboard() {
       setPolling(false)
     }
   }, [stats, polling])
-
-  async function syncBalance() {
-    setSyncing(true)
-    try {
-      const { data } = await api.post("/institution/billing/sync")
-      const eth = formatEther(BigInt(data.paymasterBalanceWei || 0))
-      setStats((prev: any) => ({
-        ...prev,
-        paymasterBalanceWei: data.paymasterBalanceWei,
-        paymasterBalanceEth: eth,
-      }))
-    } catch {
-      toast.error("Failed to sync paymaster balance")
-    } finally {
-      setSyncing(false)
-    }
-  }
 
   return (
     <DashboardLayout title="Dashboard">
@@ -119,40 +100,12 @@ export default function InstitutionDashboard() {
                 </div>
               )}
 
-              <div className="card from-surface-card to-void border-surface-border flex flex-col justify-between rounded-xl border bg-gradient-to-br p-4">
-                <div className="flex items-start justify-between">
-                  <p className="text-muted text-sm">Your Paymaster Credit</p>
-                  <span className="text-muted font-mono text-xs">BASE SEPOLIA</span>
-                </div>
-                <div className="mt-2">
-                  <p
-                    className={`text-2xl font-semibold ${Number(stats?.paymasterBalanceEth) < 0.01 ? "text-red-400" : "text-foreground"}`}
-                  >
-                    {Number(stats?.paymasterBalanceEth || 0).toFixed(4)}{" "}
-                    <span className="text-muted text-sm">ETH</span>
-                  </p>
-                  {stats?.promoActive ? (
-                    <p className="text-accent mt-1 text-xs">
-                      Promo active, gas sponsored for up to 999 records
-                    </p>
-                  ) : Number(stats?.paymasterBalanceEth) < 0.01 ? (
-                    <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
-                      <AlertCircle size={12} /> Low balance
-                    </p>
-                  ) : (
-                    <p className="text-muted mt-1 text-xs">
-                      Use this balance for paid batch submissions
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={syncBalance}
-                  disabled={syncing}
-                  className="text-muted mt-3 inline-flex items-center gap-2 text-xs transition-colors hover:text-foreground"
-                >
-                  <RefreshCcw size={12} className={syncing ? "animate-spin" : ""} />
-                  {syncing ? "Syncing" : "Sync balance"}
-                </button>
+              <div className="bg-surface-card border-surface-border flex flex-col justify-between rounded-xl border p-4">
+                <p className="text-muted text-sm">Current Tier</p>
+                <p className="text-2xl font-semibold text-foreground">{stats?.tier ?? "FREE"}</p>
+                <p className="text-muted mt-1 text-xs">
+                  {stats?.tier === "PAID" ? "PAID tier — batch upload fees apply" : "FREE tier — gas sponsored for ≤999 students"}
+                </p>
               </div>
             </div>
 

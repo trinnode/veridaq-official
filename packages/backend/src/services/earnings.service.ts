@@ -65,13 +65,12 @@ export class EarningsService {
     const poolShareUsd = parseFloat((amountUsd * (poolPct / 100)).toFixed(4))
 
     const amountWeiBig = BigInt(amountWei)
-    const platformShareWei = (amountWeiBig * BigInt(platformPct)) / BigInt(100)
     const institutionShareWei = (amountWeiBig * BigInt(instPct)) / BigInt(100)
     const poolShareWei = (amountWeiBig * BigInt(poolPct)) / BigInt(100)
 
     await this.prisma.$transaction(async (tx) => {
       // Update institution earnings (+20%)
-      const instEarnings = await tx.institutionEarnings.upsert({
+      await tx.institutionEarnings.upsert({
         where: { institutionId },
         update: {
           totalEarnedUsd: { increment: institutionShareUsd },

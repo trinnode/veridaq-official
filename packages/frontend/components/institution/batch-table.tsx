@@ -167,22 +167,32 @@ export function BatchTable({ batches, onDismiss }: { batches: Batch[]; onDismiss
                 )}
               </td>
               <td className="py-3">
-                {b.status === "FAILED" && (
-                  <button
-                    className="btn-ghost text-xs"
-                    onClick={async () => {
-                      try {
-                        await api.delete(`/institution/batch/${b.id}`)
-                        toast.success("Batch dismissed")
-                        onDismiss?.()
-                      } catch (err: any) {
-                        toast.error(err?.response?.data?.error ?? "Failed to dismiss batch")
-                      }
-                    }}
-                  >
-                    Dismiss
-                  </button>
-                )}
+                <div className="flex gap-2">
+                  {b.status === "CONFIRMED" && (
+                    <a
+                      href={`/institution/batches/${b.id}`}
+                      className="btn-ghost inline-flex items-center gap-1 text-xs"
+                    >
+                      View
+                    </a>
+                  )}
+                  {b.status === "FAILED" && (
+                    <button
+                      className="btn-ghost text-xs"
+                      onClick={async () => {
+                        try {
+                          await api.delete(`/institution/batch/${b.id}`)
+                          toast.success("Batch dismissed")
+                          onDismiss?.()
+                        } catch (err: any) {
+                          toast.error(err?.response?.data?.error ?? "Failed to dismiss batch")
+                        }
+                      }}
+                    >
+                      Dismiss
+                    </button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}

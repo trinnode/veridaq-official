@@ -1,8 +1,8 @@
 "use client"
 import {
   BookOpen, ChevronRight, CodeSquare, Database, Github, Layers, Shield, Cpu, FileCode2,
-  Workflow, Terminal, Lock, Zap, BookMarked, ExternalLink, FileText, Search, HelpCircle,
-  Globe, Wifi, Wallet, Hash, Network, Key, UserCheck, ScrollText, Library
+  Workflow, Terminal, Zap, BookMarked, ExternalLink, FileText, HelpCircle, Hash,
+  Library
 } from "@/lib/icons"
 import Link from "next/link"
 import { AppHeader } from "@/components/ui/app-header"

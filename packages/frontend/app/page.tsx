@@ -886,7 +886,7 @@ template CredentialVerifier() {
                     title: "Auditable by Design",
                     body: "Every verification produces a transaction hash on Base Sepolia. Any party can verify that a proof was checked and accepted by the on-chain verifier. The audit trail is permanent, public, and contains zero personal data.",
                   },
-                ].map(({ title, body }, i) => (
+                ].map(({ title, body }, _i) => (
                   <div key={title} className="border-surface-border bg-surface-card rounded-lg border p-5 text-left">
                     <h3 className="font-bold text-foreground text-sm mb-2">{title}</h3>
                     <p className="text-muted text-xs leading-relaxed">{body}</p>
