@@ -1232,7 +1232,7 @@ export class BlockchainService {
   static createInstitutionWallet(privateKeyHex: string) {
     const key = (privateKeyHex.startsWith("0x") ? privateKeyHex : `0x${privateKeyHex}`) as `0x${string}`
     const account = privateKeyToAccount(key)
-  const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL, { timeout: 180_000 })
+  const transport = http(config.ALCHEMY_BASE_SEPOLIA_URL, { timeout: 60_000 })
     const walletClient = createWalletClient({ account, chain: baseSepolia, transport })
     return { walletClient, account }
   }
