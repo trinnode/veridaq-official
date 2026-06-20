@@ -24,6 +24,8 @@ export class BatchQueue {
       host: url.hostname,
       port: Number(url.port || "6379"),
       password: url.password || undefined,
+      connectTimeout: 10_000,
+      enableOfflineQueue: false,
     }
     this.queue = new Queue("batch-processing", {
       connection,
@@ -37,9 +39,11 @@ export class BatchQueue {
   }
 
   async enqueue(data: BatchJobData) {
-    return this.queue.add("process-batch", data, {
-      // Jobs older than 30 minutes are considered stale and moved to failed
-      delay: 0,
-    })
+    return Promise.race([
+      this.queue.add("process-batch", data, { delay: 0 }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Redis enqueue timed out after 10s")), 10_000)
+      ),
+    ])
   }
 }
