@@ -15,10 +15,25 @@ import "dotenv/config"
 import { PrismaClient } from "@prisma/client"
 import bcryptjs from "bcryptjs"
 import crypto from "crypto"
+import { createCipheriv } from "crypto"
 import { privateKeyToAccount } from "viem/accounts"
 
 const prisma = new PrismaClient()
 const COST = 12
+
+const ALGORITHM = "aes-256-gcm"
+const ENCRYPTION_KEY = Buffer.from(process.env.ENCRYPTION_KEY || "0".repeat(64), "hex")
+
+function encryptValue(plaintext: string): { encryptedData: string; encryptedIv: string; encryptedTag: string } {
+  const iv = crypto.randomBytes(12)
+  const cipher = createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv)
+  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
+  return {
+    encryptedData: encrypted.toString("hex"),
+    encryptedIv: iv.toString("hex"),
+    encryptedTag: cipher.getAuthTag().toString("hex"),
+  }
+}
 
 function bytes32FromUUID(uuid: string): string {
   const hex = uuid.replace(/-/g, "")
@@ -47,10 +62,23 @@ async function main() {
   const instId = "institution-futminna-001"
   const instOnChainId = bytes32FromUUID(instId)
 
+  const adminPk = "0x" + crypto.randomBytes(32).toString("hex")
+  const adminKeyEnc = encryptValue(adminPk.slice(2))
+  const institutionKeyRaw = crypto.randomBytes(32).toString("hex")
+  const institutionKeyEnc = encryptValue(institutionKeyRaw)
+
   const instHash = await bcryptjs.hash("Inst@2026!", COST)
   const inst = await prisma.institution.upsert({
     where: { email: "futminna@veridaq.xyz" },
-    update: { passwordHash: instHash },
+    update: {
+      passwordHash: instHash,
+      adminKeyEncrypted: adminKeyEnc.encryptedData,
+      adminKeyIv: adminKeyEnc.encryptedIv,
+      adminKeyTag: adminKeyEnc.encryptedTag,
+      institutionKeyEncrypted: institutionKeyEnc.encryptedData,
+      institutionKeyIv: institutionKeyEnc.encryptedIv,
+      institutionKeyTag: institutionKeyEnc.encryptedTag,
+    },
     create: {
       id: instId,
       onChainId: instOnChainId,
@@ -59,12 +87,12 @@ async function main() {
       passwordHash: instHash,
       publicKey: instAccount.address,
       adminWallet: instAccount.address,
-      adminKeyEncrypted: "seed-generated",
-      adminKeyIv: "seed-generated",
-      adminKeyTag: "seed-generated",
-      institutionKeyEncrypted: "seed-generated",
-      institutionKeyIv: "seed-generated",
-      institutionKeyTag: "seed-generated",
+      adminKeyEncrypted: adminKeyEnc.encryptedData,
+      adminKeyIv: adminKeyEnc.encryptedIv,
+      adminKeyTag: adminKeyEnc.encryptedTag,
+      institutionKeyEncrypted: institutionKeyEnc.encryptedData,
+      institutionKeyIv: institutionKeyEnc.encryptedIv,
+      institutionKeyTag: institutionKeyEnc.encryptedTag,
       tier: "PAID",
       kycApproved: true,
       active: true,
