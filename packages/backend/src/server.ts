@@ -91,17 +91,21 @@ async function bootstrap() {
 
   // Fix any institutions with non-hex onChainId (legacy seed bug)
   const crypto = await import("crypto")
-  const badInstitutions = await app.prisma.$queryRaw<{ id: string; on_chain_id: string }[]>`
-    SELECT id, "onChainId" as on_chain_id FROM "Institution"
-    WHERE "onChainId" !~ '^0x[0-9a-f]{64}$'
-  `
-  for (const inst of badInstitutions) {
-    const newOnChainId = "0x" + crypto.createHash("sha256").update(inst.id).digest("hex")
-    await app.prisma.institution.update({
-      where: { id: inst.id },
-      data: { onChainId: newOnChainId, blockchainStatus: "NOT_REGISTERED" },
-    })
-    app.log.warn({ institutionId: inst.id, oldOnChainId: inst.on_chain_id, newOnChainId }, "Fixed non-hex onChainId")
+  try {
+    const badInstitutions = await app.prisma.$queryRaw<{ id: string; on_chain_id: string }[]>`
+      SELECT id, "onChainId" as on_chain_id FROM institutions
+      WHERE "onChainId" !~ '^0x[0-9a-f]{64}$'
+    `
+    for (const inst of badInstitutions) {
+      const newOnChainId = "0x" + crypto.createHash("sha256").update(inst.id).digest("hex")
+      await app.prisma.institution.update({
+        where: { id: inst.id },
+        data: { onChainId: newOnChainId, blockchainStatus: "NOT_REGISTERED" },
+      })
+      app.log.warn({ institutionId: inst.id, oldOnChainId: inst.on_chain_id, newOnChainId }, "Fixed non-hex onChainId")
+    }
+  } catch (err) {
+    app.log.warn({ err }, "onChainId migration skipped — table may not exist yet")
   }
 
   // Auth plugin — registers jwtVerify, jwtSign, and role-check decorators
