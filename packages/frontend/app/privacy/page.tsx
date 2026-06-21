@@ -1,6 +1,6 @@
 "use client"
 import { ChevronRight, Lock, Shield, Database, Eye, EyeOff, FileCode2, Trash2, Cookie, Mail, Fingerprint, Server, Cpu, Network } from "@/lib/icons"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { AppHeader } from "@/components/ui/app-header"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"
 import { FloatingShapes } from "@/components/parallax/floating-shapes"

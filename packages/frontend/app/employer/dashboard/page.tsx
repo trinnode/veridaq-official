@@ -9,7 +9,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
 import { Sparkles } from "@/lib/icons"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { useEffect, useState } from "react"
 
 export default function EmployerDashboard() {

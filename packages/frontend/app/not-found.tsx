@@ -1,7 +1,7 @@
 "use client"
 
 import { Hexagon, Home, AlertTriangle } from "@/lib/icons"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 
 export default function NotFound() {
   return (

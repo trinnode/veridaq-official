@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth"
 import { ArrowRight, FileCheck2, ShieldCheck, Upload } from "@/lib/icons"
 import { EarningsSummary } from "@/components/institution/earnings-summary"
 import { toast } from "@/components/ui/toast"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { useEffect, useState } from "react"
 
 export default function InstitutionDashboard() {

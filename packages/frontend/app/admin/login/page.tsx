@@ -2,7 +2,7 @@
 import { toast } from "@/components/ui/toast"
 import { useAuth } from "@/lib/auth"
 import { Shield, ArrowRight, Eye, EyeOff } from "@/lib/icons"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { LogoMark } from "@/components/ui/logo"
