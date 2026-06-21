@@ -25,7 +25,11 @@ export function SafeLink({
     (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault()
       extraOnClick?.()
-      router.push(href)
+      try {
+        router.push(href)
+      } catch {
+        window.location.href = href
+      }
     },
     [href, router, extraOnClick],
   )
