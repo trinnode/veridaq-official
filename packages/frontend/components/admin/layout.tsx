@@ -2,13 +2,11 @@
 import { OrbitalLoader } from "@/components/ui/orbital-loader"
 import { useAuth } from "@/lib/auth"
 import { LogOut, Menu, X, ChevronRight, Shield } from "@/lib/icons"
-import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { LogoMark } from "@/components/ui/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { PortalBg } from "@/components/parallax/floating-shapes"
-import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 
 const nav = [
   { href: "/admin/dashboard", label: "Overview" },
@@ -18,6 +16,15 @@ const nav = [
   { href: "/admin/earnings", label: "Earnings" },
   { href: "/admin/audit", label: "Audit Log" },
 ]
+
+/** Navigate using window.location so we don't depend on the Next.js router. */
+function NavLink({ href, className, children, onClick: extraOnClick }: { href: string; className?: string; children: React.ReactNode; onClick?: () => void }) {
+  return (
+    <a href={href} className={className} onClick={(e) => { e.preventDefault(); extraOnClick?.(); window.location.href = href }}>
+      {children}
+    </a>
+  )
+}
 
 export function AdminLayout({ children, title }: { children: React.ReactNode; title: string }) {
   const pathname = usePathname()
@@ -31,9 +38,9 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
     }
   }, [loading, user, router])
 
-  async function handleLogout() {
-    await logout()
-    router.push("/admin/login")
+  function handleLogout() {
+    logout().catch(() => {})
+    window.location.href = "/admin/login"
   }
 
   const [authTimeout, setAuthTimeout] = useState(false)
@@ -42,13 +49,18 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
     return () => clearTimeout(t)
   }, [])
 
-  if ((loading || !user) && !authTimeout) {
+  if (loading && !authTimeout) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-void text-sm tracking-widest text-muted">
         <OrbitalLoader label="VERIFYING" />
         <span className="animate-pulse">Verifying session...</span>
       </div>
     )
+  }
+
+  if (!user) {
+    router.push("/admin/login")
+    return null
   }
 
   return (
@@ -63,13 +75,13 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
             >
               {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
-            <Link href="/" className="flex items-center gap-2">
+            <NavLink href="/" className="flex items-center gap-2">
               <LogoMark className="h-5 w-5" />
               <span className="text-xs font-bold tracking-widest text-accent">VERIDAQ</span>
-            </Link>
+            </NavLink>
             <nav className="hidden items-center gap-1 lg:flex">
               {nav.map(({ href, label }) => (
-                <Link
+                <NavLink
                   key={href}
                   href={href}
                    className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
@@ -79,7 +91,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
                    }`}
                 >
                   {label}
-                </Link>
+                </NavLink>
               ))}
             </nav>
           </div>
@@ -110,7 +122,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
             <div className="rounded-2xl border border-surface-border bg-surface-card/95 p-3 shadow-elevated backdrop-blur-xl">
               <div className="flex flex-col gap-1">
                 {nav.map(({ href, label }) => (
-                  <Link
+                  <NavLink
                     key={href}
                     href={href}
                     onClick={() => setIsMenuOpen(false)}
@@ -121,7 +133,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
                     }`}
                   >
                     {label}
-                  </Link>
+                  </NavLink>
                 ))}
                 <div className="border-surface-border my-1 border-t" />
                 <button
@@ -142,7 +154,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
 
       <div className="border-surface-border border-b bg-surface/30">
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2.5 text-xs text-muted md:px-6">
-          <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+          <NavLink href="/" className="hover:text-foreground transition-colors">Home</NavLink>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground">Admin</span>
           <ChevronRight className="h-3 w-3" />

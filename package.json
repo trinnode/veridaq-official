@@ -33,6 +33,8 @@
     "extension:zip": "mkdir -p packages/frontend/public/extension packages/extension/dist && cp packages/extension/manifest.json packages/extension/background.js packages/extension/content.js packages/extension/popup.html packages/extension/panel.html packages/extension/ui.js packages/extension/config.js packages/extension/styles.css packages/extension/panel.css packages/extension/icon.svg packages/extension/dist/ && cd packages/extension/dist && zip -r ../../frontend/public/extension/VERIDAQ-Companion.zip . && cd .. && rm -rf dist"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@typescript-eslint/eslint-plugin": "^8.32.0",
     "@typescript-eslint/parser": "^8.32.0",
     "concurrently": "^9.1.2",
@@ -40,6 +42,7 @@
     "eslint-config-next": "^15.3.2",
     "eslint-plugin-security": "^3.0.1",
     "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
     "lint-staged": "^15.5.0",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
