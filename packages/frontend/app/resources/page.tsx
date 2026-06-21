@@ -4,7 +4,7 @@ import {
   Workflow, Terminal, Zap, BookMarked, ExternalLink, FileText, HelpCircle, Hash,
   Library
 } from "@/lib/icons"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { AppHeader } from "@/components/ui/app-header"
 import { ParallaxBg } from "@/components/parallax/parallax-layer"
 import { FloatingShapes } from "@/components/parallax/floating-shapes"

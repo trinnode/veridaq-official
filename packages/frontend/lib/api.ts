@@ -116,21 +116,29 @@ api.interceptors.response.use(
 )
 
 export async function downloadReport(requestId: string) {
-  const { data, headers } = await api.get(`/verify/report/${requestId}`, {
+  const res = await api.get(`/verify/report/${requestId}`, {
     responseType: "blob",
   })
-  const disposition = headers["content-disposition"] ?? ""
+  const disposition = res.headers?.["content-disposition"] ?? ""
   const match = disposition.match(/filename="?(.+?)"?$/)
   const filename = match?.[1] ?? `veridaq-report-${requestId}.pdf`
 
-  const url = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }))
-  const link = document.createElement("a")
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  window.URL.revokeObjectURL(url)
+  const blob = new Blob([res.data], { type: "application/pdf" })
+  if (blob.size < 100) {
+    throw new Error("Report is empty or invalid")
+  }
+
+  const url = window.URL.createObjectURL(blob)
+  try {
+    const link = document.createElement("a")
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } finally {
+    window.URL.revokeObjectURL(url)
+  }
 }
 
 export default api

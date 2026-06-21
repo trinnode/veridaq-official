@@ -1,3 +1,4 @@
+"use client"
 import { downloadReport } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
 import { format } from "date-fns"

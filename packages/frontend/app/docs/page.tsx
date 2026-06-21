@@ -1,5 +1,5 @@
 "use client"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import React, { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {

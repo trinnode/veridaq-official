@@ -2,7 +2,7 @@
 
 import { api } from "@/lib/api"
 import { useEffect, useState } from "react"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { ArrowRight } from "@/lib/icons"
 
 export function EarningsSummary() {

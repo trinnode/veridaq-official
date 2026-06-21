@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { LogoMark } from "@/components/ui/logo"
 
 export function Footer() {

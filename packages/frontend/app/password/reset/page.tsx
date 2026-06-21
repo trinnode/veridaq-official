@@ -1,6 +1,6 @@
 "use client"
 import { api } from "@/lib/api"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { useEffect, useState } from "react"
 
 export default function ResetPasswordPage() {

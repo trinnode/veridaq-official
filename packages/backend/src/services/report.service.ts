@@ -163,7 +163,7 @@ export class ReportService {
       doc.rect(0, 0, doc.page.width, 50).fill(NAVY)
       doc.rect(0, 50, doc.page.width, 1).fill(MUTED)
 
-      doc.image(LOGO_WHITE, M, 13, { width: 24, height: 24 })
+      try { doc.image(LOGO_WHITE, M, 13, { width: 24, height: 24 }) } catch { /* logo not found */ }
       doc.fontSize(15).fillColor(WHITE).font("Orbitron")
       doc.text("VERIDAQ", M + 32, 13)
       doc.fontSize(6.5).fillColor(MUTED).font("Cambria")
@@ -238,7 +238,7 @@ export class ReportService {
       doc.roundedRect(LX, sa, CW, 38, 3).fill(ROW_LIGHT)
       doc.roundedRect(LX, sa, CW, 38, 3).lineWidth(0.5).stroke(BORDER)
 
-      doc.image(LOGO_BLACK, LX + 12, sa + 7, { width: 24, height: 24 })
+      try { doc.image(LOGO_BLACK, LX + 12, sa + 7, { width: 24, height: 24 }) } catch { /* logo not found */ }
 
       doc.fontSize(8).fillColor(NAVY).font("Orbitron")
       doc.text("VERIFIED BY VERIDAQ", LX + 44, sa + 6)

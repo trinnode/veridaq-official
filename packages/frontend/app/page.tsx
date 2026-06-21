@@ -37,7 +37,7 @@ import {
   X,
   Zap,
 } from "@/lib/icons"
-import Link from "next/link"
+import { SafeLink as Link } from "@/components/safe-link"
 import { useEffect, useRef, useState } from "react"
 
 function scrollToId(e: React.MouseEvent<HTMLAnchorElement>, id: string) {

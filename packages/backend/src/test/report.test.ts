@@ -4,7 +4,6 @@ import { ReportService } from "../services/report.service.js"
 
 let prisma: PrismaClient
 let reportSvc: ReportService
-let institutionId: string
 let employerId: string
 
 beforeAll(async () => {
@@ -16,7 +15,6 @@ beforeAll(async () => {
     select: { id: true },
   })
   if (!inst) throw new Error("Seed institution not found")
-  institutionId = inst.id
 
   const emp = await prisma.employer.findUnique({
     where: { email: "firstbank@veridaq.xyz" },
