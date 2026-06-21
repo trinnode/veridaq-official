@@ -2,7 +2,6 @@
 import { OrbitalLoader } from "@/components/ui/orbital-loader"
 import { useAuth } from "@/lib/auth"
 import { LogOut, Menu, X, ChevronRight, Building2 } from "@/lib/icons"
-import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { LogoMark } from "@/components/ui/logo"
@@ -23,6 +22,15 @@ const employerNav = [
   { href: "/institution/settings", label: "Settings", icon: "settings" },
 ]
 
+/** Navigate using window.location so we don't depend on the Next.js router. */
+function NavLink({ href, className, children, onClick: extraOnClick }: { href: string; className?: string; children: React.ReactNode; onClick?: () => void }) {
+  return (
+    <a href={href} className={className} onClick={(e) => { e.preventDefault(); extraOnClick?.(); window.location.href = href }}>
+      {children}
+    </a>
+  )
+}
+
 export function DashboardLayout({ children, title }: { children: React.ReactNode; title: string }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -35,9 +43,9 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
     }
   }, [loading, user, router])
 
-  async function handleLogout() {
-    await logout()
-    router.push("/institution/login")
+  function handleLogout() {
+    logout().catch(() => {})
+    window.location.href = "/institution/login"
   }
 
   // Safety: fall through after 8s even if auth is stuck
@@ -47,13 +55,18 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
     return () => clearTimeout(t)
   }, [])
 
-  if ((loading || !user) && !authTimeout) {
+  if (loading && !authTimeout) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-void text-sm tracking-widest text-muted">
         <OrbitalLoader label="VERIFYING" />
         <span className="animate-pulse">Verifying session...</span>
       </div>
     )
+  }
+
+  if (!user) {
+    router.push("/institution/login")
+    return null
   }
 
   return (
@@ -69,13 +82,13 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
             >
               {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
-            <Link href="/" className="flex items-center gap-2">
+            <NavLink href="/" className="flex items-center gap-2">
               <LogoMark className="h-5 w-5" />
               <span className="text-xs font-bold tracking-widest text-accent">VERIDAQ</span>
-            </Link>
+            </NavLink>
             <nav className="hidden items-center gap-1 lg:flex">
               {baseNav.map(({ href, label }) => (
-                <Link
+                <NavLink
                   key={href}
                   href={href}
                    className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
@@ -85,13 +98,13 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
                    }`}
                 >
                   {label}
-                </Link>
+                </NavLink>
               ))}
               {user?.alsoEmployer && (
                 <>
                   <span className="text-muted mx-1 text-xs">|</span>
                   {employerNav.map(({ href, label }) => (
-                    <Link
+                    <NavLink
                       key={href}
                       href={href}
                        className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
@@ -101,7 +114,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
                        }`}
                      >
                        {label}
-                     </Link>
+                     </NavLink>
                    ))}
                 </>
               )}
@@ -135,7 +148,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
             <div className="rounded-2xl border border-surface-border bg-surface-card/95 p-3 shadow-elevated backdrop-blur-xl">
               <div className="flex flex-col gap-1">
                 {baseNav.map(({ href, label }) => (
-                  <Link
+                  <NavLink
                     key={href}
                     href={href}
                     onClick={() => setIsMenuOpen(false)}
@@ -146,13 +159,13 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
                     }`}
                   >
                     {label}
-                  </Link>
+                  </NavLink>
                 ))}
-                {user.alsoEmployer && (
+                {user?.alsoEmployer && (
                   <>
                     <div className="border-surface-border my-1 border-t" />
                     {employerNav.map(({ href, label }) => (
-                      <Link
+                      <NavLink
                         key={href}
                         href={href}
                         onClick={() => setIsMenuOpen(false)}
@@ -163,7 +176,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
                         }`}
                       >
                         {label}
-                      </Link>
+                      </NavLink>
                     ))}
                   </>
                 )}
@@ -187,7 +200,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
       {/* Breadcrumb */}
       <div className="border-surface-border border-b bg-surface/30">
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2.5 text-xs text-muted md:px-6">
-          <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+          <NavLink href="/" className="hover:text-foreground transition-colors">Home</NavLink>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground">Institution</span>
           <ChevronRight className="h-3 w-3" />
