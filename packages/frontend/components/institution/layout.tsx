@@ -8,7 +8,6 @@ import { useEffect, useState } from "react"
 import { LogoMark } from "@/components/ui/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { PortalBg } from "@/components/parallax/floating-shapes"
-import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 
 const baseNav = [
   { href: "/institution/dashboard", label: "Dashboard", icon: "grid" },
@@ -191,10 +190,8 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
 
       {/* Main */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
-        <ScrollReveal direction="up" delay={0} once={true} amount={0.05}>
           <h1 className="mb-6 text-xl font-semibold text-foreground">{title}</h1>
           {children}
-        </ScrollReveal>
       </main>
     </div>
   )

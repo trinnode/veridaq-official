@@ -90,27 +90,27 @@ export default function AdminEarningsPage() {
             ${((platform?.totalEarnedUsd ?? 0) - (platInst?.totalEarnedUsd ?? 0)).toFixed(2)}
           </div>
           <div className="text-muted mt-1 text-xs">
-            Total earned: ${platform?.totalEarnedUsd.toFixed(2) ?? "0.00"}
+            Total earned: ${(platform?.totalEarnedUsd ?? 0).toFixed(2)}
           </div>
         </div>
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Withdrawn (Platform)</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${platform?.totalWithdrawnUsd.toFixed(2) ?? "0.00"}
+            ${(platform?.totalWithdrawnUsd ?? 0).toFixed(2)}
           </div>
           <div className="text-muted mt-1 text-xs">{platform?.totalTransactions ?? 0} transactions</div>
         </div>
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Gas Pool</div>
-          <div className="mt-1 text-2xl font-bold text-accent">${pool?.availableUsd.toFixed(2) ?? "0.00"}</div>
-          <div className="text-muted mt-1 text-xs">Deposited: ${pool?.totalDepositedUsd.toFixed(2) ?? "0.00"}</div>
+          <div className="mt-1 text-2xl font-bold text-accent">${(pool?.availableUsd ?? 0).toFixed(2)}</div>
+          <div className="text-muted mt-1 text-xs">Deposited: ${(pool?.totalDepositedUsd ?? 0).toFixed(2)}</div>
         </div>
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Institution Earnings</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${platInst?.totalEarnedUsd.toFixed(2) ?? "0.00"}
+            ${(platInst?.totalEarnedUsd ?? 0).toFixed(2)}
           </div>
-          <div className="text-muted mt-1 text-xs">Available: ${platInst?.availableUsd.toFixed(2) ?? "0.00"}</div>
+          <div className="text-muted mt-1 text-xs">Available: ${(platInst?.availableUsd ?? 0).toFixed(2)}</div>
         </div>
       </div>
 
