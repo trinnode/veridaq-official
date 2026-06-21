@@ -21,6 +21,7 @@ export default defineConfig({
     exclude: ["**/node_modules/**"],
     globals: true,
     environment: "node",
+    envDir: resolve(root, "../.."), // workspace root for .env
     setupFiles: [resolve(root, "src/test/setup.ts")],
     coverage: {
       provider: "v8",

@@ -69,7 +69,10 @@ packages/backend/simulate-workflow.ts
 packages/backend/output.txt
 packages/backend/output-final.txt
 packages/backend/sys.log
-
+packages/backend/src/scripts/comprehensive-simulation.ts
+packages/backend/src/scripts/simulate-comprehensive.ts
+simulation-report.json
+.env.backup
 
 
 COMPLETE.md

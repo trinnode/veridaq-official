@@ -16,7 +16,7 @@ beforeAll(() => {
 
 describe("AuthService.loginAdmin", () => {
   it("returns tokens for valid admin credentials", async () => {
-    const result = await authSvc.loginAdmin("admin@veridaq.xyz", "Admin@2026!")
+    const result = await authSvc.loginAdmin("admin@veridaq.xyz", "Admin2026!@#")
     expect(result).not.toBeNull()
     expect(result?.accessToken).toBeTruthy()
     expect(result?.user.role).toBe("ADMIN")
