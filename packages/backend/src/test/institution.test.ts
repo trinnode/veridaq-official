@@ -72,13 +72,13 @@ describe("InstitutionService.createClaim", () => {
   it("creates a new claim definition", async () => {
     const claim = await instSvc.createClaim(institutionId, {
       label: "Test Claim",
-      claimCode: 5,
-      threshold: 400,
+      claimCode: 99,
+      threshold: 99,
       reviewType: "AUTO",
     })
     expect(claim.id).toBeTruthy()
     expect(claim.label).toBe("Test Claim")
-    expect(claim.threshold).toBe(400)
+    expect(claim.threshold).toBe(99)
     testClaimId = claim.id
   })
 })

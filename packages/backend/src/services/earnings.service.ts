@@ -375,7 +375,16 @@ export class EarningsService {
       },
       orderBy: { updatedAt: "desc" },
     })
-    return { total, page, limit, items }
+    const mapped = items.map((e) => ({
+      ...e,
+      totalEarnedUsd: e.totalEarnedUsd.toNumber(),
+      totalEarnedWei: e.totalEarnedWei.toNumber(),
+      withdrawnUsd: e.withdrawnUsd.toNumber(),
+      withdrawnWei: e.withdrawnWei.toNumber(),
+      availableUsd: e.availableUsd.toNumber(),
+      availableWei: e.availableWei.toNumber(),
+    }))
+    return { total, page, limit, items: mapped }
   }
 
   // ─── Admin processes a pending fiat withdrawal ────────────────────────
