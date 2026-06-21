@@ -147,10 +147,8 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
       </div>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
-        <ScrollReveal direction="up" delay={0} once={true} amount={0.05}>
           <h1 className="mb-6 font-display text-xl font-semibold tracking-wide text-foreground">{title}</h1>
           {children}
-        </ScrollReveal>
       </main>
     </div>
   )
