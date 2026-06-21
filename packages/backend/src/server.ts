@@ -154,6 +154,24 @@ async function bootstrap() {
   await app.register(crossmintRoutes, { prefix: "/api/crossmint" })
   await app.register(statsRoutes, { prefix: "/api/stats" })
 
+  // Auto-fix stuck PROCESSING verification requests from before the last restart
+  try {
+    const stuckCount = await app.prisma.verificationRequest.updateMany({
+      where: { status: "PROCESSING" },
+      data: {
+        status: "FAILED",
+        result: "CLAIM_NOT_SATISFIED",
+        completedAt: new Date(),
+        proofJson: JSON.stringify({ note: "Auto-failed on server restart — proof gen interrupted" }),
+      },
+    })
+    if (stuckCount.count > 0) {
+      app.log.warn({ count: stuckCount.count }, "Fixed stuck verification requests from prior session")
+    }
+  } catch (err) {
+    app.log.warn({ err }, "Failed to auto-fix stuck verification requests")
+  }
+
   // Health check — used by Docker and load balancers
   app.get("/health", async () => ({ status: "ok", ts: Date.now() }))
 

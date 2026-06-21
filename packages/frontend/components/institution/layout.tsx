@@ -40,7 +40,14 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
     router.push("/institution/login")
   }
 
-  if (loading || !user) {
+  // Safety: fall through after 8s even if auth is stuck
+  const [authTimeout, setAuthTimeout] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setAuthTimeout(true), 8000)
+    return () => clearTimeout(t)
+  }, [])
+
+  if ((loading || !user) && !authTimeout) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-void text-sm tracking-widest text-muted">
         <OrbitalLoader label="VERIFYING" />
@@ -80,7 +87,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
                   {label}
                 </Link>
               ))}
-              {user.alsoEmployer && (
+              {user?.alsoEmployer && (
                 <>
                   <span className="text-muted mx-1 text-xs">|</span>
                   {employerNav.map(({ href, label }) => (
@@ -189,7 +196,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
       </div>
 
       {/* Main */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
+      <main className="pointer-events-auto mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
           <h1 className="mb-6 text-xl font-semibold text-foreground">{title}</h1>
           {children}
       </main>

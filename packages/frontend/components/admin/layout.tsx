@@ -36,7 +36,13 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
     router.push("/admin/login")
   }
 
-  if (loading || !user) {
+  const [authTimeout, setAuthTimeout] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setAuthTimeout(true), 8000)
+    return () => clearTimeout(t)
+  }, [])
+
+  if ((loading || !user) && !authTimeout) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-void text-sm tracking-widest text-muted">
         <OrbitalLoader label="VERIFYING" />
@@ -59,9 +65,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
             </button>
             <Link href="/" className="flex items-center gap-2">
               <LogoMark className="h-5 w-5" />
-              <span className="text-xs font-bold tracking-widest text-accent">
-                VERIDAQ <span className="text-muted">admin</span>
-              </span>
+              <span className="text-xs font-bold tracking-widest text-accent">VERIDAQ</span>
             </Link>
             <nav className="hidden items-center gap-1 lg:flex">
               {nav.map(({ href, label }) => (
@@ -146,7 +150,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
+      <main className="pointer-events-auto mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
           <h1 className="mb-6 font-display text-xl font-semibold tracking-wide text-foreground">{title}</h1>
           {children}
       </main>
