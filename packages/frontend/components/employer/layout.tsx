@@ -33,7 +33,13 @@ export function EmployerLayout({ children, title }: { children: React.ReactNode;
     router.push("/employer/login")
   }
 
-  if (loading || !user) {
+  const [authTimeout, setAuthTimeout] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setAuthTimeout(true), 8000)
+    return () => clearTimeout(t)
+  }, [])
+
+  if ((loading || !user) && !authTimeout) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-void text-sm tracking-widest text-muted">
         <OrbitalLoader label="VERIFYING" />
@@ -141,7 +147,7 @@ export function EmployerLayout({ children, title }: { children: React.ReactNode;
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
+      <main className="pointer-events-auto mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
           <h1 className="mb-6 text-xl font-semibold text-foreground">{title}</h1>
           {children}
       </main>
