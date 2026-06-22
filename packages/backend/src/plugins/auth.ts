@@ -31,6 +31,10 @@ export const authPlugin: FastifyPluginAsync = fp(async (app) => {
   await app.register(jwt, {
     secret: config.JWT_SECRET,
     sign: { expiresIn: config.JWT_EXPIRES_IN },
+    cookie: {
+      cookieName: "accessToken",
+      signed: false,
+    },
   })
 
   // Generic auth check — just verifies the token is valid

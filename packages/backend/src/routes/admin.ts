@@ -130,11 +130,17 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   app.get("/institutions/:id/report", async (req, rep) => {
     const { id } = req.params as { id: string }
     const q = req.query as { format?: string }
+
+    if (q.format === "pdf") {
+      const pdf = await adminSvc.getInstitutionReportPdf(id)
+      if (!pdf) return rep.code(404).send({ error: "Institution not found" })
+      rep.header("Content-Type", "application/pdf")
+      rep.header("Content-Disposition", `inline; filename="institution-${id.slice(0, 8)}.pdf"`)
+      return rep.send(pdf)
+    }
+
     const result = await adminSvc.getInstitutionReport(id)
     if (!result) return rep.code(404).send({ error: "Institution not found" })
-    if (q.format === "pdf") {
-      rep.header("Content-Type", "application/pdf")
-    }
     return result
   })
 
