@@ -195,7 +195,7 @@ The script deploys all 8 contracts in dependency order and prints their addresse
 - `ZK_VERIFIER_ADDRESS`
 - `AA_SIMPLE_ACCOUNT_FACTORY_ADDRESS`
 
-The deploy script automatically grants BUNDLER_ROLE to the platform admin on the SubscriptionManager contract.
+The deploy script automatically grants BUNDLER_ROLE to the VERIDAQ Admin on the SubscriptionManager contract.
 
 Verify the deployment:
 
