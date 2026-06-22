@@ -8,6 +8,7 @@
 
 import { PrismaClient } from "@prisma/client"
 import crypto from "crypto"
+import PDFDocument from "pdfkit"
 import pino from "pino"
 import { formatEther, parseEther } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
@@ -536,6 +537,140 @@ export class AdminService {
       employerProfile: inst.employerProfile,
       earnings: inst.earnings,
     }
+  }
+
+  async getInstitutionReportPdf(institutionId: string): Promise<Buffer | null> {
+    const data = await this.getInstitutionReport(institutionId)
+    if (!data) return null
+
+    const NAVY = "#0f172a"
+    const WHITE = "#ffffff"
+    const FG = "#1e293b"
+    const MUTED = "#64748b"
+    const BORDER = "#e2e8f0"
+    const ROW_LIGHT = "#f8fafc"
+    const FONT = "Helvetica"
+    const FONT_BOLD = "Helvetica-Bold"
+    const M = 40
+
+    const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit", month: "short", year: "numeric",
+    })
+
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ size: "A4", margin: M })
+      const chunks: Buffer[] = []
+      doc.on("data", (chunk) => chunks.push(chunk))
+      doc.on("end", () => resolve(Buffer.concat(chunks)))
+      doc.on("error", reject)
+
+      const CW = doc.page.width - M * 2
+      const LX = M
+      const PAGE_BOTTOM = doc.page.height - M
+
+      function row(label: string, value: string, mono = false) {
+        const rh = 14
+        if (doc.y + rh > PAGE_BOTTOM) doc.addPage()
+        const ry = doc.y
+        doc.rect(LX, ry, CW, rh).fill(ry % 28 === 0 ? ROW_LIGHT : WHITE)
+        doc.fontSize(7.5).fillColor(MUTED).font(FONT)
+        doc.text(label, LX + 8, ry + 3, { width: 130 })
+        doc.fillColor(FG)
+        doc.font(mono ? "Courier" : FONT).fontSize(mono ? 6.5 : 7.5)
+        doc.text(value, LX + 146, ry + 3, { width: CW - 160, lineBreak: false })
+        doc.y = ry + rh
+      }
+
+      function section(title: string) {
+        if (doc.y + 30 > PAGE_BOTTOM) doc.addPage()
+        doc.y += 8
+        doc.fontSize(9).fillColor(NAVY).font(FONT_BOLD)
+        doc.text(title, LX, doc.y)
+        doc.y += 2
+        doc.rect(LX, doc.y, CW, 0.5).fill(BORDER)
+        doc.y += 6
+      }
+
+      // Header
+      doc.rect(0, 0, doc.page.width, 50).fill(NAVY)
+      doc.rect(0, 50, doc.page.width, 1).fill(MUTED)
+      doc.fontSize(15).fillColor(WHITE).font(FONT_BOLD)
+      doc.text("VERIDAQ", M + 4, 13)
+      doc.fontSize(6.5).fillColor(MUTED)
+      doc.text("Institution Report", M + 4, 31)
+      doc.fontSize(8).fillColor(WHITE).font("Courier")
+      doc.text(`REF: ${data.id.slice(0, 8).toUpperCase()}`, M, 13, { width: CW, align: "right" })
+      doc.y = 60
+
+      // Institution Details
+      section("Institution Details")
+      row("Name", data.name)
+      row("Email", data.email)
+      row("Tier", data.tier)
+      row("KYC Status", data.kycApproved ? "Approved" : "Pending")
+      row("Blockchain Status", data.blockchainStatus ?? "N/A")
+      row("Active", data.active ? "Yes" : "No")
+      row("Also Employer", data.alsoEmployer ? "Yes" : "No")
+      row("Admin Wallet", data.adminWallet, true)
+      row("On-Chain ID", data.onChainId ?? "N/A", true)
+      row("Created", dateFormatter.format(new Date(data.createdAt)))
+      if (data.deactivatedAt) row("Deactivated", dateFormatter.format(new Date(data.deactivatedAt)))
+      if (data.deactivationReason) row("Reason", data.deactivationReason)
+
+      // Stats
+      doc.y += 4
+      section("Statistics")
+      row("Total Batches", String(data.stats.totalBatches))
+      row("Total Verifications", String(data.stats.totalVerifications))
+      row("Verified Verifications", String(data.stats.verifiedVerifications))
+      row("Total Claims", String(data.stats.totalClaims))
+
+      // Recent Batches
+      if (data.recentBatches.length > 0) {
+        doc.y += 4
+        section("Recent Batches")
+        const batchHeaders = ["Status", "Students", "Year", "Date"]
+        const colW = (CW - 16) / batchHeaders.length
+        doc.fontSize(7).fillColor(NAVY).font(FONT_BOLD)
+        batchHeaders.forEach((h, i) => doc.text(h, LX + 8 + i * colW, doc.y, { width: colW }))
+        doc.y += 2
+        doc.rect(LX + 4, doc.y, CW - 8, 0.5).fill(BORDER)
+        doc.y += 6
+        data.recentBatches.forEach((b, i) => {
+          if (doc.y + 14 > PAGE_BOTTOM) doc.addPage()
+          doc.rect(LX, doc.y, CW, 12).fill(i % 2 === 0 ? ROW_LIGHT : WHITE)
+          doc.fontSize(7).fillColor(FG).font(FONT)
+          doc.text(b.status, LX + 8, doc.y + 1, { width: colW })
+          doc.text(String(b.studentCount ?? "-"), LX + 8 + colW, doc.y + 1, { width: colW })
+          doc.text(String(b.graduationYear ?? "-"), LX + 8 + colW * 2, doc.y + 1, { width: colW })
+          doc.text(dateFormatter.format(new Date(b.createdAt)), LX + 8 + colW * 3, doc.y + 1, { width: colW })
+          doc.y += 12
+        })
+      }
+
+      // Employer Profile
+      if (data.employerProfile) {
+        doc.y += 4
+        section("Employer Profile")
+        row("Name", data.employerProfile.name)
+        row("Email", data.employerProfile.email)
+        row("KYC Approved", data.employerProfile.kycApproved ? "Yes" : "No")
+        row("Free Verifications", String(data.employerProfile.freeVerificationsRemaining))
+        row("Paid Credits", String(data.employerProfile.verificationCredits))
+      }
+
+      // Footer
+      const fh = 30
+      const fy = PAGE_BOTTOM - fh
+      doc.rect(0, fy, doc.page.width, fh).fill(NAVY)
+      doc.rect(0, fy, doc.page.width, 0.5).fill(MUTED)
+      doc.fontSize(6).fillColor(MUTED).font(FONT)
+      doc.text(`Generated ${dateFormatter.format(new Date())}  ·  Report ${data.id.slice(0, 8).toUpperCase()}`, M, fy + 8, { width: CW, align: "center" })
+      doc.fontSize(5.5).fillColor(MUTED)
+      doc.text("VERIDAQ — Censor-Resistant Academic Truth", M, fy + 19, { width: CW, align: "center" })
+
+      doc.end()
+    })
   }
 
   async approveInstitutionEmployerAccess(institutionId: string, adminId: string) {

@@ -12,6 +12,7 @@
 import type { FastifyPluginAsync } from "fastify"
 import { z } from "zod"
 import { AuthService } from "../services/auth.service.js"
+import { config } from "../config/index.js"
 
 const loginBody = z.object({
   email: z.string().email(),
@@ -65,13 +66,21 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const result = await authSvc.loginInstitution(email, password)
     if (!result) return rep.code(401).send({ error: "Invalid credentials" })
 
-    // Access token in response body; refresh token in httpOnly cookie
+    // Access token in httpOnly cookie so it survives full page loads
+    rep.setCookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
+      secure: process.env["NODE_ENV"] === "production",
+      path: "/api",
+      maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
+    })
+    // Refresh token in separate httpOnly cookie (only sent to /refresh)
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
       secure: process.env["NODE_ENV"] === "production",
       path: "/api/auth/refresh",
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      maxAge: 7 * 24 * 60 * 60,
     })
 
     return { accessToken: result.accessToken, user: result.user }
@@ -84,6 +93,13 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const result = await authSvc.loginEmployer(email, password)
     if (!result) return rep.code(401).send({ error: "Invalid credentials" })
 
+    rep.setCookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
+      secure: process.env["NODE_ENV"] === "production",
+      path: "/api",
+      maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
+    })
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
@@ -102,6 +118,13 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const result = await authSvc.loginAdmin(email, password)
     if (!result) return rep.code(401).send({ error: "Invalid credentials" })
 
+    rep.setCookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
+      secure: process.env["NODE_ENV"] === "production",
+      path: "/api",
+      maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
+    })
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
@@ -121,9 +144,19 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
     const result = await authSvc.refresh(token)
     if (!result) {
-      rep.clearCookie("refreshToken")
+      rep.clearCookie("refreshToken", { path: "/api/auth/refresh" })
+      rep.clearCookie("accessToken", { path: "/api" })
       return rep.code(401).send({ error: "Invalid or expired refresh token" })
     }
+
+    // Rotate the access token cookie so it survives future full page loads
+    rep.setCookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
+      secure: process.env["NODE_ENV"] === "production",
+      path: "/api",
+      maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
+    })
 
     return { accessToken: result.accessToken }
   })
@@ -143,6 +176,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
   app.post("/logout", async (req, rep) => {
     rep.clearCookie("refreshToken", { path: "/api/auth/refresh" })
+    rep.clearCookie("accessToken", { path: "/api" })
     return { ok: true }
   })
 
