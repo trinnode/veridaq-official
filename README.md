@@ -372,7 +372,7 @@ Created by `pnpm db:seed`. These exist only in your local PostgreSQL database an
 
 ### InstitutionRegistry.sol
 
-Maps institution bytes32 IDs to name and admin wallet. Owned by platform admin.
+Maps institution bytes32 IDs to name and admin wallet. Owned by VERIDAQ Admin.
 
 | Function           | Description                                  |
 | ------------------ | -------------------------------------------- |

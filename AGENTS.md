@@ -288,7 +288,7 @@ cast call $INSTITUTION_REGISTRY_ADDRESS "owner()(address)" \
 Should return the deployer address.
 
 The deploy script (`Deploy.s.sol`) automatically grants `BUNDLER_ROLE` to the
-platform admin during deployment — no manual step required.
+VERIDAQ Admin during deployment — no manual step required.
 
 ---
 

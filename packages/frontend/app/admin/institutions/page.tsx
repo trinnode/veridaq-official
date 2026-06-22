@@ -141,10 +141,16 @@ export default function InstitutionsPage() {
   async function exportReport(type: "json" | "pdf") {
     if (!detailTarget) return
     try {
-      const { data } = await api.get(`/admin/institutions/${detailTarget.id}/report?format=${type}`)
-      const blob = new Blob([type === "json" ? JSON.stringify(data, null, 2) : data], {
-        type: type === "json" ? "application/json" : "application/pdf"
-      })
+      let blob: Blob
+      if (type === "pdf") {
+        const { data } = await api.get(`/admin/institutions/${detailTarget.id}/report?format=${type}`, {
+          responseType: "blob",
+        })
+        blob = data as Blob
+      } else {
+        const { data } = await api.get(`/admin/institutions/${detailTarget.id}/report?format=${type}`)
+        blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+      }
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
