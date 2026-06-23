@@ -293,6 +293,8 @@ model VerificationRequest {
   proofJson     String?
   // On-chain transaction hash of the verifyProof call
   txHash        String?
+  // Internal note from institution admin when declining a manual verification (not shared externally)
+  adminNote     String?
   createdAt     DateTime            @default(now())
   completedAt   DateTime?
 

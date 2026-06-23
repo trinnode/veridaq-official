@@ -191,6 +191,9 @@ importers:
       prisma:
         specifier: ^6.8.2
         version: 6.19.2(typescript@5.9.3)
+      qr-image:
+        specifier: '3'
+        version: 3.2.0
       react:
         specifier: ^19.1.0
         version: 19.2.4
@@ -240,6 +243,9 @@ importers:
       '@testing-library/react':
         specifier: ^16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@types/qr-image':
+        specifier: ^3.2.11
+        version: 3.2.11
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.32.0
         version: 8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3)
@@ -2409,6 +2415,9 @@ packages:
 
   '@types/pdfkit@0.17.6':
     resolution: {integrity: sha512-tIwzxk2uWKp0Cq9JIluQXJid77lYhF52EsIOwhsMF4iWLA6YneoBR1xVKYYdAysHuepUB0OX4tdwMiUDdGKmig==}
+
+  '@types/qr-image@3.2.11':
+    resolution: {integrity: sha512-gdVdzzXCv7BdraCpccCiZQorSimKuuBvAzOJFQcSnSda4tcLz/5gW2u4tNUPqIEBEPB+7H6bKx1W4OsSOFhRiQ==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -5452,6 +5461,9 @@ packages:
 
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
+
+  qr-image@3.2.0:
+    resolution: {integrity: sha512-rXKDS5Sx3YipVsqmlMJsJsk6jXylEpiHRC2+nJy66fxA5ExYyGa4PqwteW69SaVmAb2OQ18HbYriT7cGQMbduw==}
 
   qr@0.6.0:
     resolution: {integrity: sha512-P23VoX7SipHALdiIYG+D+LT/6n22dNKwV92FAb3d+Nlki/5WisSsfLt0UDFz2XEBtuwrECTznvu+chKKFCSYhA==}
@@ -9340,6 +9352,10 @@ snapshots:
     dependencies:
       '@types/node': 22.19.15
 
+  '@types/qr-image@3.2.11':
+    dependencies:
+      '@types/node': 22.19.15
+
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
       '@types/react': 19.2.14
@@ -13158,6 +13174,8 @@ snapshots:
   punycode@2.3.1: {}
 
   pure-rand@6.1.0: {}
+
+  qr-image@3.2.0: {}
 
   qr@0.6.0: {}
 

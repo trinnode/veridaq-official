@@ -22,7 +22,7 @@ import { z } from "zod"
 import { Prisma } from "@prisma/client"
 import { config } from "../config/index.js"
 import { InstitutionService } from "../services/institution.service.js"
-import { formatCgpaRange, getCgpaRange, isCgpaInRange } from "../utils/cgpa.js"
+import { isCgpaInRange } from "../utils/cgpa.js"
 import { BatchQueue } from "../workers/batch.queue.js"
 
 const claimBody = z.object({
@@ -166,17 +166,41 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
         })
       }
 
-      const errors: Array<{ row: number; error: string }> = []
+      const errors: Array<{ row: number; column: string; error: string }> = []
       let validCount = 0
+      const previewRows: Array<Record<string, string>> = []
 
       const rowSchema = z.object({
-        matricNumber: z.string().min(2),
-        studentName: z.string().min(2),
-        courseName: z.string().min(2),
-        cgpa: z.coerce.number().min(1).max(5),
+        matricNumber: z.string().min(2, "Matric Number must be at least 2 characters"),
+        studentName: z.string().min(2, "Student Name must be at least 2 characters"),
+        courseName: z.string().min(2, "Course Name must be at least 2 characters"),
+        cgpa: z.coerce.number().min(1, "CGPA must be at least 1.00").max(5, "CGPA cannot exceed 5.00"),
         classification: z.coerce.number().int().min(0).max(4),
-        graduationYear: z.coerce.number().int().min(1950).max(2100),
+        graduationYear: z.coerce.number().int().min(1950, "Graduation Year must be ≥ 1950").max(2100, "Graduation Year must be ≤ 2100"),
       })
+
+      const parseClassificationText = (raw: unknown): string => {
+        const text = String(raw ?? "").trim()
+        if (!text) return ""
+        const lower = text.toLowerCase()
+        const lookup: Record<string, string> = {
+          "first class": "First Class",
+          "first": "First Class",
+          "second class upper": "Second Class Upper",
+          "upper second": "Second Class Upper",
+          "second class lower": "Second Class Lower",
+          "lower second": "Second Class Lower",
+          "third class": "Third Class",
+          "third": "Third Class",
+          "pass": "Pass",
+          "4": "First Class",
+          "3": "Second Class Upper",
+          "2": "Second Class Lower",
+          "1": "Third Class",
+          "0": "Pass",
+        }
+        return lookup[lower] ?? text
+      }
 
       for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
         const row = sheet.getRow(rowNumber)
@@ -210,30 +234,59 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
         })
 
         if (!res.success) {
-          const firstError = res.error.errors[0]
-          const path = firstError?.path?.[0] ?? "field"
-          const message = firstError?.message ?? "Invalid value"
-          errors.push({
-            row: rowNumber,
-            error: message + " at " + path,
-          })
-        } else {
-          const cgpaInt = Math.round(res.data.cgpa * 100)
-          if (!isCgpaInRange(cgpaInt, res.data.classification)) {
-            const range = getCgpaRange(res.data.classification)
-            const rangeLabel = range ? `${range.label} ${formatCgpaRange(range)}` : "Unknown"
+          for (const issue of res.error.errors) {
+            const path = String(issue.path?.[0] ?? "field")
+            const columnName = {
+              matricNumber: "Matriculation Number",
+              studentName: "Student Name",
+              courseName: "Course Name",
+              cgpa: "CGPA",
+              classification: "Classification",
+              graduationYear: "Graduation Year",
+            }[path] ?? path
+            const message = issue.message ?? "Invalid value"
+            let plainLanguage = message
+            if (message.includes("too_small") || message.startsWith("Value is less than")) {
+              plainLanguage = `${columnName}: Value is out of allowed range`
+            } else if (message.startsWith("String must contain at least")) {
+              plainLanguage = `${columnName}: Value is too short (minimum ${(issue as { minimum?: number }).minimum ?? 2} characters)`
+            } else if (message.startsWith("Value")) {
+              plainLanguage = `${columnName}: ${message}`
+            }
             errors.push({
               row: rowNumber,
-              error: `CGPA ${res.data.cgpa.toFixed(2)} does not match classification range ${rangeLabel}`,
+              column: columnName,
+              error: `Row ${rowNumber}, ${columnName}: ${plainLanguage}`,
+            })
+          }
+        } else {
+          const cgpaInt = Math.round(res.data.cgpa * 100)
+          const classificationText = parseClassificationText(rawClassification)
+          if (!isCgpaInRange(cgpaInt, res.data.classification)) {
+            errors.push({
+              row: rowNumber,
+              column: "Classification",
+              error: `Row ${rowNumber}, Classification: CGPA ${res.data.cgpa.toFixed(2)} does not support ${classificationText} classification`,
             })
           } else {
             validCount++
+            // Collect first 5 valid rows for preview
+            if (previewRows.length < 5) {
+              previewRows.push({
+                matricNumber: rawMatricNumber,
+                studentName: rawStudentName,
+                cgpa: String(res.data.cgpa),
+                classification: classificationText,
+                courseName: rawCourseName,
+                graduationYear: String(res.data.graduationYear),
+              })
+            }
           }
         }
       }
 
       if (errors.length > 0) {
-        return rep.code(400).send({ valid: false, errors, totalRecords: validCount })
+        return rep.code(400).send({ valid: false, errors, totalRecords: validCount, preview: previewRows })
       }
 
       const billing = await instSvc.getBilling(req.jwtPayload.sub)
@@ -318,6 +371,9 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
           : estimateError.message ?? "Simulation failed"
       }
 
+      const graduationYear = previewRows.length > 0 ? previewRows[0]!.graduationYear : null
+      const degreeTypes = [...new Set(previewRows.map(r => r.classification).filter(Boolean))]
+
       return rep.send({
         valid: true,
         totalRecords: validCount,
@@ -325,6 +381,9 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
         estimatedGasWei: "500000000000000",
         simulation,
         simulationError,
+        preview: previewRows,
+        graduationYear: graduationYear ? Number(graduationYear) : null,
+        degreeTypes,
       })
     } catch {
       return rep.code(400).send({ errors: [{ row: 0, error: "Failed to parse excel file" }] })
@@ -496,7 +555,8 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
 
   app.post("/verifications/:id/decline", async (req, rep) => {
     const { id } = req.params as { id: string }
-    const result = await instSvc.declineVerification(id, req.jwtPayload.sub)
+    const body = req.body as { comment?: string } | null
+    const result = await instSvc.declineVerification(id, req.jwtPayload.sub, body?.comment)
     if (!result.ok) return rep.code(400).send({ error: result.error })
     return { ok: true }
   })

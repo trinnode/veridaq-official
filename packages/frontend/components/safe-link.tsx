@@ -1,12 +1,12 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useCallback, type MouseEvent } from "react"
 
 /**
- * SafeLink — uses useRouter() from next/navigation (AppRouterContext)
- * for client-side navigation instead of next/link (which uses the
- * Pages Router's RouterContext and breaks in App Router).
+ * SafeLink — navigates via window.location.href (full page load).
+ * The auth cookie (httpOnly accessToken) ensures the session survives
+ * the reload. Avoids any dependency on next/navigation or next/link
+ * which can be unreliable in production builds.
  */
 export function SafeLink({
   href,
@@ -19,19 +19,13 @@ export function SafeLink({
   children: React.ReactNode
   onClick?: () => void
 }) {
-  const router = useRouter()
-
   const handleClick = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault()
       extraOnClick?.()
-      try {
-        router.push(href)
-      } catch {
-        window.location.href = href
-      }
+      window.location.href = href
     },
-    [href, router, extraOnClick],
+    [href, extraOnClick],
   )
 
   return (
