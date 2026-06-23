@@ -72,7 +72,6 @@ async function bootstrap() {
   // Cookie support — used for httpOnly JWT refresh tokens
   await app.register(cookie, {
     secret: config.JWT_SECRET,
-    parseOptions: { httpOnly: true, sameSite: "lax", secure: config.NODE_ENV === "production" },
   })
 
   // Rate limiting — apply globally; tighten on auth routes in the route plugin

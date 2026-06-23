@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth"
 import { LogOut, Menu, X, ChevronRight, Building2 } from "@/lib/icons"
 import { usePathname, useRouter } from "next/navigation"
 import { SafeLink } from "@/components/safe-link"
+import { ErrorBoundary } from "@/components/ui/error-boundary"
 import { useEffect, useState } from "react"
 import { LogoMark } from "@/components/ui/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -62,6 +63,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
   }
 
   return (
+    <ErrorBoundary portal="institution">
     <div className="flex min-h-screen flex-col bg-void">
       <PortalBg />
       {/* Header */}
@@ -206,5 +208,6 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
           {children}
       </main>
     </div>
+    </ErrorBoundary>
   )
 }

@@ -372,7 +372,7 @@ export class InstitutionService {
     return { ok: true }
   }
 
-  async declineVerification(requestId: string, institutionId: string) {
+  async declineVerification(requestId: string, institutionId: string, comment?: string) {
     const updated = await this.prisma.verificationRequest.updateMany({
       where: {
         id: requestId,
@@ -383,6 +383,7 @@ export class InstitutionService {
         status: "COMPLETED",
         result: "RECORD_NOT_FOUND",
         completedAt: new Date(),
+        adminNote: comment ?? null,
       },
     })
 

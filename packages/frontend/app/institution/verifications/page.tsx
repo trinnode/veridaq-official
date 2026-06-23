@@ -13,6 +13,8 @@ export default function VerificationsPage() {
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [polling, setPolling] = useState(false)
+  const [declineModal, setDeclineModal] = useState<{ id: string; open: boolean }>({ id: "", open: false })
+  const [declineComment, setDeclineComment] = useState("")
 
   const fetchVerifications = () => {
     api.get("/institution/verifications")
@@ -56,10 +58,18 @@ export default function VerificationsPage() {
     }
   }
 
-  const handleDecline = async (id: string) => {
+  const openDeclineModal = (id: string) => {
+    setDeclineComment("")
+    setDeclineModal({ id, open: true })
+  }
+
+  const confirmDecline = async () => {
+    const id = declineModal.id
+    if (!id) return
     setProcessingId(id)
+    setDeclineModal({ id: "", open: false })
     try {
-      await api.post(`/institution/verifications/${id}/decline`)
+      await api.post(`/institution/verifications/${id}/decline`, { comment: declineComment || undefined })
       toast.success("Verification declined")
       fetchVerifications()
     } catch (err: any) {
@@ -138,7 +148,7 @@ export default function VerificationsPage() {
                           <Check className="w-3 h-3" /> Approve
                         </button>
                         <button
-                          onClick={() => handleDecline(r.id)}
+                          onClick={() => openDeclineModal(r.id)}
                           disabled={processingId === r.id}
                           className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-red-400 hover:bg-red-400/10 border border-red-400/20 transition-colors disabled:opacity-50"
                         >
@@ -151,6 +161,40 @@ export default function VerificationsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {/* Decline comment modal */}
+      {declineModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="border-surface-border bg-surface-card w-full max-w-md rounded-xl border p-6 shadow-2xl">
+            <h3 className="text-base font-semibold text-foreground">Decline Verification</h3>
+            <p className="text-muted mt-1 text-sm">This record will be marked as not found.</p>
+            <div className="mt-4">
+              <label className="mb-1.5 block text-xs font-medium text-foreground">
+                Reason (institution only — not shared externally)
+              </label>
+              <textarea
+                value={declineComment}
+                onChange={(e) => setDeclineComment(e.target.value)}
+                placeholder="Optional internal note about why this was declined..."
+                className="bg-void border-surface-border focus:border-accent h-24 w-full resize-none rounded-lg border px-3 py-2 text-sm text-foreground outline-none transition-colors"
+              />
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setDeclineModal({ id: "", open: false })}
+                className="border-surface-border rounded-lg border px-4 py-2 text-sm text-foreground transition-colors hover:bg-surface"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDecline}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-foreground transition-opacity hover:bg-red-700"
+              >
+                Confirm Decline
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </DashboardLayout>

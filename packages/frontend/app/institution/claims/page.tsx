@@ -328,7 +328,26 @@ export default function ClaimsPage() {
               )}
             </div>
 
-            <div className="mt-8 flex justify-end gap-3">
+            {/* Employer-facing preview */}
+            {label && (
+              <div className="border-accent/20 bg-accent/5 mt-6 rounded-lg border p-4">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted">Employer Preview</p>
+                <div className="rounded border border-surface-border bg-void p-3">
+                  <p className="text-sm font-medium text-foreground">{label}</p>
+                  {description && <p className="text-muted mt-1 text-xs">{description}</p>}
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className={`px-1.5 py-0.5 text-[10px] font-medium ${reviewType === "AUTO" ? "bg-accent/10 text-accent" : "bg-orange-500/10 text-orange-400"}`}>
+                      {reviewType === "AUTO" ? "Instant (ZK Proof)" : "Manual Review"}
+                    </span>
+                    <span className="text-muted border-surface-border border px-1.5 py-0.5 text-[10px]">
+                      Code {claimCode}{threshold > 0 ? ` · ≥ ${(threshold / 100).toFixed(2)} CGPA` : ""}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex justify-end gap-3">
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="border-surface-border hover:bg-surface-elevated border px-4 py-2 text-sm font-medium text-foreground transition-colors"

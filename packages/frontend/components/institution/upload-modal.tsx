@@ -43,7 +43,10 @@ interface ValidationResult {
   gasSponsored: boolean
   simulation: SimulationData | null
   simulationError: string | null
-  errors?: { row: number; error: string }[]
+  errors?: { row: number; column: string; error: string }[]
+  preview?: { matricNumber: string; studentName: string; cgpa: string; classification: string; courseName: string; graduationYear: string }[]
+  graduationYear?: number | null
+  degreeTypes?: string[]
 }
 
 interface ErrorReportEntry {
@@ -85,7 +88,7 @@ function extractError(err: unknown): string {
   return "An unexpected error occurred."
 }
 
-function extractErrors(err: unknown): { row: number; error: string }[] {
+function extractErrors(err: unknown): { row: number; column: string; error: string }[] {
   if (typeof err === "object" && err !== null) {
     const e = err as Record<string, unknown>
     const resp = e["response"] as Record<string, unknown> | undefined
@@ -93,11 +96,12 @@ function extractErrors(err: unknown): { row: number; error: string }[] {
     if (Array.isArray(data?.["errors"])) {
       return (data["errors"] as Array<Record<string, unknown>>).map((r) => ({
         row: Number(r["row"]) || 0,
+        column: String(r["column"] ?? ""),
         error: String(r["error"] ?? "Unknown error"),
       }))
     }
   }
-  return [{ row: 0, error: extractError(err) }]
+  return [{ row: 0, column: "", error: extractError(err) }]
 }
 
 function StepIndicator({ current }: { current: Step }) {
@@ -186,6 +190,28 @@ function Alert({ variant, children }: { variant: "error" | "warn" | "ok"; childr
   )
 }
 
+function downloadErrorCsv(errors: { row: number; column?: string; error: string }[]) {
+  const header = "Row,Column,Error Description"
+  const rows = errors.map((e) => `"${e.row}","${e.column ?? "—"}","${e.error.replace(/"/g, '""')}"`)
+  const csv = [header, ...rows].join("\n")
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "validation-errors.csv"
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+const PROGRESS_MESSAGES = [
+  "Validating data...",
+  "Generating commitments...",
+  "Submitting to blockchain...",
+  "Waiting for confirmation...",
+]
+
 export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
   const [step, setStep] = useState<Step>("TEMPLATE")
   const [file, setFile] = useState<File | null>(null)
@@ -197,6 +223,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
   const [pollData, setPollData] = useState<BatchPollData | null>(null)
   const [predeploying, setPredeploying] = useState(false)
   const [predeployMsg, setPredeployMsg] = useState("")
+  const [progressStep, setProgressStep] = useState(0)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -307,11 +334,20 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
     setBusy(true)
     setStep("PROCESSING")
     setPollData(null)
+    setProgressStep(0)
 
     try {
+      setProgressStep(0) // Validating data...
+      await new Promise((r) => setTimeout(r, 800))
+
+      setProgressStep(1) // Generating commitments...
+      await new Promise((r) => setTimeout(r, 600))
+
       if (validation.simulation?.needsInit) {
         await predeployAccount()
       }
+
+      setProgressStep(2) // Submitting to blockchain...
 
       const fd = new FormData()
       fd.append("file", file)
@@ -334,6 +370,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
   }
 
   function pollForBatch(_jobId: string) {
+    setProgressStep(3) // Waiting for confirmation...
     let attempts = 0
     pollRef.current = setInterval(async () => {
       attempts++
@@ -510,6 +547,41 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                     </span>
                   </Alert>
 
+                  {/* Preview table */}
+                  {validation.preview && validation.preview.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">Preview (first {validation.preview.length} rows)</p>
+                      <div className="border-surface-border max-h-48 overflow-x-auto rounded-lg border">
+                        <table className="w-full text-left text-[10px]">
+                          <thead className="border-surface-border sticky top-0 border-b bg-surface-card">
+                            <tr>
+                              <th className="px-2 py-1.5 font-medium text-muted">#</th>
+                              <th className="px-2 py-1.5 font-medium text-muted">Matric</th>
+                              <th className="px-2 py-1.5 font-medium text-muted">Name</th>
+                              <th className="px-2 py-1.5 font-medium text-muted">CGPA</th>
+                              <th className="px-2 py-1.5 font-medium text-muted">Class</th>
+                              <th className="px-2 py-1.5 font-medium text-muted">Course</th>
+                              <th className="px-2 py-1.5 font-medium text-muted">Year</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {validation.preview.map((row, i) => (
+                              <tr key={i} className="border-surface-border/40 border-b last:border-0">
+                                <td className="px-2 py-1.5 text-muted">{i + 1}</td>
+                                <td className="px-2 py-1.5 font-mono text-foreground">{row.matricNumber}</td>
+                                <td className="px-2 py-1.5 text-foreground">{row.studentName}</td>
+                                <td className="px-2 py-1.5 text-foreground">{row.cgpa}</td>
+                                <td className="px-2 py-1.5 text-foreground">{row.classification}</td>
+                                <td className="px-2 py-1.5 text-foreground">{row.courseName}</td>
+                                <td className="px-2 py-1.5 text-foreground">{row.graduationYear}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="border-surface-border grid grid-cols-2 gap-px overflow-hidden rounded-lg border">
                     {[
                       ["Records", String(validation.totalRecords)],
@@ -607,28 +679,35 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
               ) : (
                 <div className="flex flex-col gap-4">
                   <Alert variant="error">
-                    <span className="font-medium">Validation failed</span> — fix the errors
-                    below and re-upload. ({validation?.errors?.length ?? 0} issue{(validation?.errors?.length ?? 0) !== 1 ? "s" : ""})
+                    <span className="font-medium">Validation failed</span> — fix the errors in your spreadsheet and re-upload. ({validation?.errors?.length ?? 0} issue{(validation?.errors?.length ?? 0) !== 1 ? "s" : ""})
                   </Alert>
                   <div className="border-surface-border max-h-56 overflow-y-auto rounded-lg border">
                     <table className="w-full text-left text-xs">
                       <thead className="border-surface-border sticky top-0 border-b bg-surface-card">
                         <tr>
                           <th className="px-3 py-2 font-medium text-muted">Row</th>
-                          <th className="px-3 py-2 font-medium text-muted">Error</th>
+                          <th className="px-3 py-2 font-medium text-muted">Column</th>
+                          <th className="px-3 py-2 font-medium text-muted">Error Description</th>
                         </tr>
                       </thead>
                       <tbody>
                         {validation?.errors?.map((e, i) => (
                           <tr key={i} className="border-surface-border/40 border-b">
                             <td className="px-3 py-2 font-mono text-muted">{e.row > 0 ? `Row ${e.row}` : "—"}</td>
+                            <td className="px-3 py-2 text-muted">{e.column ?? "—"}</td>
                             <td className="px-3 py-2 text-red-400">{e.error}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      onClick={() => validation?.errors && downloadErrorCsv(validation.errors)}
+                      className="border-surface-border flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-surface"
+                    >
+                      <Download size={12} /> Download Error Report (CSV)
+                    </button>
                     <button
                       onClick={() => setStep("UPLOAD")}
                       className="border-surface-border rounded-lg border px-4 py-2 text-sm text-foreground transition-colors hover:bg-surface"
@@ -651,6 +730,21 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                   blockchain. Commitments cannot be altered once mined.
                 </p>
               </Alert>
+
+              {/* Batch summary */}
+              <div className="border-surface-border grid grid-cols-2 gap-px overflow-hidden rounded-lg border">
+                {[
+                  ["Total Students", String(validation?.totalRecords ?? 0)],
+                  ["Gas Cost", validation?.gasSponsored ? "Sponsored — No Cost" : `${Number(validation?.simulation?.maxCostEth ?? 0).toFixed(6)} ETH`],
+                  ["Graduation Year", String(validation?.graduationYear ?? "—")],
+                  ["Degree Type(s)", validation?.degreeTypes?.length ? validation.degreeTypes.join(", ") : "—"],
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-surface-card px-4 py-3">
+                    <p className="text-xs text-muted">{label}</p>
+                    <p className="mt-0.5 text-sm font-medium text-foreground">{value}</p>
+                  </div>
+                ))}
+              </div>
 
               <div className="border-surface-border rounded-lg border p-4">
                 <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted">
@@ -689,16 +783,24 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
           {/* ── PROCESSING ── */}
           {step === "PROCESSING" && (
             <div className="flex flex-col items-center gap-6 py-10 text-center">
-              <Spinner label="Processing" />
-              <div>
-                <h3 className="font-medium text-foreground">Submitting to blockchain</h3>
-                <p className="mt-1 text-sm text-muted">
-                  Status: {pollData?.status ?? "SUBMITTING"}
-                </p>
-                <p className="mt-1 text-xs text-muted">Do not close this window.</p>
-                {pollData?.txHash && (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 size={28} className="animate-spin text-accent" />
+                <div className="space-y-3">
+                  {PROGRESS_MESSAGES.slice(0, progressStep + 1).map((msg, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      {i < progressStep ? (
+                        <CheckCircle2 size={14} className="text-accent shrink-0" />
+                      ) : (
+                        <Loader2 size={14} className="animate-spin text-accent shrink-0" />
+                      )}
+                      <span className={i <= progressStep ? "text-foreground" : "text-muted"}>{msg}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-muted">Do not close this window.</p>
+                {progressStep >= 2 && (
                   <p className="mt-2 font-mono text-xs text-muted">
-                    Tx: {pollData.txHash.slice(0, 18)}…
+                    {pollData?.txHash ? `Tx: ${pollData.txHash.slice(0, 18)}…` : "Transaction pending..."}
                   </p>
                 )}
               </div>
@@ -732,8 +834,9 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                     href={`https://sepolia.basescan.org/tx/${pollData.txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-accent mt-2 inline-block font-mono text-xs hover:underline"
+                    className="text-accent mt-2 inline-flex items-center gap-1 font-mono text-xs hover:underline"
                   >
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                     View on Basescan
                   </a>
                 )}
@@ -781,6 +884,17 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                         )}
                       </div>
                     ))}
+                  </div>
+                </div>
+              ) : pollData?.status !== "FAILED" ? (
+                <div className="border-surface-border w-full max-w-lg rounded-lg border p-4 text-left">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">Batch Receipt</p>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between"><span className="text-muted">Status</span><span className="text-accent font-medium">Confirmed</span></div>
+                    <div className="flex justify-between"><span className="text-muted">Students</span><span className="text-foreground font-medium">{validation?.totalRecords ?? "—"}</span></div>
+                    {pollData?.txHash && (
+                      <div className="flex justify-between"><span className="text-muted">Transaction</span><span className="font-mono text-[10px] text-foreground">{pollData.txHash.slice(0, 18)}…</span></div>
+                    )}
                   </div>
                 </div>
               ) : null}

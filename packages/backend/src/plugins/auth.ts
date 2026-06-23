@@ -37,12 +37,25 @@ export const authPlugin: FastifyPluginAsync = fp(async (app) => {
     },
   })
 
-  // Generic auth check — just verifies the token is valid
+  // Generic auth check — verifies the token from Authorization header first,
+  // then falls back to the accessToken cookie (needed for full page reloads
+  // on Railway where cross-origin headers may be strip-d).
   const requireAuth = async (req: FastifyRequest, rep: FastifyReply) => {
     try {
       req.jwtPayload = await req.jwtVerify<JwtPayload>()
+      return
     } catch {
-      return rep.code(401).send({ error: "Unauthorised" })
+      // jwtVerify may fail when the browser doesn't send the Authorization
+      // header on full page reloads. Try the accessToken cookie directly.
+      const token = req.cookies?.accessToken
+      if (!token) {
+        return rep.code(401).send({ error: "Unauthorised" })
+      }
+      try {
+        req.jwtPayload = app.jwt.verify<JwtPayload>(token)
+      } catch {
+        return rep.code(401).send({ error: "Unauthorised" })
+      }
     }
   }
 
