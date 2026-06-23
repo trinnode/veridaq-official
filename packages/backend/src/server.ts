@@ -43,6 +43,10 @@ const app = Fastify({
   // Limit request bodies to 10 MB. Excel files with thousands of rows are
   // typically well under this; raise it if institutions report failures.
   bodyLimit: 10 * 1024 * 1024,
+  // Trust the Railway proxy so req.protocol reflects x-forwarded-proto.
+  // Without this, cookies would always think they're on HTTP (internal
+  // proxy connection) and would set secure=false, breaking cross-origin auth.
+  trustProxy: true,
 })
 
 async function bootstrap() {
@@ -56,11 +60,22 @@ async function bootstrap() {
     contentSecurityPolicy: config.NODE_ENV === "production",
   })
 
-  // CORS — only allow the configured frontend origin
+  // CORS — allow the configured frontend URL and any Railway
+  // subdomain (dynamic `.up.railway.app` origins).  Railway
+  // generates per-service subdomains that the user can't predict
+  // at build time, so a static list won't work.
+  const isRailwayOrigin = (origin: string) =>
+    origin.endsWith(".up.railway.app") ||
+    /^https:\/\/[a-z0-9-]+\.railway\.app$/.test(origin)
+
   await app.register(cors, {
     origin: (origin, cb) => {
       if (!origin) return cb(null, true)
-      if (origin === config.FRONTEND_URL || extensionOrigins.includes(origin)) {
+      if (
+        origin === config.FRONTEND_URL ||
+        isRailwayOrigin(origin) ||
+        extensionOrigins.includes(origin)
+      ) {
         return cb(null, true)
       }
       return cb(new Error("Origin not allowed"), false)
