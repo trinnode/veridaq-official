@@ -153,19 +153,19 @@ async function main() {
 
   // ── Claim Definitions (pre-seeded for FUTMINNA) ───────────────────────
   // These map 1:1 to the 6 circuit claim types in credential.circom:
-  //   1 = Programme completion (year 1960-2030)
-  //   2 = Minimum Lower Second Class (classification >= 2)
-  //   3 = Minimum Upper Second Class (classification >= 3)
-  //   4 = First Class (classification == 4)
-  //   5 = CGPA above threshold (employer specifies threshold)
-  //   6 = Programme-specific completion (course + year valid)
+  //   T=1: Graduated — valid year 1960-2030
+  //   T=2: Minimum Second Class Lower — classification >= 2
+  //   T=3: Minimum Second Class Upper — classification >= 3
+  //   T=4: First Class — classification == 4
+  //   T=5: CGPA Above Threshold — employer specifies threshold manually
+  //   T=6: Programme Completion — course + year, manual institution review
   const claimDefs = [
-    { label: "Programme Completion", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student graduated in a valid year (1960–2030)" },
-    { label: "Minimum Lower Second Class", claimCode: 2, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Lower (classification ≥ 2)" },
-    { label: "Minimum Upper Second Class", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Upper (classification ≥ 3)" },
-    { label: "First Class Honours", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved First Class (classification == 4)" },
+    { label: "Graduated", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student graduated in a valid year (1960–2030)" },
+    { label: "Minimum Second Class Lower", claimCode: 2, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Lower (classification ≥ 2)" },
+    { label: "Minimum Second Class Upper", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Upper (classification ≥ 3)" },
+    { label: "First Class", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved First Class (classification == 4)" },
     { label: "CGPA Above Threshold", claimCode: 5, threshold: 350, reviewType: "AUTO" as const, description: "Verify CGPA meets a minimum threshold (employer sets the value)" },
-    { label: "Programme-Specific Completion", claimCode: 6, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed a specific programme of study" },
+    { label: "Programme Completion", claimCode: 6, threshold: 0, reviewType: "MANUAL" as const, description: "Institution confirms the student completed a specific programme" },
   ]
 
   for (const cd of claimDefs) {
