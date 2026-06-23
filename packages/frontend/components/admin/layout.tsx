@@ -35,23 +35,32 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
     window.location.href = "/admin/login"
   }
 
-  const [authTimeout, setAuthTimeout] = useState(false)
+  const [stuck, setStuck] = useState(false)
   useEffect(() => {
-    const t = setTimeout(() => setAuthTimeout(true), 8000)
+    const t = setTimeout(() => setStuck(true), 30000)
     return () => clearTimeout(t)
   }, [])
 
-  if (loading && !authTimeout) {
+  if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-void text-sm tracking-widest text-muted">
         <OrbitalLoader label="VERIFYING" />
         <span className="animate-pulse">Verifying session...</span>
+        {stuck && (
+          <p className="mt-4 max-w-xs text-center text-xs text-muted/60">
+            This is taking longer than expected. The backend may be cold-starting.
+            <br />
+            <a href="/admin/login" className="text-accent mt-2 inline-block hover:underline">
+              Go to login
+            </a>
+          </p>
+        )}
       </div>
     )
   }
 
   if (!user) {
-    router.push("/admin/login")
+    window.location.href = "/admin/login"
     return null
   }
 
