@@ -30,11 +30,17 @@ type TxResponse = {
   items: TransactionItem[]
 }
 
+function safeUsd(value: number | undefined | null): string {
+  if (value == null || typeof value !== "number" || isNaN(value)) return "0.00"
+  return value.toFixed(2)
+}
+
 export default function InstitutionEarningsPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [summary, setSummary] = useState<EarningsSummary | null>(null)
   const [txnResponse, setTxnResponse] = useState<TxResponse | null>(null)
+  const [apiError, setApiError] = useState<string | null>(null)
   const [showWithdraw, setShowWithdraw] = useState(false)
 
   useEffect(() => {
@@ -45,12 +51,30 @@ export default function InstitutionEarningsPage() {
 
   useEffect(() => {
     if (!user?.alsoEmployer) return
-    api.get("/earnings").then(({ data }) => setSummary(data as EarningsSummary))
-    api.get("/earnings/transactions").then(({ data }) => setTxnResponse(data as TxResponse))
+    setApiError(null)
+    api.get("/earnings")
+      .then(({ data }) => setSummary(data as EarningsSummary))
+      .catch(() => { /* handled below */ })
+    api.get("/earnings/transactions")
+      .then(({ data }) => setTxnResponse(data as TxResponse))
+      .catch((err) => {
+        const msg = err?.response?.data?.error ?? "Failed to load earnings data"
+        setApiError(msg)
+      })
   }, [user])
 
   if (loading || !user) return null
   if (!user.alsoEmployer) return null
+
+  if (apiError) {
+    return (
+      <DashboardLayout title="Earnings">
+        <div className="flex h-64 items-center justify-center">
+          <p className="text-muted text-sm">{apiError}</p>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout title="Earnings">
@@ -58,19 +82,19 @@ export default function InstitutionEarningsPage() {
         <div className="card bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Total Earned</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${summary?.totalEarnedUsd.toFixed(2) ?? "0.00"}
+            ${safeUsd(summary?.totalEarnedUsd)}
           </div>
         </div>
         <div className="card bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Available</div>
           <div className="mt-1 text-2xl font-bold text-accent">
-            ${summary?.availableUsd.toFixed(2) ?? "0.00"}
+            ${safeUsd(summary?.availableUsd)}
           </div>
         </div>
         <div className="card bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Withdrawn</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${summary?.withdrawnUsd.toFixed(2) ?? "0.00"}
+            ${safeUsd(summary?.withdrawnUsd)}
           </div>
         </div>
       </div>
@@ -108,7 +132,7 @@ export default function InstitutionEarningsPage() {
                   <div className="text-muted text-xs">{new Date(tx.createdAt).toLocaleDateString()}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-foreground">${tx.amountUsd.toFixed(2)}</div>
+                  <div className="text-sm font-semibold text-foreground">${safeUsd(tx.amountUsd)}</div>
                   <div className="text-xs text-accent">{tx.type}</div>
                 </div>
               </div>
@@ -124,7 +148,9 @@ export default function InstitutionEarningsPage() {
           onClose={() => setShowWithdraw(false)}
           onDone={() => {
             setShowWithdraw(false)
-            api.get("/earnings").then(({ data }) => setSummary(data))
+            api.get("/earnings")
+              .then(({ data }) => setSummary(data))
+              .catch(() => {})
           }}
         />
       )}

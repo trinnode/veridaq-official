@@ -51,8 +51,24 @@ export const paymentRoutes: FastifyPluginAsync = async (app) => {
     if (body.type === "INSTITUTION_FUNDING" && payerRole !== "INSTITUTION") {
       return rep.code(403).send({ error: "Only institutions can fund" })
     }
-    if (body.type === "EMPLOYER_TOPUP" && payerRole !== "EMPLOYER") {
-      return rep.code(403).send({ error: "Only employers can top up" })
+
+    // Resolve payerId — EMPLOYER_TOPUP may come from an institution with alsoEmployer
+    let payerId = req.jwtPayload.sub
+    if (body.type === "EMPLOYER_TOPUP") {
+      if (payerRole === "EMPLOYER") {
+        // Straight employer — use sub directly
+      } else if (payerRole === "INSTITUTION") {
+        const inst = await app.prisma.institution.findUnique({
+          where: { id: payerId },
+          select: { alsoEmployer: true, employerProfile: { select: { id: true } } },
+        })
+        if (!inst?.alsoEmployer || !inst.employerProfile) {
+          return rep.code(403).send({ error: "Only employers can top up" })
+        }
+        payerId = inst.employerProfile.id
+      } else {
+        return rep.code(403).send({ error: "Only employers can top up" })
+      }
     }
 
     // For fiat payments, forward to Crossmint order creation
@@ -63,7 +79,7 @@ export const paymentRoutes: FastifyPluginAsync = async (app) => {
         amountWei: body.amountWei,
         amountFiat: body.amountFiat ?? null,
         fiatCurrency: body.fiatCurrency ?? "USD",
-        payerId: req.jwtPayload.sub,
+        payerId,
         payerRole,
         description: body.description ?? null,
       })
@@ -79,7 +95,7 @@ export const paymentRoutes: FastifyPluginAsync = async (app) => {
       type: body.type as any,
       method: "CRYPTO",
       amountWei: body.amountWei,
-      payerId: req.jwtPayload.sub,
+      payerId,
       payerRole,
       description: body.description ?? null,
     })
@@ -103,12 +119,20 @@ export const paymentRoutes: FastifyPluginAsync = async (app) => {
     if (payerRole === "INSTITUTION") {
       const inst = await app.prisma.institution.findUnique({
         where: { id: req.jwtPayload.sub },
-        select: { onChainId: true, name: true, paymasterBalance: true, tier: true },
+        select: {
+          onChainId: true, name: true, paymasterBalance: true, tier: true,
+          alsoEmployer: true,
+          employerProfile: { select: { freeVerificationsRemaining: true, verificationCredits: true } },
+        },
       })
       if (inst) {
         institutionOnChainId = inst.onChainId
         institutionName = inst.name
         currentBalance = inst.paymasterBalance
+        if (inst.alsoEmployer && inst.employerProfile) {
+          freeRemaining = inst.employerProfile.freeVerificationsRemaining
+          credits = inst.employerProfile.verificationCredits
+        }
       }
     }
 
@@ -195,6 +219,19 @@ export const paymentRoutes: FastifyPluginAsync = async (app) => {
     const payerRole = req.jwtPayload.role as "INSTITUTION" | "EMPLOYER"
     const balance = await paymentSvc.getPayerBalance(req.jwtPayload.sub, payerRole)
     if (!balance) return rep.code(404).send({ error: "Entity not found" })
-    return balance
+
+    // For institutions with alsoEmployer, also fetch employer balance
+    let employerBalance: Record<string, unknown> | null = null
+    if (payerRole === "INSTITUTION") {
+      const inst = await app.prisma.institution.findUnique({
+        where: { id: req.jwtPayload.sub },
+        select: { alsoEmployer: true, employerProfile: { select: { id: true } } },
+      })
+      if (inst?.alsoEmployer && inst.employerProfile) {
+        employerBalance = await paymentSvc.getPayerBalance(inst.employerProfile.id, "EMPLOYER")
+      }
+    }
+
+    return { ...balance, employerBalance }
   })
 }
