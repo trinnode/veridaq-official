@@ -322,6 +322,101 @@ contract CredentialRegistryTest is Test {
     }
   }
 
+  // ── View function tests ──────────────────────────────────────────────────
+
+  function test_get_nullifier_for_commitment() public {
+    bytes32[] memory commitments = new bytes32[](1);
+    bytes32[] memory nullifiers = new bytes32[](1);
+    commitments[0] = keccak256("commitment1");
+    nullifiers[0]  = keccak256("nullifier1");
+
+    vm.prank(institutionAdmin);
+    credReg.registerBatch(INST_ID, commitments, nullifiers, 2024, 1, keccak256("batch1"));
+
+    bytes32 got = credReg.getNullifierForCommitment(commitments[0]);
+    assertEq(got, nullifiers[0]);
+  }
+
+  function test_get_nullifier_for_nonexistent_commitment() public view {
+    bytes32 got = credReg.getNullifierForCommitment(keccak256("nobody"));
+    assertEq(got, bytes32(0));
+  }
+
+  function test_get_institution_nullifiers() public {
+    bytes32[] memory commitments = new bytes32[](3);
+    bytes32[] memory nullifiers = new bytes32[](3);
+    for (uint256 i = 0; i < 3; i++) {
+      commitments[i] = keccak256(abi.encodePacked("c", i));
+      nullifiers[i]  = keccak256(abi.encodePacked("n", i));
+    }
+
+    vm.prank(institutionAdmin);
+    credReg.registerBatch(INST_ID, commitments, nullifiers, 2024, 1, keccak256("batch-multi"));
+
+    bytes32[] memory got = credReg.getInstitutionNullifiers(INST_ID);
+    assertEq(got.length, 3);
+    for (uint256 i = 0; i < 3; i++) {
+      assertEq(got[i], nullifiers[i]);
+    }
+  }
+
+  function test_get_institution_nullifiers_empty_for_unknown() public view {
+    bytes32[] memory got = credReg.getInstitutionNullifiers(keccak256("unknown"));
+    assertEq(got.length, 0);
+  }
+
+  function test_get_record_reverts_not_found() public {
+    vm.expectRevert(
+      abi.encodeWithSelector(CredentialRegistry.NotFound.selector, keccak256("ghost"))
+    );
+    credReg.getRecord(keccak256("ghost"));
+  }
+
+  function test_get_commitment_returns_zero_for_nonexistent() public view {
+    bytes32 c = credReg.getCommitment(keccak256("ghost"));
+    assertEq(c, bytes32(0));
+  }
+
+  // ── Pause / Unpause ───────────────────────────────────────────────────────
+
+  function test_pause_prevents_registration() public {
+    vm.prank(admin);
+    credReg.pause();
+
+    bytes32[] memory commitments = new bytes32[](1);
+    bytes32[] memory nullifiers  = new bytes32[](1);
+    commitments[0] = keccak256("c1");
+    nullifiers[0]  = keccak256("n1");
+
+    vm.prank(institutionAdmin);
+    vm.expectRevert();
+    credReg.registerBatch(INST_ID, commitments, nullifiers, 2024, 1, keccak256("paused-batch"));
+  }
+
+  function test_unpause_allows_registration() public {
+    vm.prank(admin);
+    credReg.pause();
+
+    vm.prank(admin);
+    credReg.unpause();
+
+    bytes32[] memory commitments = new bytes32[](1);
+    bytes32[] memory nullifiers  = new bytes32[](1);
+    commitments[0] = keccak256("c2");
+    nullifiers[0]  = keccak256("n2");
+
+    vm.prank(institutionAdmin);
+    credReg.registerBatch(INST_ID, commitments, nullifiers, 2024, 1, keccak256("unpaused-batch"));
+
+    assertTrue(credReg.exists(nullifiers[0]));
+  }
+
+  function test_pause_reverts_non_admin() public {
+    vm.prank(alice);
+    vm.expectRevert();
+    credReg.pause();
+  }
+
   // ── Helper Functions ──────────────────────────────────────────────────────
 
   /// @notice Generates a batch of unique commitments and nullifiers
