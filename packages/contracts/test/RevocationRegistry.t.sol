@@ -166,6 +166,23 @@ contract RevocationRegistryTest is Test {
         }
     }
 
+    function test_get_revocation_returns_empty_for_not_revoked() public {
+        bytes32 fakeNullifier = keccak256("not-revoked");
+        RevocationRegistry.Revocation memory rev = revReg.getRevocation(fakeNullifier);
+        assertEq(rev.revokedAt, 0);
+        assertEq(rev.nullifier, bytes32(0));
+    }
+
+    function test_get_revocation_uses_correct_nullifier() public {
+        vm.prank(institutionAdmin);
+        revReg.revokeCredential(nullifier, 4);
+
+        RevocationRegistry.Revocation memory rev = revReg.getRevocation(nullifier);
+        assertEq(rev.nullifier, nullifier);
+        assertEq(rev.institutionId, INST_ID);
+        assertEq(rev.reasonCode, 4);
+    }
+
     // ── Gas measurement ───────────────────────────────────────────────────────
 
     function test_gas_revoke_credential() public {

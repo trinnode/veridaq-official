@@ -199,6 +199,23 @@ contract PaymasterVaultTest is Test {
         );
     }
 
+    function test_withdrawal_reverts_bad_registry_address() public {
+        vm.deal(alice, 2 ether);
+        vm.prank(alice);
+        vault.fundInstitution{value: 1 ether}(INST_PAID);
+
+        // Pass a random address as institutionRegistry — staticcall succeeds but
+        // returns empty bytes, causing abi.decode to revert
+        vm.prank(institutionAdmin);
+        vm.expectRevert();
+        vault.withdrawInstitutionBalance(
+            INST_PAID,
+            payable(institutionAdmin),
+            0.5 ether,
+            address(0xdead)
+        );
+    }
+
     // ── Emergency withdrawal ──────────────────────────────────────────────────
 
     function test_emergency_withdraw_sponsored_pool() public {
@@ -386,5 +403,100 @@ contract PaymasterVaultTest is Test {
         (bool ok,) = address(vault).call{value: 0.5 ether}("");
         assertTrue(ok);
         assertEq(vault.sponsoredPool(), 0.5 ether);
+    }
+
+    // ── Additional revert paths ────────────────────────────────────────────────
+
+    function test_post_op_reverts_non_entry_point() public {
+        bytes memory context = abi.encode(INST_ID, true, uint256(0.1 ether));
+
+        vm.prank(alice);
+        vm.expectRevert(PaymasterVault.OnlyEntryPoint.selector);
+        vault.postOp(0, context, 0.06 ether);
+    }
+
+    function test_post_op_no_refund_when_cost_equals_max() public {
+        vm.prank(admin);
+        vault.fundSponsoredPool{value: 1 ether}();
+
+        uint256 maxCost    = 0.1 ether;
+        uint256 actualCost = 0.1 ether; // no refund
+
+        bytes memory paymasterAndData = abi.encodePacked(
+            address(vault),
+            abi.encode(INST_ID, uint256(10))
+        );
+        vm.prank(address(entryPoint));
+        (bytes memory context,) = vault.validatePaymasterUserOp(paymasterAndData, maxCost);
+
+        uint256 poolAfterValidate = vault.sponsoredPool();
+
+        vm.prank(address(entryPoint));
+        vault.postOp(0, context, actualCost);
+
+        // Pool should stay the same as after validate (no refund)
+        assertEq(vault.sponsoredPool(), poolAfterValidate);
+    }
+
+    function test_validate_free_tier_large_batch_uses_institution_balance() public {
+        // FREE tier with batch > 999 should NOT be sponsored
+        // If institution has no balance, it should revert with insufficient balance
+        bytes memory paymasterAndData = abi.encodePacked(
+            address(vault),
+            abi.encode(INST_ID, uint256(1000))
+        );
+
+        vm.prank(address(entryPoint));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                PaymasterVault.InsufficientInstitutionBalance.selector,
+                INST_ID,
+                0.1 ether,
+                0
+            )
+        );
+        vault.validatePaymasterUserOp(paymasterAndData, 0.1 ether);
+    }
+
+    function test_validate_reverts_insufficient_institution_balance() public {
+        // Fund institution with small amount
+        vm.deal(alice, 2 ether);
+        vm.prank(alice);
+        vault.fundInstitution{value: 0.05 ether}(INST_PAID);
+
+        bytes memory paymasterAndData = abi.encodePacked(
+            address(vault),
+            abi.encode(INST_PAID, uint256(1000))
+        );
+
+        vm.prank(address(entryPoint));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                PaymasterVault.InsufficientInstitutionBalance.selector,
+                INST_PAID,
+                1 ether,
+                0.05 ether
+            )
+        );
+        vault.validatePaymasterUserOp(paymasterAndData, 1 ether);
+    }
+
+    function test_validate_paymaster_user_op_emits_after_post() public {
+        vm.prank(admin);
+        vault.fundSponsoredPool{value: 2 ether}();
+
+        bytes memory paymasterAndData = abi.encodePacked(
+            address(vault),
+            abi.encode(INST_ID, uint256(10))
+        );
+
+        vm.prank(address(entryPoint));
+        (bytes memory context,) = vault.validatePaymasterUserOp(paymasterAndData, 0.1 ether);
+
+        vm.expectEmit(true, true, false, true);
+        emit PaymasterVault.GasSponsored(INST_ID, 0.08 ether);
+
+        vm.prank(address(entryPoint));
+        vault.postOp(0, context, 0.08 ether);
     }
 }

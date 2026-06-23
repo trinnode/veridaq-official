@@ -265,4 +265,104 @@ contract InstitutionRegistryTest is Test {
         vm.prank(admin);
         reg.deactivateInstitution(ID);
     }
+
+    // ── transferAdminWallet ─────────────────────────────────────────────────────
+
+    function test_transfer_admin_wallet() public {
+        vm.prank(admin);
+        reg.registerInstitution(ID, "FUTMinna", alice, KEY);
+
+        address newWallet = makeAddr("newWallet");
+        vm.prank(admin);
+        reg.transferAdminWallet(ID, newWallet);
+
+        assertEq(reg.getAdminWallet(ID), newWallet);
+    }
+
+    function test_transfer_admin_wallet_emits_event() public {
+        vm.prank(admin);
+        reg.registerInstitution(ID, "FUTMinna", alice, KEY);
+
+        address newWallet = makeAddr("newWallet");
+        vm.expectEmit(true, true, false, true);
+        emit InstitutionRegistry.AdminWalletTransferred(ID, newWallet);
+
+        vm.prank(admin);
+        reg.transferAdminWallet(ID, newWallet);
+    }
+
+    function test_transfer_admin_wallet_reverts_not_found() public {
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(InstitutionRegistry.NotFound.selector, keccak256("nonexistent"))
+        );
+        reg.transferAdminWallet(keccak256("nonexistent"), alice);
+    }
+
+    function test_transfer_admin_wallet_reverts_zero_address() public {
+        vm.prank(admin);
+        reg.registerInstitution(ID, "FUTMinna", alice, KEY);
+
+        vm.prank(admin);
+        vm.expectRevert(InstitutionRegistry.ZeroAddress.selector);
+        reg.transferAdminWallet(ID, address(0));
+    }
+
+    function test_transfer_admin_wallet_reverts_non_admin() public {
+        vm.prank(admin);
+        reg.registerInstitution(ID, "FUTMinna", alice, KEY);
+
+        vm.prank(alice);
+        vm.expectRevert();
+        reg.transferAdminWallet(ID, bob);
+    }
+
+    // ── unpause ─────────────────────────────────────────────────────────────────
+
+    function test_unpause_allows_registration() public {
+        vm.prank(admin);
+        reg.pause();
+        vm.prank(admin);
+        reg.unpause();
+
+        vm.prank(admin);
+        reg.registerInstitution(ID, "FUTMinna", alice, KEY);
+        assertTrue(reg.isActive(ID));
+    }
+
+    // ── Additional revert paths for existing functions ──────────────────────────
+
+    function test_deactivate_reverts_not_found() public {
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(InstitutionRegistry.NotFound.selector, keccak256("ghost"))
+        );
+        reg.deactivateInstitution(keccak256("ghost"));
+    }
+
+    function test_reactivate_reverts_not_found() public {
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(InstitutionRegistry.NotFound.selector, keccak256("ghost"))
+        );
+        reg.reactivateInstitution(keccak256("ghost"));
+    }
+
+    function test_rotate_key_reverts_not_found() public {
+        vm.prank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(InstitutionRegistry.NotFound.selector, keccak256("ghost"))
+        );
+        reg.rotatePublicKey(keccak256("ghost"), hex"04ddee");
+    }
+
+    function test_get_admin_wallet_returns_zero_for_nonexistent() public view {
+        address wallet = reg.getAdminWallet(keccak256("nonexistent"));
+        assertEq(wallet, address(0));
+    }
+
+    function test_get_public_key_returns_empty_for_nonexistent() public view {
+        bytes memory key = reg.getPublicKey(keccak256("nonexistent"));
+        assertEq(key.length, 0);
+    }
 }
