@@ -35,9 +35,12 @@ export class BatchQueue {
         maxRetriesPerRequest: null,
       }
     } else {
-      // Local Redis: pass URL string directly
+      // Local Redis: parse URL to extract host and port
+      const url = new URL(redisUrl)
       connection = {
-        host: redisUrl,
+        host: url.hostname,
+        port: Number(url.port || "6379"),
+        password: url.password || undefined,
         connectTimeout: 10_000,
         enableOfflineQueue: false,
         maxRetriesPerRequest: null,
