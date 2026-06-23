@@ -9,10 +9,22 @@
  * GET  /api/auth/me
  */
 
-import type { FastifyPluginAsync } from "fastify"
+import type { FastifyPluginAsync, FastifyRequest } from "fastify"
 import { z } from "zod"
 import { AuthService } from "../services/auth.service.js"
 import { config } from "../config/index.js"
+
+// ── Secure cookie helper ──────────────────────────────────────
+// On Railway, the proxy terminates HTTPS and forwards via HTTP
+// with x-forwarded-proto=HTTPS. We need Secure + SameSite=None
+// for cross-origin cookies between the frontend and backend
+// domains.  When the connection is plain HTTP (local dev without
+// TLS) we fall back to SameSite=Lax so cookies aren't rejected.
+// Must NOT use NODE_ENV here — Railway may or may not set it, and
+// the connection security is the only reliable signal.
+function cookieSecure(req: FastifyRequest): boolean {
+  return req.protocol === "https" || req.headers["x-forwarded-proto"] === "https"
+}
 
 const loginBody = z.object({
   email: z.string().email(),
@@ -67,18 +79,18 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     if (!result) return rep.code(401).send({ error: "Invalid credentials" })
 
     // Access token in httpOnly cookie so it survives full page loads
+    const secure = cookieSecure(req)
     rep.setCookie("accessToken", result.accessToken, {
       httpOnly: true,
-      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
-      secure: process.env["NODE_ENV"] === "production",
+      sameSite: secure ? "none" : "lax",
+      secure,
       path: "/api",
       maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
     })
-    // Refresh token in separate httpOnly cookie (only sent to /refresh)
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
-      secure: process.env["NODE_ENV"] === "production",
+      sameSite: secure ? "none" : "lax",
+      secure,
       path: "/api/auth/refresh",
       maxAge: 7 * 24 * 60 * 60,
     })
@@ -93,17 +105,18 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const result = await authSvc.loginEmployer(email, password)
     if (!result) return rep.code(401).send({ error: "Invalid credentials" })
 
+    const secure = cookieSecure(req)
     rep.setCookie("accessToken", result.accessToken, {
       httpOnly: true,
-      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
-      secure: process.env["NODE_ENV"] === "production",
+      sameSite: secure ? "none" : "lax",
+      secure,
       path: "/api",
       maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
     })
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
-      secure: process.env["NODE_ENV"] === "production",
+      sameSite: secure ? "none" : "lax",
+      secure,
       path: "/api/auth/refresh",
       maxAge: 7 * 24 * 60 * 60,
     })
@@ -118,17 +131,18 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const result = await authSvc.loginAdmin(email, password)
     if (!result) return rep.code(401).send({ error: "Invalid credentials" })
 
+    const secure = cookieSecure(req)
     rep.setCookie("accessToken", result.accessToken, {
       httpOnly: true,
-      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
-      secure: process.env["NODE_ENV"] === "production",
+      sameSite: secure ? "none" : "lax",
+      secure,
       path: "/api",
       maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
     })
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
-      secure: process.env["NODE_ENV"] === "production",
+      sameSite: secure ? "none" : "lax",
+      secure,
       path: "/api/auth/refresh",
       maxAge: 7 * 24 * 60 * 60,
     })
@@ -149,11 +163,11 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       return rep.code(401).send({ error: "Invalid or expired refresh token" })
     }
 
-    // Rotate the access token cookie so it survives future full page loads
+    const secure = cookieSecure(req)
     rep.setCookie("accessToken", result.accessToken, {
       httpOnly: true,
-      sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
-      secure: process.env["NODE_ENV"] === "production",
+      sameSite: secure ? "none" : "lax",
+      secure,
       path: "/api",
       maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
     })
