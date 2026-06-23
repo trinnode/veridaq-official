@@ -41,16 +41,16 @@ export default function ClaimsPage() {
     fetchClaims()
   }, [user])
 
-  const autoGenerateCode = (text: string) => {
-    const l = text.toLowerCase()
-    if (l.includes("first class") || l.includes("first honours")) return 4
-    if (l.includes("upper second")) return 3
-    if (l.includes("lower second")) return 2
-    if (l.includes("programme completion") || l.includes("program completion") || l.includes("graduated")) return 1
-    if (l.includes("programme-specific") || l.includes("course")) return 6
-    if (l.includes("cgpa") || l.includes("threshold")) return 5
-    return 1
-  }
+    const autoGenerateCode = (text: string) => {
+      const l = text.toLowerCase()
+      if (l.includes("first class") || l.includes("first honours")) return 4
+      if (l.includes("upper second")) return 3
+      if (l.includes("lower second")) return 2
+      if (l.includes("graduated") || l.includes("graduation")) return 1
+      if (l.includes("programme completion") || l.includes("program completion") || l.includes("course")) return 6
+      if (l.includes("cgpa") || l.includes("threshold")) return 5
+      return 1
+    }
 
   const handleLabelChange = (e: any) => {
     const val = e.target.value

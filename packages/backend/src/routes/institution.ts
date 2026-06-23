@@ -480,12 +480,12 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
     // Auto-create default claims if institution has none (covers pre-existing institutions)
     if (items.length === 0) {
       const defaults = [
-        { label: "Programme Completion", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student graduated in a valid year (1960–2030)" },
-        { label: "Minimum Lower Second Class", claimCode: 2, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Lower (classification ≥ 2)" },
-        { label: "Minimum Upper Second Class", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Upper (classification ≥ 3)" },
-        { label: "First Class Honours", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved First Class (classification == 4)" },
+        { label: "Graduated", claimCode: 1, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student graduated in a valid year (1960–2030)" },
+        { label: "Minimum Second Class Lower", claimCode: 2, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Lower (classification ≥ 2)" },
+        { label: "Minimum Second Class Upper", claimCode: 3, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved at least Second Class Upper (classification ≥ 3)" },
+        { label: "First Class", claimCode: 4, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student achieved First Class (classification == 4)" },
         { label: "CGPA Above Threshold", claimCode: 5, threshold: 350, reviewType: "AUTO" as const, description: "Verify CGPA meets a minimum threshold (employer sets the value)" },
-        { label: "Programme-Specific Completion", claimCode: 6, threshold: 0, reviewType: "AUTO" as const, description: "Verify the student completed a specific programme of study" },
+        { label: "Programme Completion", claimCode: 6, threshold: 0, reviewType: "MANUAL" as const, description: "Institution confirms the student completed a specific programme" },
       ]
       try {
         await app.prisma.claimDefinition.createMany({

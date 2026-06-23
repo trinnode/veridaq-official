@@ -14,6 +14,15 @@ type Item = {
   institution: { name: string }
 }
 
+const CLAIM_LABELS: Record<number, string> = {
+  1: "Graduated",
+  2: "Minimum Second Class Lower",
+  3: "Minimum Second Class Upper",
+  4: "First Class",
+  5: "CGPA Above Threshold",
+  6: "Programme Completion",
+}
+
 const resultClass: Record<string, string> = {
   VERIFIED: "badge-green",
   CLAIM_NOT_SATISFIED: "badge-red",
@@ -56,7 +65,7 @@ export function HistoryTable({ items }: { items: Item[] }) {
             <tr key={item.id} className="table-row">
               <td className="text-muted py-3">{format(new Date(item.createdAt), "dd MMM yyyy")}</td>
               <td className="py-3 text-foreground">{item.institution.name}</td>
-              <td className="text-muted py-3">Type {item.claimType}</td>
+              <td className="text-muted py-3">{CLAIM_LABELS[item.claimType] ?? `Type ${item.claimType}`}</td>
               <td className="py-3">
                 {item.result ? (
                   <span className={resultClass[item.result] ?? "badge-muted"}>

@@ -14,6 +14,8 @@ type Institution = {
   claims: { id: string; label: string; claimCode: number; threshold: number }[]
 }
 
+const MANUAL_CLAIM_CODES = [6]
+
 type Result = { id: string; status: string; result: string | null }
 
 export function VerifyButton({ onComplete }: { onComplete(): void }) {
@@ -76,10 +78,22 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
       setProcessing(true)
       setLoading(false)
 
+      const isManual = MANUAL_CLAIM_CODES.includes(claimType)
+
       let attempts = 0
       const poll = setInterval(async () => {
         attempts++
         const { data: r } = await api.get(`/verify/request/${data.requestId}`)
+
+        if (isManual && r.status === "AWAITING_INSTITUTION") {
+          clearInterval(poll)
+          setProcessing(false)
+          setResult({ id: data.requestId, status: "AWAITING_INSTITUTION", result: null })
+          onComplete()
+          toast.success("Request submitted — awaiting institution review")
+          return
+        }
+
         if (r.status === "COMPLETED" || r.status === "FAILED") {
           clearInterval(poll)
           setProcessing(false)
@@ -216,8 +230,12 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
         <motion.div className="bg-surface-card border-accent/20 flex items-center gap-3 rounded-lg border px-4 py-3" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <Loader2 className="h-5 w-5 animate-spin text-accent" />
           <div>
-            <p className="text-sm font-medium text-foreground">Verifying Credential...</p>
-            <p className="text-muted text-xs">Generating zero-knowledge proof</p>
+            <p className="text-sm font-medium text-foreground">
+              {MANUAL_CLAIM_CODES.includes(claimType) ? "Submitting for Review..." : "Verifying Credential..."}
+            </p>
+            <p className="text-muted text-xs">
+              {MANUAL_CLAIM_CODES.includes(claimType) ? "The institution will confirm your claim" : "Generating zero-knowledge proof"}
+            </p>
           </div>
         </motion.div>
       )}
@@ -228,7 +246,16 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
         </motion.div>
       )}
 
-      {result && (
+      {result && result.status === "AWAITING_INSTITUTION" && (
+        <motion.div className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-sm font-medium text-orange-400" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Awaiting institution review — check back later</span>
+          </div>
+        </motion.div>
+      )}
+
+      {result && result.status !== "AWAITING_INSTITUTION" && (
         <motion.div className={`rounded-lg px-4 py-3 text-sm font-medium ${result.result === "VERIFIED" ? "bg-accent-muted text-accent border-accent/20 border" : "bg-error-bg text-error border-error/20 border"}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-2">
             {result.result === "VERIFIED" ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}

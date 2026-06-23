@@ -133,7 +133,9 @@ export default function VerificationsPage() {
                     <div className="font-medium">{r.employer?.name || r.employerId.substring(0, 8)}</div>
                   </td>
                   <td className="px-4 py-3 font-mono opacity-80">{r.matricNumber}</td>
-                  <td className="hidden px-4 py-3 md:table-cell">Code {r.claimType}</td>
+                  <td className="hidden px-4 py-3 md:table-cell text-muted text-xs">
+                    {({ 1: "Graduated", 2: "2nd Class Lower", 3: "2nd Class Upper", 4: "First Class", 5: "CGPA", 6: "Programme" } as Record<number, string>)[r.claimType] ?? `T${r.claimType}`}
+                  </td>
                   <td className="px-4 py-3">
                     {getStatusBadge(r.status)}
                   </td>
