@@ -162,7 +162,15 @@ export class EarningsService {
       skip,
       take: limit,
     })
-    return { total, page, limit, items }
+    const mapped = items.map((item) => ({
+      ...item,
+      amountUsd: item.amountUsd.toNumber(),
+      amountWei: item.amountWei.toNumber(),
+      platformShareUsd: item.platformShareUsd?.toNumber() ?? null,
+      institutionShareUsd: item.institutionShareUsd?.toNumber() ?? null,
+      poolShareUsd: item.poolShareUsd?.toNumber() ?? null,
+    }))
+    return { total, page, limit, items: mapped }
   }
 
   // ─── Set payout wallet ───────────────────────────────────────────────
