@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import PDFDocument from "pdfkit"
 import qr from "qr-image"
-import { resolve } from "path"
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "2-digit",
@@ -11,20 +10,20 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   minute: "2-digit",
 })
 
-const LOGO_WHITE = resolve(process.cwd(), "packages/frontend/public/logo-white.png")
-const LOGO_BLACK = resolve(process.cwd(), "packages/frontend/public/logo-black.png")
-
-const NAVY = "#0f172a"
+// ── VERIDAQ Brand Colors ──────────────────────────────────────────
+const VOID = "#05050a"
+const FOREGROUND = "#18181b"
+const MUTED = "#646473"
+const MUTED_SUBTLE = "#8c8c9b"
+const SURFACE = "#f0f0f2"
+const SURFACE_CARD = "#ffffff"
+const SURFACE_BORDER = "#e4e4e7"
+const ACCENT = "#be2a96"
+const LOGO_RED = "#e11d48"
+const SUCCESS = "#16a34a"
+const WARNING = "#d97706"
 const WHITE = "#ffffff"
-const FG = "#1e293b"
-const MUTED = "#64748b"
-const BORDER = "#e2e8f0"
-const ROW_LIGHT = "#f8fafc"
 const LINK = "#2563eb"
-const GREEN_BG = "#f0fdf4"
-const GREEN = "#16a34a"
-const AMBER_BG = "#fffbeb"
-const AMBER = "#d97706"
 
 export class ReportService {
   constructor(private prisma: PrismaClient) {}
@@ -76,6 +75,7 @@ export class ReportService {
       result: request.result,
       isVerified,
       txHash: request.txHash,
+      proofJson: request.proofJson,
       credentialCommitment: request.credential?.commitment ?? null,
       credentialNullifier: request.credential?.nullifier ?? null,
       graduationYear: request.credential?.graduationYear ?? null,
@@ -98,6 +98,7 @@ export class ReportService {
     result: string
     isVerified: boolean
     txHash: string | null
+    proofJson: unknown
     credentialCommitment: string | null
     credentialNullifier: string | null
     graduationYear: number | null
@@ -120,36 +121,58 @@ export class ReportService {
       const LX = M
       const PAGE_BOTTOM = doc.page.height - M
 
-      let rowToggle = false
+      // ── VERIDAQ Shield Logo ─────────────────────────────────────
+      function drawShieldLogo(x: number, y: number, size: number) {
+        const s = size / 512
+        doc.save()
+        doc.translate(x, y)
+        doc.scale(s)
 
-      function row(label: string, value: string, mono = false) {
-        const rh = 14
-        if (doc.y + rh > PAGE_BOTTOM) { doc.addPage(); rowToggle = false }
-        rowToggle = !rowToggle
+        // Shield outline
+        doc.path("M256 464c0 0 170-85 170-213V106l-170-64-170 64v145c0 128 170 213 170 213z")
+        doc.fill(LOGO_RED)
+
+        // Checkmark
+        doc.path("M170 256l56 56 120-120")
+        doc.lineWidth(40)
+        doc.lineCap("round")
+        doc.lineJoin("round")
+        doc.stroke(WHITE)
+
+        doc.restore()
+      }
+
+      // ── Section heading ─────────────────────────────────────────
+      function section(title: string) {
+        if (doc.y + 30 > PAGE_BOTTOM) { doc.addPage() }
+        doc.y += 10
+        doc.fontSize(10).fillColor(ACCENT).font(FONT_BOLD)
+        doc.text(title, LX, doc.y)
+        doc.y += 2
+        doc.rect(LX, doc.y, CW, 1).fill(SURFACE_BORDER)
+        doc.y += 8
+      }
+
+      // ── Detail row ──────────────────────────────────────────────
+      function detailRow(label: string, value: string, mono = false) {
+        const rh = 16
+        if (doc.y + rh > PAGE_BOTTOM) { doc.addPage() }
         const ry = doc.y
-        doc.rect(LX, ry, CW, rh).fill(rowToggle ? ROW_LIGHT : WHITE)
-        doc.fontSize(7.5).fillColor(MUTED).font(FONT)
-        doc.text(label, LX + 8, ry + 3, { width: 130 })
-        doc.fillColor(FG)
-        if (mono) doc.font(FONT_MONO).fontSize(6.5)
-        else doc.font(FONT).fontSize(7.5)
-        doc.text(value, LX + 146, ry + 3, { width: CW - 160, lineBreak: false })
+        // Subtle background
+        doc.rect(LX, ry, CW, rh).fill(SURFACE)
+        doc.fontSize(8).fillColor(MUTED).font(FONT)
+        doc.text(label, LX + 10, ry + 4, { width: 140 })
+        doc.fillColor(FOREGROUND)
+        if (mono) doc.font(FONT_MONO).fontSize(7)
+        else doc.font(FONT).fontSize(8.5)
+        doc.text(value, LX + 155, ry + 4, { width: CW - 170, lineBreak: false })
         doc.y = ry + rh
       }
 
-      function section(title: string) {
-        if (doc.y + 30 > PAGE_BOTTOM) { doc.addPage(); rowToggle = false }
-        doc.y += 8
-        doc.fontSize(9).fillColor(NAVY).font(FONT_BOLD)
-        doc.text(title, LX, doc.y)
-        doc.y += 2
-        doc.rect(LX, doc.y, CW, 0.5).fill(BORDER)
-        doc.y += 6
-      }
-
-      function drawQrCode(url: string, x: number, y: number, size: number) {
+      // ── QR Code ─────────────────────────────────────────────────
+      function drawQr(url: string, x: number, y: number, size: number) {
         try {
-          const qrBuffer = qr.imageSync(url, { type: "png", size: 8, margin: 1 })
+          const qrBuffer = qr.imageSync(url, { type: "png", size: 10, margin: 1 })
           doc.image(qrBuffer, x, y, { width: size, height: size })
         } catch {
           doc.fontSize(6).fillColor(MUTED).font(FONT)
@@ -157,223 +180,225 @@ export class ReportService {
         }
       }
 
-      // ── Seal drawing ──────────────────────────────────────────────
-      function drawSeal(cx: number, cy: number, radius: number, institutionName: string) {
-        const name = institutionName.length > 30 ? institutionName.slice(0, 27) + "..." : institutionName
-        doc.lineWidth(1.5)
-        doc.circle(cx, cy, radius).stroke(NAVY)
-        doc.circle(cx, cy, radius - 4).stroke(NAVY)
+      // ════════════════ HEADER ═════════════════════════════════════
+      doc.rect(0, 0, doc.page.width, 56).fill(VOID)
 
-        const arcRadius = radius - 10
-        const arcStart = -Math.PI * 0.8
-        const arcEnd = Math.PI * 0.8
-        const chars = name.split("")
-        const totalAngle = arcEnd - arcStart
-        const charAngle = chars.length > 1 ? totalAngle / (chars.length - 1) : 0
-        doc.fontSize(7).fillColor(NAVY).font(FONT_BOLD)
-        chars.forEach((ch, i) => {
-          const angle = arcStart + charAngle * i
-          const cx2 = cx + arcRadius * Math.cos(angle)
-          const cy2 = cy + arcRadius * Math.sin(angle)
-          doc.save()
-          doc.translate(cx2, cy2)
-          doc.rotate((angle * 180) / Math.PI + 90)
-          doc.text(ch, -3, -3.5, { width: 6, align: "center", lineBreak: false })
-          doc.restore()
-        })
+      // Logo
+      drawShieldLogo(M + 2, 10, 36)
 
-        doc.fontSize(16).fillColor(NAVY).font(FONT_BOLD)
-        doc.text("V", cx - 4, cy - 9, { width: 8, align: "center", lineBreak: false })
+      // Title
+      doc.fontSize(14).fillColor(WHITE).font(FONT_BOLD)
+      doc.text("VERIDAQ", M + 46, 13)
 
-        doc.fontSize(5).fillColor(NAVY).font(FONT)
-        doc.text("VERIDAQ", cx - 12, cy + 3, { width: 24, align: "center", lineBreak: false })
-      }
+      doc.fontSize(7).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.text("Credential Verification Report", M + 46, 31)
 
-      // ── Stamp drawing ─────────────────────────────────────────────
-      function drawStamp(text: string, x: number, y: number, w: number, h: number, color: string) {
-        doc.save()
-        doc.opacity(0.15)
-        doc.lineWidth(2)
-        doc.rect(x, y, w, h).stroke(color)
-        doc.fontSize(16).fillColor(color).font(FONT_BOLD)
-        doc.text(text, x, y + (h - 16) / 2, { width: w, align: "center", lineBreak: false })
-        doc.restore()
-      }
-
-      // ════════════════ HEADER ═══════════════════════════════════════
-      doc.rect(0, 0, doc.page.width, 50).fill(NAVY)
-      doc.rect(0, 50, doc.page.width, 1).fill(MUTED)
-
-      try { doc.image(LOGO_WHITE, M, 13, { width: 24, height: 24 }) } catch { /* logo not found */ }
-      doc.fontSize(15).fillColor(WHITE).font(FONT_BOLD)
-      doc.text("VERIDAQ", M + 32, 13)
-      doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-      doc.text("Credential Verification Report", M + 32, 31)
-
-      doc.fontSize(8).fillColor(WHITE).font(FONT_MONO)
+      // Reference
       const ref = data.requestId.slice(0, 8).toUpperCase()
-      doc.text(`REF: ${ref}`, M, 13, { width: CW, align: "right" })
-      doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-      doc.text("CONFIDENTIAL", M, 27, { width: CW, align: "right" })
+      doc.fontSize(9).fillColor(WHITE).font(FONT_MONO)
+      doc.text(`REF: ${ref}`, M, 12, { width: CW, align: "right" })
+      doc.fontSize(6.5).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.text("CONFIDENTIAL", M, 26, { width: CW, align: "right" })
 
-      doc.y = 60
+      doc.y = 66
 
-      // ════════════════ RESULT BADGE ═════════════════════════════════
+      // ════════════════ RESULT BADGE ═══════════════════════════════
       if (data.isVerified) {
-        const bc = GREEN
-        const bb = GREEN_BG
-        doc.roundedRect(LX, doc.y, CW, 28, 3).fill(bb)
-        doc.roundedRect(LX, doc.y, CW, 28, 3).lineWidth(0.5).stroke(bc)
-        doc.fontSize(12).fillColor(bc).font(FONT_BOLD)
-        doc.text("VERIFIED", LX + 12, doc.y + 6)
-        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-        doc.text("Cryptographic proof verified on-chain", LX + 12, doc.y + 21)
-        doc.y += 36
+        // Verified badge
+        doc.roundedRect(LX, doc.y, CW, 36, 4)
+        doc.fillOpacity(0.06).fill(SUCCESS).fillOpacity(1)
+        doc.roundedRect(LX, doc.y, CW, 36, 4).lineWidth(1).stroke(SUCCESS)
 
-        // ════════════════ VERIFICATION DETAILS ═════════════════════════
-        section("Verification Details")
-        row("Institution", data.institutionName)
-        row("Matriculation Number", data.matricNumber)
-        row("Employer", data.employerName)
-        row("Claim Type", data.claimLabel)
-        row("Result", data.result.replace(/_/g, " "))
-        row("Submitted", dateFormatter.format(data.createdAt))
-        row("Completed", dateFormatter.format(data.completedAt))
-        if (data.claimDescription) row("Description", data.claimDescription)
-        if (data.threshold > 0) row("Threshold", `${data.threshold}`)
-        if (data.graduationYear) row("Graduation Year", String(data.graduationYear))
-        row("Institution Chain ID", data.institutionOnChainId, true)
+        // Checkmark icon
+        doc.save()
+        doc.translate(LX + 14, doc.y + 10)
+        doc.circle(0, 0, 8).fill(SUCCESS)
+        doc.path("M-4 0l3 3 5-6")
+        doc.lineWidth(2).lineCap("round").lineJoin("round").stroke(WHITE)
+        doc.restore()
 
-        doc.y += 4
-
-        // ════════════════ ON-CHAIN PROOF ═══════════════════════════════
-        section("On-Chain Proof")
-        row("Verification Method", "Groth16 Zero-Knowledge Proof")
-        row("Network", "Base Sepolia (L2)")
-        if (data.txHash) {
-          row("Transaction Hash", data.txHash, true)
-          doc.y += 1
-          const url = `https://sepolia.basescan.org/tx/${data.txHash}`
-          doc.fontSize(6.5).fillColor(LINK).font(FONT_MONO)
-          doc.text(url, LX + 8, doc.y, { width: CW - 16, link: url, underline: true, lineBreak: false })
-          doc.y += 13
-
-          // QR code
-          doc.y += 4
-          drawQrCode(url, LX + CW - 60, doc.y, 50)
-          doc.y += 58
-        }
-        doc.y += 4
-
-        // ════════════════ ZERO-KNOWLEDGE PROOF ═════════════════════════
-        section("Zero-Knowledge Proof")
-        const zkpNote = "The following values are stored on-chain and were verified using a Groth16 zero-knowledge proof."
-        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-        doc.text(zkpNote, LX + 8, doc.y, { width: CW - 16, lineBreak: false })
-        doc.y += 11
-
-        if (data.credentialCommitment) row("Poseidon Commitment", data.credentialCommitment, true)
-        if (data.credentialNullifier) row("Nullifier", data.credentialNullifier, true)
-
-        doc.y += 5
-
-        // ════════════════ AUTHENTICITY SEAL ════════════════════════════
-        section("Authenticity Seal")
-
-        const sa = doc.y
-        doc.roundedRect(LX, sa, CW, 52, 3).fill(ROW_LIGHT)
-        doc.roundedRect(LX, sa, CW, 52, 3).lineWidth(0.5).stroke(BORDER)
-
-        // Draw the seal with institution name
-        const sealCx = LX + 40
-        const sealCy = sa + 26
-        drawSeal(sealCx, sealCy, 22, data.institutionName)
-
-        doc.fontSize(8).fillColor(NAVY).font(FONT_BOLD)
-        doc.text("VERIFIED BY " + data.institutionName.toUpperCase(), LX + 68, sa + 8)
-        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-        doc.text("This verification is independently verifiable on the Base blockchain.", LX + 68, sa + 22)
-        doc.text("Verify the transaction hash at sepolia.basescan.org.", LX + 68, sa + 31)
-        doc.text("Issued to: " + data.employerName, LX + 68, sa + 40)
-
-        doc.y = sa + 60
-
-        // Stamp overlay
-        drawStamp("VERIFIED", LX + CW - 90, doc.y - 30, 80, 50, GREEN)
-
+        doc.fontSize(13).fillColor(SUCCESS).font(FONT_BOLD)
+        doc.text("Credential Verified", LX + 34, doc.y + 5)
+        doc.fontSize(7.5).fillColor(FOREGROUND).font(FONT)
+        doc.text("Cryptographic zero-knowledge proof validated on-chain", LX + 34, doc.y + 21)
+        doc.y += 44
       } else {
-        // ════════════════ NOT SATISFIED (scanty report) ════════════════
-        const bc = AMBER
-        const bb = AMBER_BG
-        doc.roundedRect(LX, doc.y, CW, 28, 3).fill(bb)
-        doc.roundedRect(LX, doc.y, CW, 28, 3).lineWidth(0.5).stroke(bc)
-        doc.fontSize(12).fillColor(bc).font(FONT_BOLD)
-        doc.text("CLAIM NOT SATISFIED", LX + 12, doc.y + 6)
-        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-        doc.text("The submitted credential does not satisfy the requested claim threshold.", LX + 12, doc.y + 21)
-        doc.y += 36
+        // Not satisfied badge
+        doc.roundedRect(LX, doc.y, CW, 36, 4)
+        doc.fillOpacity(0.06).fill(WARNING).fillOpacity(1)
+        doc.roundedRect(LX, doc.y, CW, 36, 4).lineWidth(1).stroke(WARNING)
 
-        // Minimal details — no raw student data
-        section("Report Information")
-        row("Request Reference", data.requestId.slice(0, 8).toUpperCase())
-        row("Institution", data.institutionName)
-        row("Employer", data.employerName)
-        row("Claim Requested", data.claimLabel)
-        row("Result", "NOT SATISFIED")
-        row("Submitted", dateFormatter.format(data.createdAt))
-        row("Completed", dateFormatter.format(data.completedAt))
+        doc.save()
+        doc.translate(LX + 14, doc.y + 10)
+        doc.circle(0, 0, 8).fill(WARNING)
+        doc.path("M0-3v4M0 4v1")
+        doc.lineWidth(2).lineCap("round").stroke(WHITE)
+        doc.restore()
 
-        doc.y += 4
-
-        // QR code linking to on-chain record
-        section("Blockchain Reference")
-        if (data.txHash) {
-          const url = `https://sepolia.basescan.org/tx/${data.txHash}`
-          doc.fontSize(6.5).fillColor(LINK).font(FONT_MONO)
-          doc.text(url, LX + 8, doc.y, { width: CW - 16, link: url, underline: true, lineBreak: false })
-          doc.y += 11
-          drawQrCode(url, LX + CW - 60, doc.y, 50)
-          doc.y += 58
-        } else {
-          doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-          doc.text("No on-chain transaction recorded for this request.", LX + 8, doc.y, { width: CW - 16, lineBreak: false })
-          doc.y += 13
-        }
-
-        doc.y += 4
-
-        // Privacy notice
-        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-        doc.text(
-          "Note: VERIDAQ zero-knowledge proofs ensure no student personal data is disclosed " +
-          "when a claim is not satisfied. Only the verification outcome is recorded on-chain.",
-          LX + 8, doc.y, { width: CW - 16, lineBreak: false }
-        )
-        doc.y += 16
-
-        // Authenticity seal
-        section("Authenticity Seal")
-        const sa2 = doc.y
-        doc.roundedRect(LX, sa2, CW, 38, 3).fill(ROW_LIGHT)
-        doc.roundedRect(LX, sa2, CW, 38, 3).lineWidth(0.5).stroke(BORDER)
-        try { doc.image(LOGO_BLACK, LX + 12, sa2 + 7, { width: 24, height: 24 }) } catch { /* logo not found */ }
-        doc.fontSize(8).fillColor(NAVY).font(FONT_BOLD)
-        doc.text("VERIFIED BY VERIDAQ", LX + 44, sa2 + 6)
-        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-        doc.text("This verification record is authentic and independently verifiable.", LX + 44, sa2 + 20)
-        doc.text("Verify the transaction hash at sepolia.basescan.org.", LX + 44, sa2 + 29)
-        doc.y = sa2 + 46
+        doc.fontSize(13).fillColor(WARNING).font(FONT_BOLD)
+        doc.text("Claim Not Satisfied", LX + 34, doc.y + 5)
+        doc.fontSize(7.5).fillColor(FOREGROUND).font(FONT)
+        doc.text("The submitted credential does not meet the requested claim threshold", LX + 34, doc.y + 21)
+        doc.y += 44
       }
 
-      // ════════════════ FOOTER ═══════════════════════════════════════
-      const fh = 30
-      const fy = PAGE_BOTTOM - fh
-      doc.rect(0, fy, doc.page.width, fh).fill(NAVY)
-      doc.rect(0, fy, doc.page.width, 0.5).fill(MUTED)
-      doc.fontSize(6).fillColor(MUTED).font(FONT)
-      doc.text(`Generated ${dateFormatter.format(new Date())}  ·  Report ${data.requestId}`, M, fy + 8, { width: CW, align: "center" })
-      doc.fontSize(5.5).fillColor(MUTED).font(FONT)
-      doc.text("VERIDAQ — Censor-Resistant Academic Truth", M, fy + 19, { width: CW, align: "center" })
+      // ════════════════ VERIFICATION DETAILS ═══════════════════════
+      section("Verification Details")
+      detailRow("Institution", data.institutionName)
+      detailRow("Matriculation Number", data.matricNumber)
+      detailRow("Employer", data.employerName)
+      detailRow("Employer Email", data.employerEmail)
+      detailRow("Claim Type", data.claimLabel)
+      detailRow("Result", data.result.replace(/_/g, " "))
+      detailRow("Submitted", dateFormatter.format(data.createdAt))
+      detailRow("Completed", dateFormatter.format(data.completedAt))
+      if (data.claimDescription) detailRow("Description", data.claimDescription)
+      if (data.threshold > 0) detailRow("Threshold", String(data.threshold))
+      if (data.graduationYear) detailRow("Graduation Year", String(data.graduationYear))
+      detailRow("Institution Chain ID", data.institutionOnChainId, true)
+
+      doc.y += 4
+
+      // ════════════════ ON-CHAIN PROOF ═════════════════════════════
+      section("On-Chain Proof")
+      detailRow("Network", "Base Sepolia (L2)")
+      detailRow("Verification Method", "Groth16 Zero-Knowledge Proof")
+
+      if (data.txHash) {
+        detailRow("Transaction Hash", data.txHash, true)
+
+        // QR Code — scan to verify on blockchain explorer
+        doc.y += 4
+        const txUrl = `https://sepolia.basescan.org/tx/${data.txHash}`
+        const qrSize = 90
+        const qrX = LX + CW - qrSize - 10
+        const qrY = doc.y
+
+        // QR container card
+        doc.roundedRect(qrX - 8, qrY - 6, qrSize + 16, qrSize + 38, 4)
+        doc.fillOpacity(1).fill(SURFACE_CARD)
+        doc.roundedRect(qrX - 8, qrY - 6, qrSize + 16, qrSize + 38, 4)
+        doc.lineWidth(1).stroke(SURFACE_BORDER)
+
+        drawQr(txUrl, qrX, qrY, qrSize)
+
+        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
+        doc.text("Scan to verify", qrX, qrY + qrSize + 4, { width: qrSize, align: "center", lineBreak: false })
+
+        // Description text beside QR
+        doc.fontSize(8).fillColor(FOREGROUND).font(FONT_BOLD)
+        doc.text("Blockchain Proof", LX + 10, qrY + 2)
+        doc.fontSize(7).fillColor(MUTED).font(FONT)
+        doc.text("Scan the QR code to view the verified", LX + 10, qrY + 14)
+        doc.text("transaction on Base Sepolia (BaseScan).", LX + 10, qrY + 24)
+        doc.text("This proves the credential check was", LX + 10, qrY + 34)
+        doc.text("executed and validated on-chain.", LX + 10, qrY + 44)
+        doc.fontSize(6.5).fillColor(LINK).font(FONT_MONO)
+        doc.text(txUrl.replace("https://", ""), LX + 10, qrY + 58, { width: qrX - LX - 26, lineBreak: false })
+
+        doc.y = qrY + qrSize + 28
+      } else {
+        doc.y += 4
+        doc.fontSize(7.5).fillColor(MUTED).font(FONT)
+        doc.text("No on-chain transaction hash recorded for this verification request.", LX + 8, doc.y, { width: CW - 16 })
+        doc.y += 14
+      }
+
+      doc.y += 2
+
+      // ════════════════ ZERO-KNOWLEDGE PROOF (only for VERIFIED) ══
+      if (data.isVerified) {
+        section("Zero-Knowledge Proof Details")
+
+        const zkpNote = "The following cryptographic values are committed on-chain and were verified" +
+          " using a Groth16 zero-knowledge proof. No student personal data is disclosed."
+        doc.fontSize(7).fillColor(MUTED).font(FONT)
+        doc.text(zkpNote, LX + 8, doc.y, { width: CW - 16 })
+        doc.y += 12
+
+        if (data.credentialCommitment) detailRow("Poseidon Commitment", data.credentialCommitment, true)
+        if (data.credentialNullifier) detailRow("Nullifier", data.credentialNullifier, true)
+
+        if (data.proofJson) {
+          doc.y += 4
+          doc.fontSize(7).fillColor(FOREGROUND).font(FONT_BOLD)
+          doc.text("Groth16 Proof", LX + 8, doc.y)
+          doc.y += 4
+          try {
+            const proof = typeof data.proofJson === "string"
+              ? JSON.parse(data.proofJson)
+              : data.proofJson
+            const proofStr = JSON.stringify(proof, null, 2)
+            const lines = proofStr.split("\n")
+            // Show first 6 lines of the proof
+            const displayLines = lines.slice(0, 6).join("\n") + (lines.length > 6 ? "\n  ..." : "")
+            doc.fontSize(6).fillColor(MUTED_SUBTLE).font(FONT_MONO)
+            doc.text(displayLines, LX + 10, doc.y, { width: CW - 20 })
+            doc.y += lines.length > 6 ? 50 : 40
+          } catch { /* skip proof display if parsing fails */ }
+        }
+
+        doc.y += 4
+      }
+
+      // ════════════════ VERIFICATION QR CODE ═══════════════════════
+      doc.y += 2
+      section("Verification QR Code")
+
+      const bigQrSize = 110
+      const bigQrX = LX + (CW - bigQrSize) / 2
+      const bigQrY = doc.y + 4
+
+      // Card container
+      doc.roundedRect(LX, doc.y, CW, bigQrSize + 80, 6)
+      doc.fillOpacity(1).fill(SURFACE)
+      doc.roundedRect(LX, doc.y, CW, bigQrSize + 80, 6)
+      doc.lineWidth(1).stroke(SURFACE_BORDER)
+
+      // Large QR code
+      const verifyUrl = data.txHash
+        ? `https://sepolia.basescan.org/tx/${data.txHash}`
+        : `https://veridaq-official.vercel.app/verify/check?id=${data.requestId}`
+      drawQr(verifyUrl, bigQrX, bigQrY, bigQrSize)
+
+      doc.fontSize(9).fillColor(FOREGROUND).font(FONT_BOLD)
+      doc.text("Scan to Verify Authenticity", LX, bigQrY + bigQrSize + 10, { width: CW, align: "center", lineBreak: false })
+
+      doc.fontSize(7).fillColor(MUTED).font(FONT)
+      doc.text(
+        "Scan this QR code with any smartphone to independently verify the blockchain proof",
+        LX, bigQrY + bigQrSize + 26, { width: CW, align: "center", lineBreak: false }
+      )
+
+      doc.y = bigQrY + bigQrSize + 56
+
+      // ════════════════ ISSUED BY ─────────────────────────────────
+      doc.y += 6
+      doc.roundedRect(LX, doc.y, CW, 36, 4).fill(SURFACE)
+      doc.roundedRect(LX, doc.y, CW, 36, 4).lineWidth(1).stroke(SURFACE_BORDER)
+
+      // Small shield logo
+      drawShieldLogo(LX + 12, doc.y + 6, 24)
+
+      doc.fontSize(8).fillColor(FOREGROUND).font(FONT_BOLD)
+      doc.text("Verified by VERIDAQ", LX + 44, doc.y + 6)
+      doc.fontSize(6.5).fillColor(MUTED).font(FONT)
+      doc.text("This verification is independently verifiable on the Base blockchain", LX + 44, doc.y + 20)
+      doc.y += 44
+
+      // ════════════════ FOOTER ═════════════════════════════════════
+      const fy = PAGE_BOTTOM - 28
+      doc.rect(0, fy, doc.page.width, 28).fill(VOID)
+      doc.fontSize(6.5).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.text(
+        `Generated ${dateFormatter.format(new Date())}  ·  Report ${data.requestId}`,
+        M, fy + 7, { width: CW, align: "center" }
+      )
+      doc.fontSize(6).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.text(
+        "VERIDAQ \u2014 Censor-Resistant Academic Truth",
+        M, fy + 17, { width: CW, align: "center" }
+      )
 
       doc.end()
     })
