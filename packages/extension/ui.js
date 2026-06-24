@@ -87,6 +87,8 @@ function initLoginForm(root) {
     })
   })
 
+  var loginText = byData(root, "login-text")
+
   // Submit login
   async function handleLogin() {
     var email = emailInput.value.trim()
@@ -99,7 +101,7 @@ function initLoginForm(root) {
 
     errorEl.textContent = ""
     loginBtn.disabled = true
-    loginBtn.querySelector("span").textContent = "Signing in..."
+    if (loginText) loginText.textContent = "Signing in..."
     spinner.classList.remove("hidden")
 
     var result = await sendMessage({
@@ -110,7 +112,7 @@ function initLoginForm(root) {
     })
 
     loginBtn.disabled = false
-    loginBtn.querySelector("span").textContent = "Sign In"
+    if (loginText) loginText.textContent = "Sign In"
     spinner.classList.add("hidden")
 
     if (!result || !result.ok) {
@@ -158,15 +160,12 @@ async function loadSession(root) {
     // Show role-specific panels
     var uploadPanel = byData(root, "panel-upload")
     var verifyPanel = byData(root, "panel-verify")
-    var adminPanel = byData(root, "panel-admin")
 
     if (uploadPanel) uploadPanel.classList.toggle("hidden", user.role !== "INSTITUTION")
     if (verifyPanel) verifyPanel.classList.toggle("hidden", user.role !== "EMPLOYER")
-    if (adminPanel) adminPanel.classList.toggle("hidden", user.role !== "ADMIN")
 
     // Load role-specific data
     if (user.role === "EMPLOYER") loadCredits(root)
-    if (user.role === "ADMIN") loadAdminStats(root)
 
     // Default to Quick Actions tab
     toggleTab(root, "quick")
@@ -210,26 +209,6 @@ async function loadCredits(root) {
 }
 
 // ─── Admin Stats ────────────────────────────────────────────────────────────
-
-async function loadAdminStats(root) {
-  var res = await sendMessage({
-    type: "veridaq.api",
-    path: "/api/admin/stats",
-    options: { method: "GET" },
-  })
-
-  if (res && res.ok && res.data) {
-    var d = res.data
-    var instEl = byData(root, "stat-institutions")
-    var empEl = byData(root, "stat-employers")
-    var batchEl = byData(root, "stat-batches")
-    var verifEl = byData(root, "stat-verifications")
-    if (instEl) instEl.textContent = d.institutions || 0
-    if (empEl) empEl.textContent = d.employers || 0
-    if (batchEl) batchEl.textContent = d.confirmedBatches || 0
-    if (verifEl) verifEl.textContent = d.successfulVerifications || 0
-  }
-}
 
 // ─── Crossmint ──────────────────────────────────────────────────────────────
 
@@ -342,31 +321,6 @@ async function loadDashboard(root) {
     })
   }
 
-  if (role === "ADMIN") {
-    var res = await sendMessage({
-      type: "veridaq.api",
-      path: "/api/admin/stats",
-      options: { method: "GET" },
-    })
-    if (!res || !res.ok) {
-      list.innerHTML = '<li><span class="list-secondary">Unable to load stats</span></li>'
-      return
-    }
-    var d = res.data
-    list.innerHTML =
-      '<li><span class="list-primary">' +
-      (d.institutions || 0) +
-      '</span> institutions</li>' +
-      '<li><span class="list-primary">' +
-      (d.employers || 0) +
-      '</span> employers</li>' +
-      '<li><span class="list-primary">' +
-      (d.confirmedBatches || 0) +
-      '</span> confirmed batches</li>' +
-      '<li><span class="list-primary">' +
-      (d.successfulVerifications || 0) +
-      "</span> verifications</li>"
-  }
 }
 
 // ─── Bind Actions ───────────────────────────────────────────────────────────
@@ -431,18 +385,6 @@ function bindActions(root) {
   root.querySelectorAll('[data-action="buy-credits"]').forEach(function (button) {
     button.addEventListener("click", function () {
       openCrossmintPurchase(root)
-    })
-  })
-
-  // Admin buttons
-  root.querySelectorAll('[data-action="admin-institutions"]').forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      ext.tabs.create({ url: VERIDAQ_CONFIG.WEB_URL + "/admin/institutions" })
-    })
-  })
-  root.querySelectorAll('[data-action="admin-employers"]').forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      ext.tabs.create({ url: VERIDAQ_CONFIG.WEB_URL + "/admin/employers" })
     })
   })
 
