@@ -59,6 +59,18 @@ async function getSession() {
 }
 
 async function clearSession() {
+  // Try to clear the server-side httpOnly cookie first
+  try {
+    const stored = await ext.storage.session.get(["veridaqToken"])
+    if (stored.veridaqToken) {
+      await fetch(VERIDAQ_CONFIG.BACKEND_URL + "/api/auth/logout", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + stored.veridaqToken },
+        credentials: "include",
+      }).catch(() => {})
+    }
+  } catch {}
+  // Clear local extension session
   await ext.storage.session.remove(["veridaqToken", "veridaqUser", "veridaqTokenExpiry"])
 }
 
