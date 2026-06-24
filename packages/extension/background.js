@@ -121,10 +121,12 @@ async function clearSession() {
 // ─── Login ───────────────────────────────────────────────────────────────────
 
 async function login(role, email, password) {
+  // Only Institution and Employer are supported in the extension
+  if (role === "ADMIN") return { ok: false, error: "Admin access is restricted to the web app" }
+
   const endpointMap = {
     INSTITUTION: "/api/auth/institution/login",
     EMPLOYER: "/api/auth/employer/login",
-    ADMIN: "/api/auth/admin/login",
   }
 
   const endpoint = endpointMap[role]

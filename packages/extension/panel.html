@@ -48,7 +48,6 @@
         <div class="role-tabs" data-role-tabs>
           <button class="role-tab active" data-role="INSTITUTION">Institution</button>
           <button class="role-tab" data-role="EMPLOYER">Employer</button>
-          <button class="role-tab" data-role="ADMIN">Admin</button>
         </div>
         <div class="form-group">
           <label class="form-label">Email</label>
@@ -60,10 +59,10 @@
         </div>
         <p class="login-error" data-login-error></p>
         <button class="login-btn" data-action="login">
-          <svg class="hidden" data-login-spinner width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg class="hidden" data-login-spinner class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32"/>
           </svg>
-          Sign In
+          <span data-login-text>Sign In</span>
         </button>
         <p class="login-footer">
           <a href="#" data-action="open-app">Open full app</a>
@@ -137,34 +136,7 @@
           <p class="status-msg" data-verify-status></p>
         </div>
 
-        <div class="panel-block hidden" data-panel-admin>
-          <div class="panel-block-header">
-            <h3>Overview</h3>
-            <span class="badge badge-warning">Admin</span>
-          </div>
-          <div class="stat-row" data-admin-stats>
-            <div class="stat-cell">
-              <div class="stat-cell-value" data-stat-institutions>—</div>
-              <div class="stat-cell-label">Institutions</div>
-            </div>
-            <div class="stat-cell">
-              <div class="stat-cell-value" data-stat-employers>—</div>
-              <div class="stat-cell-label">Employers</div>
-            </div>
-            <div class="stat-cell">
-              <div class="stat-cell-value" data-stat-batches>—</div>
-              <div class="stat-cell-label">Batches</div>
-            </div>
-            <div class="stat-cell">
-              <div class="stat-cell-value" data-stat-verifications>—</div>
-              <div class="stat-cell-label">Verifications</div>
-            </div>
-          </div>
-          <div class="flex gap-2">
-            <button class="btn btn-outline btn-sm flex-1" data-action="admin-institutions">Institutions</button>
-            <button class="btn btn-outline btn-sm flex-1" data-action="admin-employers">Employers</button>
-          </div>
-        </div>
+
       </div>
 
       <div class="panel hidden" data-panel="dashboard">
