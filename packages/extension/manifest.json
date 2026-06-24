@@ -4,7 +4,11 @@
   "version": "1.0.0",
   "description": "Quick credential verification and batch uploads without leaving your workflow.",
   "permissions": ["storage", "activeTab", "scripting", "tabs", "cookies"],
-  "host_permissions": ["http://localhost:4000/*", "https://veridaq.xyz/*"],
+  "host_permissions": [
+    "http://localhost:4000/*",
+    "https://veridaq.xyz/*",
+    "https://veridaq-backend.railway.app/*"
+  ],
   "action": {
     "default_title": "VERIDAQ Companion",
     "default_popup": "popup.html",
