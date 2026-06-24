@@ -14,8 +14,14 @@ async function getRefreshTokenCookie() {
 }
 
 async function exchangeExtensionToken() {
+  // Try cookie-based refresh token first (web session)
   const refreshToken = await getRefreshTokenCookie()
-  if (!refreshToken) return null
+  if (!refreshToken) {
+    // Fall back to stored refresh token (extension login)
+    const stored = await ext.storage.session.get(["veridaqRefreshToken"])
+    if (!stored.veridaqRefreshToken) return null
+    return refreshExtensionToken(stored.veridaqRefreshToken)
+  }
 
   try {
     const res = await fetch(VERIDAQ_CONFIG.BACKEND_URL + "/api/auth/extension/token", {
@@ -31,7 +37,35 @@ async function exchangeExtensionToken() {
     await ext.storage.session.set({
       veridaqToken: data.accessToken,
       veridaqUser: data.user,
-      veridaqTokenExpiry: Date.now() + 4 * 60 * 1000, // 4 min (token expires in 5)
+      veridaqTokenExpiry: Date.now() + 4 * 60 * 1000,
+    })
+
+    return data
+  } catch {
+    return null
+  }
+}
+
+async function refreshExtensionToken(refreshToken) {
+  try {
+    const res = await fetch(VERIDAQ_CONFIG.BACKEND_URL + "/api/auth/extension/token", {
+      method: "POST",
+      headers: { "x-refresh-token": refreshToken },
+    })
+
+    if (!res.ok) {
+      // Refresh token expired — clear everything
+      await clearSession()
+      return null
+    }
+
+    const data = await res.json()
+    if (!data || !data.accessToken) return null
+
+    await ext.storage.session.set({
+      veridaqToken: data.accessToken,
+      veridaqUser: data.user,
+      veridaqTokenExpiry: Date.now() + 4 * 60 * 1000,
     })
 
     return data
@@ -45,11 +79,16 @@ async function getSession() {
     "veridaqToken",
     "veridaqUser",
     "veridaqTokenExpiry",
+    "veridaqRefreshToken",
   ])
 
   if (stored.veridaqToken && stored.veridaqUser) {
     // Check if token is about to expire (within 30 seconds)
     if (stored.veridaqTokenExpiry && Date.now() > stored.veridaqTokenExpiry - 30000) {
+      // Try to refresh using stored refresh token
+      if (stored.veridaqRefreshToken) {
+        return refreshExtensionToken(stored.veridaqRefreshToken)
+      }
       return exchangeExtensionToken()
     }
     return { accessToken: stored.veridaqToken, user: stored.veridaqUser }
@@ -70,8 +109,57 @@ async function clearSession() {
       }).catch(() => {})
     }
   } catch {}
-  // Clear local extension session
-  await ext.storage.session.remove(["veridaqToken", "veridaqUser", "veridaqTokenExpiry"])
+  // Clear all extension session data
+  await ext.storage.session.remove([
+    "veridaqToken",
+    "veridaqUser",
+    "veridaqTokenExpiry",
+    "veridaqRefreshToken",
+  ])
+}
+
+// ─── Login ───────────────────────────────────────────────────────────────────
+
+async function login(role, email, password) {
+  const endpointMap = {
+    INSTITUTION: "/api/auth/institution/login",
+    EMPLOYER: "/api/auth/employer/login",
+    ADMIN: "/api/auth/admin/login",
+  }
+
+  const endpoint = endpointMap[role]
+  if (!endpoint) return { ok: false, error: "Invalid role" }
+
+  try {
+    const res = await fetch(VERIDAQ_CONFIG.BACKEND_URL + endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, password }),
+      credentials: "include",
+    })
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      return { ok: false, error: body.error || "Invalid credentials" }
+    }
+
+    const data = await res.json()
+    if (!data || !data.accessToken || !data.user) {
+      return { ok: false, error: "Unexpected server response" }
+    }
+
+    // Store session
+    await ext.storage.session.set({
+      veridaqToken: data.accessToken,
+      veridaqRefreshToken: data.refreshToken,
+      veridaqUser: data.user,
+      veridaqTokenExpiry: Date.now() + 4 * 60 * 1000,
+    })
+
+    return { ok: true, user: data.user }
+  } catch (err) {
+    return { ok: false, error: err.message || "Network error" }
+  }
 }
 
 // ─── API Proxy ───────────────────────────────────────────────────────────────
@@ -146,6 +234,12 @@ ext.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         .catch(() => sendResponse({ session: null }))
       return true
 
+    case "veridaq.login":
+      login(message.role, message.email, message.password)
+        .then((result) => sendResponse(result))
+        .catch((err) => sendResponse({ ok: false, error: err.message }))
+      return true
+
     case "veridaq.logout":
       clearSession()
         .then(() => sendResponse({ ok: true }))
@@ -162,6 +256,18 @@ ext.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       apiFetch(message.path, message.options)
         .then((result) => sendResponse(result))
         .catch((err) => sendResponse({ ok: false, status: 500, data: { error: err.message } }))
+      return true
+
+    case "veridaq.get-theme":
+      ext.storage.sync.get("veridaqTheme", (result) => {
+        sendResponse({ theme: result.veridaqTheme || "dark" })
+      })
+      return true
+
+    case "veridaq.set-theme":
+      ext.storage.sync.set({ veridaqTheme: message.theme }, () => {
+        sendResponse({ ok: true })
+      })
       return true
 
     default:

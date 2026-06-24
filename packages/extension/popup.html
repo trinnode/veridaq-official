@@ -8,150 +8,186 @@
 </head>
 <body>
   <div class="app" data-host="popup">
+    <!-- Header -->
     <header class="app-header">
-      <div class="brand">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-        VERIDAQ
-      </div>
+      <a class="brand" href="#" data-action="open-app">
+        <img class="brand-icon" src="logo.svg" alt="VERIDAQ" />
+        <span class="brand-text">VERIDAQ</span>
+      </a>
       <div class="header-actions">
-        <button class="icon-btn" data-action="open-app" title="Open full app">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-        </button>
-        <button class="icon-btn danger" data-action="logout" title="Sign out">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </button>
+        <button class="theme-toggle" data-action="theme-toggle" title="Toggle theme"></button>
       </div>
     </header>
 
-    <section class="status" data-status>
+    <!-- Status Bar (authenticated only) -->
+    <section class="status hidden" data-status>
       <div class="status-indicator" data-status-indicator></div>
       <div class="status-content">
         <div class="status-label">Session</div>
-        <div class="status-value" data-status-text>Checking session...</div>
+        <div class="status-value" data-status-text>Signed in</div>
         <div class="status-user" data-status-user></div>
       </div>
+      <button class="icon-btn danger" data-action="logout" title="Sign out">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
     </section>
 
-    <nav class="tabs">
-      <button class="tab active" data-tab="quick">Quick Actions</button>
-      <button class="tab" data-tab="dashboard">Dashboard</button>
-    </nav>
+    <!-- Login Section (not authenticated) -->
+    <section class="login-section" data-section="login">
+      <div class="login-card animate-fade-in">
+        <div class="role-tabs" data-role-tabs>
+          <button class="role-tab active" data-role="INSTITUTION">Institution</button>
+          <button class="role-tab" data-role="EMPLOYER">Employer</button>
+          <button class="role-tab" data-role="ADMIN">Admin</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" data-login-email placeholder="Enter your email" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" data-login-password placeholder="Enter your password" autocomplete="current-password" />
+        </div>
+        <p class="login-error" data-login-error></p>
+        <button class="login-btn" data-action="login">
+          <svg class="hidden" data-login-spinner width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32"/>
+          </svg>
+          Sign In
+        </button>
+        <p class="login-footer">
+          <a href="#" data-action="open-app">Open full app</a>
+        </p>
+      </div>
+    </section>
 
-    <section class="panel" data-panel="quick">
-      <!-- Credit balance card — shown for employers -->
-      <div class="panel-block credits-card" data-credits-card style="display:none">
-        <div class="panel-block-header">
-          <h3 class="flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
+    <!-- Authenticated Content -->
+    <section class="panel hidden" data-section="dashboard">
+      <!-- Navigation Tabs -->
+      <nav class="tabs" data-dashboard-tabs>
+        <button class="tab active" data-tab="quick">Actions</button>
+        <button class="tab" data-tab="dashboard">Activity</button>
+      </nav>
+
+      <!-- Quick Actions -->
+      <div class="panel" data-panel="quick">
+        <!-- Credit Balance (employer) -->
+        <div class="panel-block credits-card hidden" data-credits-card>
+          <div class="panel-block-header">
+            <h3>Credits</h3>
+            <span class="badge badge-info">Employer</span>
+          </div>
+          <div class="credits-row">
+            <div class="credit-metric">
+              <span class="credit-value" data-credit-free>0</span>
+              <span class="credit-label">Free</span>
+            </div>
+            <div class="credit-divider"></div>
+            <div class="credit-metric">
+              <span class="credit-value" data-credit-paid>0</span>
+              <span class="credit-label">Paid</span>
+            </div>
+            <div class="credit-divider"></div>
+            <div class="credit-metric">
+              <span class="credit-value accent" data-credit-total>0</span>
+              <span class="credit-label">Total</span>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full btn-sm" data-action="buy-credits">Buy Credits</button>
+          <p class="status-msg" data-credit-status></p>
+        </div>
+
+        <!-- Upload Batch (institution) -->
+        <div class="panel-block hidden" data-panel-upload>
+          <div class="panel-block-header">
+            <h3>Upload Batch</h3>
+            <span class="badge badge-accent">Institution</span>
+          </div>
+          <div class="upload-zone" data-upload-zone>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            Credits
-          </h3>
-          <span class="badge-info">Employer</span>
+            <span>Drop .xlsx or <strong>browse</strong></span>
+            <input type="file" data-upload-file accept=".xlsx" class="file-input" />
+          </div>
+          <button class="btn btn-primary btn-sm btn-full" data-action="upload">Upload</button>
+          <p class="status-msg" data-upload-status></p>
         </div>
-        <div class="credits-row">
-          <div class="credit-metric">
-            <span class="credit-value" data-credit-free>0</span>
-            <span class="credit-label">Free</span>
+
+        <!-- Verify Credential (employer) -->
+        <div class="panel-block hidden" data-panel-verify>
+          <div class="panel-block-header">
+            <h3>Verify Credential</h3>
+            <span class="badge badge-info">Employer</span>
           </div>
-          <div class="credit-divider"></div>
-          <div class="credit-metric">
-            <span class="credit-value" data-credit-paid>0</span>
-            <span class="credit-label">Paid</span>
+          <input class="input" type="text" data-verify-inst placeholder="Institution on-chain ID" />
+          <input class="input" type="text" data-verify-matric placeholder="Matric number" />
+          <div class="input-row">
+            <input class="input" type="number" data-verify-claim placeholder="Claim type" />
+            <input class="input" type="number" data-verify-threshold placeholder="Threshold" />
           </div>
-          <div class="credit-divider"></div>
-          <div class="credit-metric">
-            <span class="credit-value accent" data-credit-total>0</span>
-            <span class="credit-label">Total</span>
+          <button class="btn btn-primary btn-sm btn-full" data-action="verify">Verify</button>
+          <p class="status-msg" data-verify-status></p>
+        </div>
+
+        <!-- Admin quick actions -->
+        <div class="panel-block hidden" data-panel-admin>
+          <div class="panel-block-header">
+            <h3>Overview</h3>
+            <span class="badge badge-warning">Admin</span>
+          </div>
+          <div class="stat-row" data-admin-stats>
+            <div class="stat-cell">
+              <div class="stat-cell-value" data-stat-institutions>—</div>
+              <div class="stat-cell-label">Institutions</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-cell-value" data-stat-employers>—</div>
+              <div class="stat-cell-label">Employers</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-cell-value" data-stat-batches>—</div>
+              <div class="stat-cell-label">Batches</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-cell-value" data-stat-verifications>—</div>
+              <div class="stat-cell-label">Verifications</div>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-outline btn-sm flex-1" data-action="admin-institutions">Institutions</button>
+            <button class="btn btn-outline btn-sm flex-1" data-action="admin-employers">Employers</button>
           </div>
         </div>
-        <button class="primary" data-action="buy-credits" style="margin-top:4px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="16"/>
-            <line x1="8" y1="12" x2="16" y2="12"/>
-          </svg>
-          Buy Credits
-        </button>
-        <p class="status-msg" data-credit-status></p>
       </div>
 
-      <div class="panel-block">
-        <div class="panel-block-header">
-          <h3>Upload Batch</h3>
-          <span class="badge-muted">Institution</span>
+      <!-- Dashboard / Recent Activity -->
+      <div class="panel hidden" data-panel="dashboard">
+        <div class="panel-block">
+          <div class="panel-block-header">
+            <h3>Recent Activity</h3>
+            <button class="btn btn-ghost btn-sm" data-action="refresh-dashboard">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+            </button>
+          </div>
+          <ul class="list" data-dashboard-list></ul>
         </div>
-        <div class="upload-zone" data-upload-zone>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <span>Drop .xlsx file or <strong>browse</strong></span>
-          <input type="file" data-upload-file accept=".xlsx" class="file-input" />
-        </div>
-        <button class="primary" data-action="upload">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          Upload
-        </button>
-        <p class="status-msg" data-upload-status></p>
-      </div>
-
-      <div class="panel-block">
-        <div class="panel-block-header">
-          <h3>Verify Credential</h3>
-          <span class="badge-info">Employer</span>
-        </div>
-        <input type="text" placeholder="Institution on-chain ID" data-verify-inst class="input" />
-        <input type="text" placeholder="Matric number" data-verify-matric class="input" />
-        <div class="input-row">
-          <input type="number" placeholder="Claim type" data-verify-claim class="input" />
-          <input type="number" placeholder="Threshold" data-verify-threshold class="input" />
-        </div>
-        <button class="primary" data-action="verify">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
-          Verify
-        </button>
-        <p class="status-msg" data-verify-status></p>
       </div>
     </section>
 
-    <section class="panel hidden" data-panel="dashboard">
-      <div class="panel-block">
-        <div class="panel-block-header">
-          <h3>Recent Activity</h3>
-          <button class="ghost-sm" data-action="refresh-dashboard">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"/>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-            </svg>
-          </button>
-        </div>
-        <ul class="list" data-dashboard-list></ul>
-      </div>
-    </section>
-
+    <!-- Footer -->
     <footer class="app-footer">
       <span>v1.0.0 · Base Sepolia</span>
-      <a href="#" data-action="open-app">Open Dashboard</a>
+      <a href="#" data-action="open-app">Dashboard</a>
     </footer>
   </div>
 
