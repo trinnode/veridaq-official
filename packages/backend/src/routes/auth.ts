@@ -158,8 +158,17 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
     const result = await authSvc.refresh(token)
     if (!result) {
-      rep.clearCookie("refreshToken", { path: "/api/auth/refresh" })
-      rep.clearCookie("accessToken", { path: "/api" })
+      const secure = cookieSecure(req)
+      rep.clearCookie("refreshToken", {
+        path: "/api/auth/refresh",
+        secure,
+        sameSite: secure ? "none" : "lax",
+      })
+      rep.clearCookie("accessToken", {
+        path: "/api",
+        secure,
+        sameSite: secure ? "none" : "lax",
+      })
       return rep.code(401).send({ error: "Invalid or expired refresh token" })
     }
 
@@ -189,8 +198,17 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   // ── Logout ────────────────────────────────────────────────────────────────
 
   app.post("/logout", async (req, rep) => {
-    rep.clearCookie("refreshToken", { path: "/api/auth/refresh" })
-    rep.clearCookie("accessToken", { path: "/api" })
+    const secure = cookieSecure(req)
+    rep.clearCookie("refreshToken", {
+      path: "/api/auth/refresh",
+      secure,
+      sameSite: secure ? "none" : "lax",
+    })
+    rep.clearCookie("accessToken", {
+      path: "/api",
+      secure,
+      sameSite: secure ? "none" : "lax",
+    })
     return { ok: true }
   })
 
