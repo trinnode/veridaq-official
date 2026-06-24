@@ -371,8 +371,8 @@ async function processJob(job: Job<BatchJobData>) {
       },
     })
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown blockchain error"
-    log.error({ err: error, batchId: batch.id }, "Smart contract batch registration failed")
+    const userMessage = BlockchainService.decodeContractError(error)
+    log.error({ err: error, batchId: batch.id, userMessage }, "Smart contract batch registration failed")
 
     const bundlerErr = error as {
       txHash?: string
@@ -396,7 +396,7 @@ async function processJob(job: Job<BatchJobData>) {
 
     const details = {
       row: 0,
-      error: "Blockchain registration failed: " + message,
+      error: userMessage,
       txRef,
       txHash: bundlerErr?.txHash,
       userOpHash: bundlerErr?.userOpHash,

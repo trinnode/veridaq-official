@@ -15,6 +15,7 @@ import {
     concatHex,
     createPublicClient,
     createWalletClient,
+    decodeErrorResult,
     encodeAbiParameters,
     encodeFunctionData,
     formatEther,
@@ -128,6 +129,39 @@ const credentialRegistryAbi = [
       { name: "graduationYear", type: "uint16", indexed: false },
       { name: "txRef", type: "bytes32", indexed: false },
     ],
+  },
+  {
+    type: "error",
+    name: "NotFound",
+    inputs: [{ name: "nullifier", type: "bytes32" }],
+  },
+  {
+    type: "error",
+    name: "AlreadyRegistered",
+    inputs: [{ name: "nullifier", type: "bytes32" }],
+  },
+  {
+    type: "error",
+    name: "InstitutionNotActive",
+    inputs: [{ name: "institutionId", type: "bytes32" }],
+  },
+  {
+    type: "error",
+    name: "CallerNotInstitutionAdmin",
+    inputs: [
+      { name: "institutionId", type: "bytes32" },
+      { name: "caller", type: "address" },
+    ],
+  },
+  {
+    type: "error",
+    name: "ArrayLengthMismatch",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "EmptyBatch",
+    inputs: [],
   },
 ] as const
 
@@ -1264,5 +1298,67 @@ export class BlockchainService {
     })
     await this.publicClient.waitForTransactionReceipt({ hash })
     return hash
+  }
+
+  /**
+   * Decode a contract revert error into a user-friendly message.
+   * Handles both direct ContractFunctionExecutionError and raw hex data
+   * (from bundler responses).
+   */
+  static decodeContractError(err: unknown): string {
+    const tryDecode = (data: `0x${string}`): string | null => {
+      try {
+        const decoded = decodeErrorResult({ abi: credentialRegistryAbi, data })
+        switch (decoded.errorName) {
+          case "AlreadyRegistered": {
+            const nullifier = decoded.args?.[0] as string | undefined
+            return nullifier
+              ? `Credential already registered on-chain (nullifier: ${nullifier.slice(0, 10)}...). Remove duplicate rows and re-upload.`
+              : "One or more credentials are already registered on-chain. Remove duplicates and try again."
+          }
+          case "InstitutionNotActive":
+            return "Institution is not active on the blockchain. Contact the platform admin to activate it."
+          case "CallerNotInstitutionAdmin":
+            return "The signing wallet is not authorised for this institution on-chain."
+          case "ArrayLengthMismatch":
+            return "Internal error: commitments and nullifiers arrays have different lengths."
+          case "EmptyBatch":
+            return "Cannot register an empty batch."
+          case "NotFound":
+            return "Credential record not found on-chain."
+          default:
+            return null
+        }
+      } catch {
+        return null
+      }
+    }
+
+    if (err && typeof err === "object") {
+      const e = err as Record<string, unknown>
+      // viem ContractFunctionExecutionError — data lives in cause
+      if (e.cause && typeof e.cause === "object") {
+        const cause = e.cause as Record<string, unknown>
+        if (typeof cause.data === "string" && cause.data.startsWith("0x")) {
+          const msg = tryDecode(cause.data as `0x${string}`)
+          if (msg) return msg
+        }
+      }
+      // Raw hex data passed directly (bundler error.data)
+      if (typeof e.data === "string" && e.data.startsWith("0x")) {
+        const msg = tryDecode(e.data as `0x${string}`)
+        if (msg) return msg
+      }
+      // Short message from viem that may already contain decoded info
+      if (typeof e.shortMessage === "string") return e.shortMessage
+      // Try the full message
+      if (typeof e.message === "string") {
+        const msg = e.message
+        // Check if the message already contains our decoded error
+        if (msg.includes("AlreadyRegistered")) return msg
+        return msg
+      }
+    }
+    return err instanceof Error ? err.message : "Unknown blockchain error"
   }
 }
