@@ -7,7 +7,8 @@
   "host_permissions": [
     "http://localhost:4000/*",
     "https://veridaq.xyz/*",
-    "https://veridaq-backend.railway.app/*"
+    "https://veridaq-backend.railway.app/*",
+    "https://veridaq-official.vercel.app/*"
   ],
   "action": {
     "default_title": "VERIDAQ Companion",
@@ -26,7 +27,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["panel.html", "styles.css", "config.js", "ui.js", "icon.svg"],
+      "resources": ["panel.html", "styles.css", "config.js", "ui.js", "icon.svg", "logo.svg"],
       "matches": ["<all_urls>"]
     }
   ],
