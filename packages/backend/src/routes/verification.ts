@@ -24,7 +24,30 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
   const verifySvc = new VerificationService(app.prisma)
   const reportSvc = new ReportService(app.prisma)
 
-  // All verification routes require the caller to be an employer
+  // ── Public verification check (no auth required) ────────────────
+  // Used by the QR code on printed reports. Anyone with the request
+  // ID can verify the result. No personal data beyond what the
+  // employer chose to disclose is returned.
+  app.get("/check/:id", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const request = await verifySvc.getPublicRequest(id)
+    if (!request) return rep.code(404).send({ error: "Verification record not found" })
+    if (!request.result || !request.completedAt) {
+      return rep.code(202).send({ status: request.status, message: "Verification still processing" })
+    }
+    return {
+      id: request.id,
+      status: request.status,
+      result: request.result,
+      institution: request.institution?.name ?? null,
+      claimType: request.claimType,
+      threshold: request.threshold,
+      txHash: request.txHash,
+      completedAt: request.completedAt,
+    }
+  })
+
+  // All verification routes below require the caller to be an employer
   // or an institution with alsoEmployer=true
   app.addHook("preHandler", app.requireEmployerOrInstitutionEmployer)
 

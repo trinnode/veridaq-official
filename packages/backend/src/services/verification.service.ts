@@ -334,6 +334,29 @@ export class VerificationService {
     return { total, page, limit, items }
   }
 
+  async getPublicRequest(requestId: string) {
+    return this.prisma.verificationRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        status: true,
+        result: true,
+        matricNumber: true,
+        claimType: true,
+        threshold: true,
+        txHash: true,
+        createdAt: true,
+        completedAt: true,
+        institution: {
+          select: {
+            name: true,
+            onChainId: true,
+          },
+        },
+      },
+    })
+  }
+
   async getActiveInstitutions() {
     const insts = await this.prisma.institution.findMany({
       where: { active: true, kycApproved: true },
