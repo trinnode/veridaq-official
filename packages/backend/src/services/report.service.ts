@@ -142,25 +142,25 @@ export class ReportService {
 
       // ── Section heading ─────────────────────────────────────────
       function section(title: string) {
-        doc.y += 2
+        doc.y += 3
         doc.fontSize(7).fillColor(ACCENT).font(FONT_BOLD)
         doc.text(title.toUpperCase(), LX, doc.y)
         doc.y += 1
         doc.rect(LX, doc.y, CW, 0.5).fill(SURFACE_BORDER)
-        doc.y += 4
+        doc.y += 5
       }
 
       // ── Detail row ──────────────────────────────────────────────
       function detailRow(label: string, value: string, mono = false) {
-        const rh = 12
+        const rh = 13
         const ry = doc.y
         doc.rect(LX, ry, CW, rh).fill(SURFACE)
-        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
-        doc.text(label, LX + 6, ry + 3, { width: 120 })
+        doc.fontSize(7).fillColor(MUTED).font(FONT)
+        doc.text(label, LX + 6, ry + 3.5, { width: 120 })
         doc.fillColor(FOREGROUND)
-        if (mono) doc.font(FONT_MONO).fontSize(5.5)
-        else doc.font(FONT).fontSize(7)
-        doc.text(value, LX + 130, ry + 3, { width: CW - 140, lineBreak: false })
+        if (mono) doc.font(FONT_MONO).fontSize(6)
+        else doc.font(FONT).fontSize(7.5)
+        doc.text(value, LX + 130, ry + 3.5, { width: CW - 140, lineBreak: false })
         doc.y = ry + rh
       }
 
@@ -176,75 +176,80 @@ export class ReportService {
       }
 
       // ════════════════ HEADER ═════════════════════════════════════
-      const HEADER_H = 42
+      const HEADER_H = 50
       doc.rect(0, 0, doc.page.width, HEADER_H).fill(VOID)
 
       if (LOGO_BUFFER) {
-        doc.image(LOGO_BUFFER, M + 2, 6, { width: 28, height: 28 })
+        doc.image(LOGO_BUFFER, M + 2, 11, { width: 28, height: 28 })
       }
 
-      doc.fontSize(11).fillColor(WHITE).font(FONT_BOLD)
-      doc.text("VERIDAQ", M + 36, 8)
+      doc.fontSize(13).fillColor(WHITE).font(FONT_BOLD)
+      doc.text("VERIDAQ", M + 36, 13)
 
-      doc.fontSize(6).fillColor(MUTED_SUBTLE).font(FONT)
-      doc.text("Credential Verification Report", M + 36, 22)
+      doc.fontSize(6.5).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.text("Credential Verification Report", M + 36, 29)
 
       const ref = data.requestId.slice(0, 8).toUpperCase()
       doc.fontSize(7).fillColor(WHITE).font(FONT_MONO)
-      doc.text(`REF: ${ref}`, M, 8, { width: CW, align: "right" })
-      doc.fontSize(5).fillColor(MUTED_SUBTLE).font(FONT)
-      doc.text("CONFIDENTIAL", M, 18, { width: CW, align: "right" })
+      doc.text(`REF: ${ref}`, M, 13, { width: CW, align: "right" })
+      doc.fontSize(5.5).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.text("CONFIDENTIAL", M, 25, { width: CW, align: "right" })
 
-      doc.y = HEADER_H + 4
+      doc.y = HEADER_H + 6
 
       // ════════════════ RESULT BADGE ═══════════════════════════════
+      const badgeY = doc.y
+
       if (data.isVerified) {
-        doc.roundedRect(LX, doc.y, CW, 28, 3)
+        doc.roundedRect(LX, badgeY, CW, 34, 3)
         doc.fillOpacity(0.06).fill(SUCCESS).fillOpacity(1)
-        doc.roundedRect(LX, doc.y, CW, 28, 3).lineWidth(0.8).stroke(SUCCESS)
+        doc.roundedRect(LX, badgeY, CW, 34, 3).lineWidth(0.8).stroke(SUCCESS)
 
         doc.save()
-        doc.translate(LX + 12, doc.y + 7)
-        doc.circle(0, 0, 7).fill(SUCCESS)
-        doc.path("M-3.5 0l2.5 2.5 4.5-5")
-        doc.lineWidth(1.8).lineCap("round").lineJoin("round").stroke(WHITE)
+        doc.translate(LX + 14, badgeY + 9)
+        doc.circle(0, 0, 8).fill(SUCCESS)
+        doc.path("M-4 0l3 3 5-6")
+        doc.lineWidth(2).lineCap("round").lineJoin("round").stroke(WHITE)
         doc.restore()
 
-        doc.fontSize(10).fillColor(SUCCESS).font(FONT_BOLD)
-        doc.text("Credential Verified", LX + 28, doc.y + 3)
-        doc.fontSize(6).fillColor(FOREGROUND).font(FONT)
-        doc.text("Cryptographic zero-knowledge proof validated on-chain", LX + 28, doc.y + 15)
-        doc.y += 34
+        doc.fontSize(12).fillColor(SUCCESS).font(FONT_BOLD)
+        doc.text("Credential Verified", LX + 34, badgeY + 5)
+        doc.fontSize(6.5).fillColor(FOREGROUND).font(FONT)
+        doc.text("Cryptographic zero-knowledge proof validated on-chain", LX + 34, badgeY + 20)
       } else {
-        doc.roundedRect(LX, doc.y, CW, 28, 3)
+        doc.roundedRect(LX, badgeY, CW, 34, 3)
         doc.fillOpacity(0.06).fill(WARNING).fillOpacity(1)
-        doc.roundedRect(LX, doc.y, CW, 28, 3).lineWidth(0.8).stroke(WARNING)
+        doc.roundedRect(LX, badgeY, CW, 34, 3).lineWidth(0.8).stroke(WARNING)
 
         doc.save()
-        doc.translate(LX + 12, doc.y + 7)
-        doc.circle(0, 0, 7).fill(WARNING)
-        doc.path("M0-2.5v3.5M0 4v0.5")
-        doc.lineWidth(1.8).lineCap("round").stroke(WHITE)
+        doc.translate(LX + 14, badgeY + 9)
+        doc.circle(0, 0, 8).fill(WARNING)
+        doc.path("M0-3v4M0 4.5v1")
+        doc.lineWidth(2).lineCap("round").stroke(WHITE)
         doc.restore()
 
-        doc.fontSize(10).fillColor(WARNING).font(FONT_BOLD)
-        doc.text("Claim Not Satisfied", LX + 28, doc.y + 3)
-        doc.fontSize(6).fillColor(FOREGROUND).font(FONT)
-        doc.text("The submitted credential does not meet the requested claim threshold", LX + 28, doc.y + 15)
-        doc.y += 34
+        doc.fontSize(12).fillColor(WARNING).font(FONT_BOLD)
+        doc.text("Claim Not Satisfied", LX + 34, badgeY + 5)
+        doc.fontSize(6.5).fillColor(FOREGROUND).font(FONT)
+        doc.text("The submitted credential does not meet the requested claim threshold", LX + 34, badgeY + 20)
       }
+
+      doc.y = badgeY + 42
 
       // ════════════════ VERIFICATION DETAILS ═══════════════════════
       section("Verification Details")
       detailRow("Institution", data.institutionName)
       detailRow("Matriculation Number", data.matricNumber)
       detailRow("Employer", data.employerName)
+      detailRow("Employer Email", data.employerEmail)
       detailRow("Claim Type", data.claimLabel)
+      if (data.claimDescription) detailRow("Description", data.claimDescription)
       detailRow("Result", data.result.replace(/_/g, " "))
       detailRow("Submitted", dateFormatter.format(data.createdAt))
       detailRow("Completed", dateFormatter.format(data.completedAt))
       if (data.graduationYear) detailRow("Graduation Year", String(data.graduationYear))
       if (data.threshold > 0) detailRow("Threshold", String(data.threshold))
+      detailRow("Institution Chain ID", data.institutionOnChainId, true)
 
       // ════════════════ ON-CHAIN PROOF ────────────────────────────
       section("On-Chain Proof")
@@ -253,42 +258,52 @@ export class ReportService {
 
       if (data.txHash) {
         detailRow("Transaction Hash", data.txHash, true)
-
-        // QR Code — compact, right-aligned beside the proof info
-        const qrSize = 70
-        const qrX = LX + CW - qrSize - 4
-        let qrY = doc.y + 2
-
-        doc.roundedRect(qrX - 4, qrY - 2, qrSize + 8, qrSize + 28, 3)
-        doc.fillOpacity(1).fill(SURFACE_CARD)
-        doc.roundedRect(qrX - 4, qrY - 2, qrSize + 8, qrSize + 28, 3)
-        doc.lineWidth(0.5).stroke(SURFACE_BORDER)
-
-        const verifyUrl = `${FRONTEND_URL}/verify/check/${data.requestId}`
-        drawQr(verifyUrl, qrX, qrY, qrSize)
-
-        doc.fontSize(5).fillColor(MUTED).font(FONT)
-        doc.text("Scan to verify", qrX, qrY + qrSize + 2, { width: qrSize, align: "center", lineBreak: false })
-
-        doc.y = qrY + qrSize + 22
-      } else {
-        doc.fontSize(6).fillColor(MUTED).font(FONT)
-        doc.text("No on-chain transaction hash recorded for this verification request.", LX + 6, doc.y, { width: CW - 12 })
-        doc.y += 10
       }
+
+      // ════════════════ QR CODE — always shown ────────────────────
+      doc.y += 3
+
+      const qrSectionY = doc.y
+      const qrSize = 90
+      const qrX = LX + (CW - qrSize) / 2
+      const qrCardH = qrSize + 46
+
+      doc.roundedRect(LX, qrSectionY, CW, qrCardH, 4)
+      doc.fillOpacity(1).fill(SURFACE_CARD)
+      doc.roundedRect(LX, qrSectionY, CW, qrCardH, 4)
+      doc.lineWidth(0.8).stroke(SURFACE_BORDER)
+
+      const verifyUrl = `${FRONTEND_URL}/verify/check/${data.requestId}`
+      drawQr(verifyUrl, qrX, qrSectionY + 6, qrSize)
+
+      doc.fontSize(8).fillColor(FOREGROUND).font(FONT_BOLD)
+      doc.text("Scan to Verify Authenticity", LX, qrSectionY + qrSize + 10, {
+        width: CW, align: "center", lineBreak: false,
+      })
+
+      doc.fontSize(6).fillColor(MUTED).font(FONT)
+      const qrLabel = data.txHash
+        ? "Scan to view this verified credential on the VERIDAQ verification portal"
+        : "Scan to view this verification record on the VERIDAQ portal"
+      doc.text(qrLabel, LX, qrSectionY + qrSize + 24, {
+        width: CW, align: "center", lineBreak: false,
+      })
+
+      doc.y = qrSectionY + qrCardH + 4
 
       // ════════════════ ZKP DETAILS (only for VERIFIED) ───────────
       if (data.isVerified && data.credentialCommitment) {
         section("Zero-Knowledge Proof Details")
 
-        doc.fontSize(6).fillColor(MUTED).font(FONT)
+        doc.fontSize(6.5).fillColor(MUTED).font(FONT)
         doc.text("No student personal data is disclosed. The following values are committed on-chain.", LX + 6, doc.y, { width: CW - 12 })
-        doc.y += 8
+        doc.y += 10
 
         if (data.credentialCommitment) detailRow("Poseidon Commitment", data.credentialCommitment, true)
         if (data.credentialNullifier) detailRow("Nullifier", data.credentialNullifier, true)
 
         if (data.proofJson) {
+          doc.y += 2
           try {
             const proof = typeof data.proofJson === "string"
               ? JSON.parse(data.proofJson)
@@ -296,45 +311,53 @@ export class ReportService {
             const proofStr = JSON.stringify(proof, null, 2)
             const lines = proofStr.split("\n")
             const displayLines = lines.slice(0, 4).join("\n") + (lines.length > 4 ? "\n  ..." : "")
-            doc.fontSize(5).fillColor(MUTED_SUBTLE).font(FONT_MONO)
+            doc.fontSize(5.5).fillColor(MUTED_SUBTLE).font(FONT_MONO)
             doc.text(displayLines, LX + 6, doc.y, { width: CW - 12 })
-            doc.y += lines.length > 4 ? 30 : 24
+            doc.y += lines.length > 4 ? 34 : 28
           } catch { /* skip proof display if parsing fails */ }
         }
       }
 
-      // ════════════════ ISSUED BY ─────────────────────────────────
-      const remaining = MAX_Y - doc.y
-      if (remaining < 30) {
-        doc.y = MAX_Y - 30
-      }
+      // ════════════════ AUTHENTICITY SEAL ─────────────────────────
+      const sealY = Math.min(doc.y, MAX_Y - 46)
 
-      doc.y += 2
-      doc.roundedRect(LX, doc.y, CW, 24, 3).fill(SURFACE)
-      doc.roundedRect(LX, doc.y, CW, 24, 3).lineWidth(0.5).stroke(SURFACE_BORDER)
+      const sealCardH = 40
+      doc.roundedRect(LX, sealY, CW, sealCardH, 4).fill(SURFACE)
+      doc.roundedRect(LX, sealY, CW, sealCardH, 4).lineWidth(0.8).stroke(SURFACE_BORDER)
 
       if (LOGO_BUFFER) {
-        doc.image(LOGO_BUFFER, LX + 8, doc.y + 3, { width: 18, height: 18 })
+        doc.image(LOGO_BUFFER, LX + 10, sealY + 9, { width: 22, height: 22 })
       }
 
-      doc.fontSize(7).fillColor(FOREGROUND).font(FONT_BOLD)
-      doc.text("Verified by VERIDAQ", LX + 32, doc.y + 3)
-      doc.fontSize(5.5).fillColor(MUTED).font(FONT)
-      doc.text("Independently verifiable on the Base blockchain", LX + 32, doc.y + 13)
-      doc.y += 30
+      doc.fontSize(8.5).fillColor(FOREGROUND).font(FONT_BOLD)
+      doc.text(`Verified by ${data.institutionName} through VERIDAQ`, LX + 40, sealY + 5, {
+        width: CW - 50, lineBreak: false,
+      })
+
+      doc.fontSize(6).fillColor(MUTED).font(FONT)
+      doc.text("This verification is independently verifiable on the Base blockchain", LX + 40, sealY + 19, {
+        width: CW - 50, lineBreak: false,
+      })
+
+      doc.fontSize(5.5).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.text(`Issued to: ${data.employerName}`, LX + 40, sealY + 30, {
+        width: CW - 50, lineBreak: false,
+      })
+
+      doc.y = sealY + sealCardH + 4
 
       // ════════════════ FOOTER ────────────────────────────────────
-      const fy = PAGE_BOTTOM - 20
-      doc.rect(0, fy, doc.page.width, 20).fill(VOID)
-      doc.fontSize(5.5).fillColor(MUTED_SUBTLE).font(FONT)
+      const fy = PAGE_BOTTOM - 22
+      doc.rect(0, fy, doc.page.width, 22).fill(VOID)
+      doc.fontSize(6).fillColor(MUTED_SUBTLE).font(FONT)
       doc.text(
         `Generated ${dateFormatter.format(new Date())}  |  Report ${data.requestId}`,
         M, fy + 5, { width: CW, align: "center" }
       )
-      doc.fontSize(5).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.fontSize(5.5).fillColor(MUTED_SUBTLE).font(FONT)
       doc.text(
-        "VERIDAQ  -  Censor-Resistant Academic Truth",
-        M, fy + 12, { width: CW, align: "center" }
+        "VERIDAQ \u2014 Censor-Resistant Academic Truth",
+        M, fy + 13, { width: CW, align: "center" }
       )
 
       doc.end()
