@@ -40,7 +40,8 @@ try {
   }
 }
 
-const FRONTEND_URL = process.env.FRONTEND_URL ?? "https://veridaq-official.vercel.app"
+const rawFrontendUrl = process.env.FRONTEND_URL ?? "https://veridaq-official.vercel.app"
+const FRONTEND_URL = rawFrontendUrl.replace(/\/+$/, "")
 
 export class ReportService {
   constructor(private prisma: PrismaClient) {}
