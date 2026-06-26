@@ -79,11 +79,15 @@ api.interceptors.response.use(
         setAccessToken(null)
         onRefreshed(null) // clear queue so they reject
         if (typeof window !== "undefined") {
-          const path = window.location.pathname
-          // Avoid redirect loop — if already on a login page, do nothing
+          // Normalise trailing slash — some proxies or routers append one,
+          // which would make the exact match below fail and cause a redirect loop.
+          const path = window.location.pathname.replace(/\/+$/, "")
+          // Avoid redirect loop — if already on a login or register page, do nothing
           if (
             path === "/institution/login" ||
+            path === "/institution/register" ||
             path === "/employer/login" ||
+            path === "/employer/register" ||
             path === "/admin/login"
           ) {
             // already there, no redirect needed

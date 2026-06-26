@@ -45,6 +45,7 @@ packages/circuits/*.json
 
 # misc
 .DS_Store
+.~lock.*#
 *.log
 *.lock
 !pnpm-lock.yaml
@@ -77,3 +78,9 @@ simulation-report.json
 
 COMPLETE.md
 implementation.md
+appendix.md
+additions.md
+additions2.md
+FYB PROJECT.md
+FAppendix.md
+SECURITY.md
