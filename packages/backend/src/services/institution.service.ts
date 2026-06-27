@@ -250,15 +250,57 @@ export class InstitutionService {
           status: true,
           result: true,
           claimType: true,
+          threshold: true,
           matricNumber: true,
           createdAt: true,
           completedAt: true,
-          employer: { select: { name: true } },
+          employer: { select: { name: true, email: true } },
         },
       }),
     ])
 
-    return { total, page, limit, items }
+    const enriched = await Promise.all(
+      items.map(async (item) => {
+        const claimDef = await this.prisma.claimDefinition.findFirst({
+          where: { institutionId, claimCode: item.claimType },
+          select: { label: true, description: true, reviewType: true },
+        })
+        return { ...item, claimLabel: claimDef?.label ?? null, claimDescription: claimDef?.description ?? null, reviewType: claimDef?.reviewType ?? "AUTO" }
+      })
+    )
+
+    return { total, page, limit, items: enriched }
+  }
+
+  async getVerificationDetail(requestId: string, institutionId: string) {
+    const request = await this.prisma.verificationRequest.findFirst({
+      where: { id: requestId, institutionId },
+      select: {
+        id: true,
+        status: true,
+        result: true,
+        claimType: true,
+        threshold: true,
+        matricNumber: true,
+        createdAt: true,
+        completedAt: true,
+        employer: { select: { name: true, email: true } },
+      },
+    })
+
+    if (!request) return null
+
+    const claimDef = await this.prisma.claimDefinition.findFirst({
+      where: { institutionId, claimCode: request.claimType },
+      select: { label: true, description: true, reviewType: true },
+    })
+
+    return {
+      ...request,
+      claimLabel: claimDef?.label ?? null,
+      claimDescription: claimDef?.description ?? null,
+      reviewType: claimDef?.reviewType ?? "AUTO",
+    }
   }
 
   async approveVerification(requestId: string, institutionId: string) {
@@ -318,10 +360,11 @@ export class InstitutionService {
       return { ok: false, error: "Institution key missing" }
     }
 
+    let isFreeVerification = true
     if (request.employerId) {
       const employer = await this.prisma.employer.findUnique({
         where: { id: request.employerId },
-        select: { walletAddress: true },
+        select: { id: true, walletAddress: true, freeVerificationsRemaining: true, verificationCredits: true },
       })
 
       if (!employer?.walletAddress) {
@@ -332,8 +375,27 @@ export class InstitutionService {
         const remaining = await this.blockchainSvc.getRemainingFreeVerifications(
           employer.walletAddress as `0x${string}`
         )
-        if (remaining <= 0) return { ok: false, error: "No free verifications" }
-        await this.blockchainSvc.consumeFreeVerification(employer.walletAddress as `0x${string}`)
+        if (remaining <= 0) {
+          const dbRemaining = employer.freeVerificationsRemaining
+          if (dbRemaining <= 0) {
+            if ((employer.verificationCredits ?? 0) > 0) {
+              await this.prisma.employer.update({
+                where: { id: employer.id },
+                data: { verificationCredits: { decrement: 1 } },
+              })
+              isFreeVerification = false
+            } else {
+              return { ok: false, error: "No free verifications" }
+            }
+          } else {
+            await this.prisma.employer.update({
+              where: { id: employer.id },
+              data: { freeVerificationsRemaining: { decrement: 1 } },
+            })
+          }
+        } else {
+          await this.blockchainSvc.consumeFreeVerification(employer.walletAddress as `0x${string}`)
+        }
       } catch (err) {
         log.error({ err, requestId }, "Failed to consume free verification")
         return { ok: false, error: "No free verifications" }
@@ -363,7 +425,7 @@ export class InstitutionService {
           threshold: request.threshold,
         },
         request.institution.id,
-        true // manual review verifications are always free for now
+        isFreeVerification
       )
       .catch((error: unknown) => {
         log.error({ error, requestId }, "Manual verification approval proof generation failed")

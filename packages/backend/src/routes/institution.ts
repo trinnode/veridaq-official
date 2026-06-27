@@ -546,6 +546,13 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
     return instSvc.listVerifications(req.jwtPayload.sub, q.status, Number(q.page ?? 1))
   })
 
+  app.get("/verifications/:id", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const detail = await instSvc.getVerificationDetail(id, req.jwtPayload.sub)
+    if (!detail) return rep.code(404).send({ error: "Verification request not found" })
+    return detail
+  })
+
   app.post("/verifications/:id/approve", async (req, rep) => {
     const { id } = req.params as { id: string }
     const result = await instSvc.approveVerification(id, req.jwtPayload.sub)

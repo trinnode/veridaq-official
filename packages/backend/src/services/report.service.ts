@@ -248,7 +248,7 @@ export class ReportService {
       detailRow("Result", data.result.replace(/_/g, " "))
       detailRow("Submitted", dateFormatter.format(data.createdAt))
       detailRow("Completed", dateFormatter.format(data.completedAt))
-      if (data.graduationYear) detailRow("Graduation Year", String(data.graduationYear))
+      if (data.isVerified && data.graduationYear) detailRow("Graduation Year", String(data.graduationYear))
       if (data.threshold > 0) detailRow("Threshold", String(data.threshold))
       detailRow("Institution Chain ID", data.institutionOnChainId, true)
 
