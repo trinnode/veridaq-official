@@ -9,11 +9,8 @@
 
 import type { FastifyPluginAsync } from "fastify"
 import { z } from "zod"
-import pino from "pino"
 import { ReportService } from "../services/report.service.js"
 import { VerificationService } from "../services/verification.service.js"
-
-const log = pino({ name: "verification-routes" })
 
 const createRequestBody = z.object({
   institutionOnChainId: z.string().min(1),
@@ -26,47 +23,6 @@ const createRequestBody = z.object({
 export const verificationRoutes: FastifyPluginAsync = async (app) => {
   const verifySvc = new VerificationService(app.prisma)
   const reportSvc = new ReportService(app.prisma)
-
-  // ── Public verification check (no auth required) ────────────────
-  // Used by the QR code on printed reports. Anyone with the request
-  // ID can verify the result. No personal data beyond what the
-  // employer chose to disclose is returned.
-  //
-  // Registered in a child encapsulation context so the auth hook
-  // registered later in this plugin does NOT apply to it. Fastify
-  // applies all plugin-context hooks to all routes in that context
-  // regardless of declaration order.
-  await app.register(async function publicRoutes(publicApp) {
-    publicApp.get("/check/:id", async (req, rep) => {
-      const { id } = req.params as { id: string }
-      log.info({ requestId: id }, "Public verification check requested")
-      if (!id) {
-        log.warn("Public check called without an ID")
-        return rep.code(400).send({ error: "Missing verification ID" })
-      }
-      const request = await verifySvc.getPublicRequest(id)
-      if (!request) {
-        log.warn({ requestId: id }, "Public verification check — record not found")
-        return rep.code(404).send({ error: "Verification record not found" })
-      }
-      if (!request.result || !request.completedAt) {
-        log.info({ requestId: id, status: request.status }, "Public check — still processing")
-        return rep.code(202).send({ status: request.status, message: "Verification still processing" })
-      }
-      const response = {
-        id: request.id,
-        status: request.status,
-        result: request.result,
-        institution: request.institution?.name ?? null,
-        claimType: request.claimType,
-        threshold: request.threshold,
-        txHash: request.txHash,
-        completedAt: request.completedAt,
-      }
-      log.info({ requestId: id, result: request.result }, "Public verification check — success")
-      return response
-    })
-  })
 
   // All verification routes below require the caller to be an employer
   // or an institution with alsoEmployer=true

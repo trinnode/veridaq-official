@@ -157,6 +157,36 @@ async function bootstrap() {
     await app.register(swaggerUi, { routePrefix: "/docs" })
   }
 
+  // ── Public routes (no auth) ─────────────────────────────────────
+  // Must be registered before any plugin that adds auth hooks,
+  // because Fastify parent hooks propagate to all child contexts.
+  await app.register(async function publicRoutes(publicApp) {
+    const { VerificationService } = await import("./services/verification.service.js")
+    const verifySvc = new VerificationService(publicApp.prisma)
+
+    publicApp.get("/api/verify/check/:id", async (req, rep) => {
+      const { id } = req.params as { id: string }
+      if (!id) return rep.code(400).send({ error: "Missing verification ID" })
+
+      const request = await verifySvc.getPublicRequest(id)
+      if (!request) return rep.code(404).send({ error: "Verification record not found" })
+      if (!request.result || !request.completedAt) {
+        return rep.code(202).send({ status: request.status, message: "Verification still processing" })
+      }
+
+      return {
+        id: request.id,
+        status: request.status,
+        result: request.result,
+        institution: request.institution?.name ?? null,
+        claimType: request.claimType,
+        threshold: request.threshold,
+        txHash: request.txHash,
+        completedAt: request.completedAt,
+      }
+    })
+  })
+
   // Routes
   await app.register(authRoutes, { prefix: "/api/auth" })
   await app.register(institutionRoutes, { prefix: "/api/institution" })
