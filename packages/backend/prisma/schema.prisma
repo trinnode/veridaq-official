@@ -285,6 +285,8 @@ model VerificationRequest {
   credential    Credential?         @relation(fields: [credentialId], references: [id])
   // The matriculation number as entered by the employer (not stored permanently; used to look up credential)
   matricNumber  String
+  // Course/programme name entered by the employer for manual review claims (claimType 6)
+  courseName    String?
   claimType     Int
   threshold     Int                 @default(0)
   status        VerificationStatus  @default(PENDING)
