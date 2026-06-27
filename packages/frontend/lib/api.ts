@@ -97,6 +97,8 @@ api.interceptors.response.use(
             window.location.href = "/employer/login"
           } else if (path.startsWith("/admin")) {
             window.location.href = "/admin/login"
+          } else if (path.startsWith("/verify/check") || path.startsWith("/verify/report")) {
+            // Public verify pages — no redirect needed
           } else if (
             path.includes("/dashboard") ||
             path.includes("/verify") ||
