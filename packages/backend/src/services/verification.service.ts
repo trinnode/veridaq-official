@@ -209,7 +209,8 @@ export class VerificationService {
     institutionKey: string,
     input: CreateRequestInput,
     institutionId: string,
-    isFreeVerification: boolean
+    isFreeVerification: boolean,
+    skipEarningsCredit = false
   ) {
     try {
       const { proof, publicSignals } = await this.proofSvc.generateProof(
@@ -261,15 +262,17 @@ export class VerificationService {
         },
       })
 
-      // Credit earnings for the institution whose student was verified
-      const usdAmount = config.VERIFICATION_PRICE_USD
-      await this.earningsSvc.creditVerification(
-        institutionId,
-        requestId,
-        usdAmount,
-        "0", // wei — actual wei amount calculated at transfer time
-        isFreeVerification
-      )
+      // Credit earnings only if not already credited by the caller
+      if (!skipEarningsCredit) {
+        const usdAmount = config.VERIFICATION_PRICE_USD
+        await this.earningsSvc.creditVerification(
+          institutionId,
+          requestId,
+          usdAmount,
+          "0",
+          isFreeVerification
+        )
+      }
     } catch (err) {
       log.error({ err, requestId }, "Proof generation or on-chain verification failed")
       await this.prisma.verificationRequest.update({

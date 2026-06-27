@@ -11,6 +11,7 @@ import { PortalBg } from "@/components/parallax/floating-shapes"
 
 const nav = [
   { href: "/admin/dashboard", label: "Overview" },
+  { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/institutions", label: "Institutions" },
   { href: "/admin/employers", label: "Employers" },
   { href: "/admin/payments", label: "Payments" },
