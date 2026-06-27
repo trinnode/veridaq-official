@@ -23,6 +23,7 @@ type VerificationItem = {
   claimType: number
   threshold: number
   matricNumber: string
+  courseName: string | null
   createdAt: string
   completedAt: string | null
   employer: { name: string; email: string } | null
@@ -228,6 +229,12 @@ export default function VerificationsPage() {
                     <span className="text-xs text-muted">Claim Type</span>
                     <span className="text-xs text-foreground">{selected.claimLabel ?? CLAIM_MAP[selected.claimType] ?? `Type ${selected.claimType}`}</span>
                   </div>
+                  {selected.courseName && (
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="text-xs text-muted">Course / Programme</span>
+                      <span className="text-xs text-foreground font-medium">{selected.courseName}</span>
+                    </div>
+                  )}
                   {selected.claimDescription && (
                     <div className="px-3 py-2">
                       <span className="text-xs text-muted block mb-0.5">Description</span>

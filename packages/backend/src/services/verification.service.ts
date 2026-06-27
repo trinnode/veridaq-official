@@ -131,6 +131,7 @@ export class VerificationService {
         institutionId: institution.id,
         credentialId: credential.id,
         matricNumber: input.matricNumber,
+        courseName: input.courseName ?? null,
         claimType: input.claimType,
         threshold: input.threshold,
         status: isManual ? "AWAITING_INSTITUTION" : "PROCESSING",
