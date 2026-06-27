@@ -287,4 +287,37 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
       return rep.code(400).send({ error: message })
     }
   })
+
+  // ── Analytics ────────────────────────────────────────────────────────────
+
+  app.get("/analytics/revenue", async (req) => {
+    const q = req.query as { days?: string }
+    return adminSvc.getRevenueAnalytics(Number(q.days ?? 30))
+  })
+
+  app.get("/analytics/registrations", async (req) => {
+    const q = req.query as { days?: string }
+    return adminSvc.getRegistrationAnalytics(Number(q.days ?? 30))
+  })
+
+  app.get("/analytics/transactions", async (req) => {
+    const q = req.query as Record<string, string | undefined>
+    return adminSvc.listAllTransactions({
+      page: q.page ? Number(q.page) : undefined,
+      limit: q.limit ? Number(q.limit) : undefined,
+      type: q.type,
+      institutionId: q.institutionId,
+      dateFrom: q.dateFrom,
+      dateTo: q.dateTo,
+    })
+  })
+
+  app.get("/analytics/export", async (req, rep) => {
+    const q = req.query as { format?: string; days?: string }
+    const format = (q.format === "xlsx" ? "xlsx" : "json") as "json" | "xlsx"
+    const result = await adminSvc.exportAnalytics(format, Number(q.days ?? 90))
+    rep.header("Content-Type", result.contentType)
+    rep.header("Content-Disposition", `attachment; filename="${result.filename}"`)
+    return rep.send(result.data)
+  })
 }

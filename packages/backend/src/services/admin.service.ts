@@ -9,6 +9,7 @@
 import { PrismaClient } from "@prisma/client"
 import crypto from "crypto"
 import PDFDocument from "pdfkit"
+import ExcelJS from "exceljs"
 import pino from "pino"
 import { formatEther, parseEther } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
@@ -796,6 +797,291 @@ export class AdminService {
     ])
 
     return { ok: true, walletAddress }
+  }
+
+  // Helper to safely convert Prisma Decimal to number
+  private toNum(val: unknown): number {
+    if (val == null) return 0
+    if (typeof val === "number") return val
+    if (typeof (val as any).toNumber === "function") return (val as any).toNumber()
+    return Number(val)
+  }
+
+  // ─── Revenue Analytics (time series for charts) ────────────────────────
+
+  async getRevenueAnalytics(days = 30) {
+    const since = new Date()
+    since.setDate(since.getDate() - days)
+
+    const transactions = await this.prisma.earningTransaction.findMany({
+      where: { createdAt: { gte: since }, type: "EARNED" },
+      orderBy: { createdAt: "asc" },
+      select: {
+        createdAt: true,
+        amountUsd: true,
+        platformShareUsd: true,
+        institutionShareUsd: true,
+        poolShareUsd: true,
+      },
+    })
+
+    // Group by day
+    const dailyMap = new Map<string, { revenue: number; platform: number; institution: number; pool: number; count: number }>()
+    for (const tx of transactions) {
+      const day = tx.createdAt.toISOString().slice(0, 10)
+      const entry = dailyMap.get(day) ?? { revenue: 0, platform: 0, institution: 0, pool: 0, count: 0 }
+      entry.revenue += this.toNum(tx.amountUsd)
+      entry.platform += this.toNum(tx.platformShareUsd)
+      entry.institution += this.toNum(tx.institutionShareUsd)
+      entry.pool += this.toNum(tx.poolShareUsd)
+      entry.count++
+      dailyMap.set(day, entry)
+    }
+
+    const dailySeries: Array<{ date: string; revenue: number; platform: number; institution: number; pool: number; count: number }> = []
+    const cursor = new Date(since)
+    const today = new Date()
+    while (cursor <= today) {
+      const key = cursor.toISOString().slice(0, 10)
+      const entry = dailyMap.get(key)
+      dailySeries.push({
+        date: key,
+        revenue: entry?.revenue ?? 0,
+        platform: entry?.platform ?? 0,
+        institution: entry?.institution ?? 0,
+        pool: entry?.pool ?? 0,
+        count: entry?.count ?? 0,
+      })
+      cursor.setDate(cursor.getDate() + 1)
+    }
+
+    // Aggregates
+    const totalRevenue = transactions.reduce((s, t) => s + this.toNum(t.amountUsd), 0)
+    const totalPlatform = transactions.reduce((s, t) => s + this.toNum(t.platformShareUsd), 0)
+    const totalInstitution = transactions.reduce((s, t) => s + this.toNum(t.institutionShareUsd), 0)
+    const totalPool = transactions.reduce((s, t) => s + this.toNum(t.poolShareUsd), 0)
+
+    return {
+      daily: dailySeries,
+      totals: {
+        revenue: parseFloat(totalRevenue.toFixed(2)),
+        platform: parseFloat(totalPlatform.toFixed(2)),
+        institution: parseFloat(totalInstitution.toFixed(2)),
+        pool: parseFloat(totalPool.toFixed(2)),
+        count: transactions.length,
+      },
+    }
+  }
+
+  // ─── Registration Analytics ────────────────────────────────────────────
+
+  async getRegistrationAnalytics(days = 30) {
+    const since = new Date()
+    since.setDate(since.getDate() - days)
+
+    const [institutions, employers, credentials, verifications] = await Promise.all([
+      this.prisma.institution.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.employer.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.credential.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.verificationRequest.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true, result: true },
+        orderBy: { createdAt: "asc" },
+      }),
+    ])
+
+    const groupByDay = <T extends { createdAt: Date }>(items: T[], getVal?: (item: T) => number) => {
+      const map = new Map<string, number>()
+      for (const item of items) {
+        const day = item.createdAt.toISOString().slice(0, 10)
+        map.set(day, (map.get(day) ?? 0) + (getVal ? getVal(item) : 1))
+      }
+      return map
+    }
+
+    const instMap = groupByDay(institutions)
+    const empMap = groupByDay(employers)
+    const credMap = groupByDay(credentials)
+    const verMap = groupByDay(verifications)
+    const verifiedMap = groupByDay(verifications.filter((v) => v.result === "VERIFIED"))
+
+    const series: Array<{ date: string; institutions: number; employers: number; credentials: number; verifications: number; verified: number }> = []
+    const cursor = new Date(since)
+    const today = new Date()
+    while (cursor <= today) {
+      const key = cursor.toISOString().slice(0, 10)
+      series.push({
+        date: key,
+        institutions: instMap.get(key) ?? 0,
+        employers: empMap.get(key) ?? 0,
+        credentials: credMap.get(key) ?? 0,
+        verifications: verMap.get(key) ?? 0,
+        verified: verifiedMap.get(key) ?? 0,
+      })
+      cursor.setDate(cursor.getDate() + 1)
+    }
+
+    return { daily: series }
+  }
+
+  // ─── Transaction History with Filters ──────────────────────────────────
+
+  async listAllTransactions(filters: {
+    page?: number | undefined
+    limit?: number | undefined
+    type?: string | undefined
+    institutionId?: string | undefined
+    dateFrom?: string | undefined
+    dateTo?: string | undefined
+  }) {
+    const page = filters.page ?? 1
+    const limit = Math.min(100, filters.limit ?? 20)
+    const skip = (page - 1) * limit
+
+    const where: Record<string, unknown> = {}
+    if (filters.type) where.type = filters.type
+    if (filters.institutionId) where.institutionId = filters.institutionId
+    if (filters.dateFrom || filters.dateTo) {
+      const createdAt: Record<string, Date> = {}
+      if (filters.dateFrom) createdAt.gte = new Date(filters.dateFrom)
+      if (filters.dateTo) createdAt.lte = new Date(filters.dateTo)
+      where.createdAt = createdAt
+    }
+
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.earningTransaction.count({ where }),
+      this.prisma.earningTransaction.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          institution: { select: { name: true } },
+        },
+      }),
+    ])
+
+    const mapped = items.map((item) => ({
+      id: item.id,
+      type: item.type,
+      amountUsd: item.amountUsd.toNumber(),
+      amountWei: item.amountWei.toNumber(),
+      platformShareUsd: item.platformShareUsd?.toNumber() ?? null,
+      institutionShareUsd: item.institutionShareUsd?.toNumber() ?? null,
+      poolShareUsd: item.poolShareUsd?.toNumber() ?? null,
+      description: item.description,
+      referenceId: item.referenceId,
+      institutionName: (item as any).institution?.name ?? null,
+      createdAt: item.createdAt,
+    }))
+
+    return { total, page, limit, items: mapped }
+  }
+
+  // ─── Export Analytics ──────────────────────────────────────────────────
+
+  async exportAnalytics(format: "json" | "xlsx", days = 90) {
+    const revenue = await this.getRevenueAnalytics(days)
+    const registrations = await this.getRegistrationAnalytics(days)
+
+    const transactions = await this.prisma.earningTransaction.findMany({
+      where: { createdAt: { gte: new Date(Date.now() - days * 86400000) } },
+      orderBy: { createdAt: "desc" },
+      take: 5000,
+      include: { institution: { select: { name: true } } },
+    })
+
+    if (format === "json") {
+      return {
+        contentType: "application/json",
+        filename: `veridaq-analytics-${new Date().toISOString().slice(0, 10)}.json`,
+        data: JSON.stringify({ revenue, registrations, transactions, exportedAt: new Date().toISOString() }, null, 2),
+      }
+    }
+
+    // Excel export
+    const workbook = new ExcelJS.Workbook()
+
+    // Sheet 1: Revenue Summary
+    const revSheet = workbook.addWorksheet("Revenue Summary")
+    revSheet.columns = [
+      { header: "Date", key: "date", width: 14 },
+      { header: "Revenue ($)", key: "revenue", width: 14 },
+      { header: "Platform Share ($)", key: "platform", width: 18 },
+      { header: "Institution Share ($)", key: "institution", width: 20 },
+      { header: "Gas Pool Share ($)", key: "pool", width: 18 },
+      { header: "Verifications", key: "count", width: 14 },
+    ]
+    for (const row of revenue.daily) {
+      revSheet.addRow(row)
+    }
+    // Totals row
+    revSheet.addRow({
+      date: "TOTAL",
+      revenue: revenue.totals.revenue,
+      platform: revenue.totals.platform,
+      institution: revenue.totals.institution,
+      pool: revenue.totals.pool,
+      count: revenue.totals.count,
+    })
+
+    // Sheet 2: Registration Trends
+    const regSheet = workbook.addWorksheet("Registration Trends")
+    regSheet.columns = [
+      { header: "Date", key: "date", width: 14 },
+      { header: "Institutions", key: "institutions", width: 14 },
+      { header: "Employers", key: "employers", width: 14 },
+      { header: "Credentials", key: "credentials", width: 14 },
+      { header: "Verifications", key: "verifications", width: 14 },
+      { header: "Verified", key: "verified", width: 14 },
+    ]
+    for (const row of registrations.daily) {
+      regSheet.addRow(row)
+    }
+
+    // Sheet 3: All Transactions
+    const txSheet = workbook.addWorksheet("Transactions")
+    txSheet.columns = [
+      { header: "Date", key: "date", width: 18 },
+      { header: "Type", key: "type", width: 14 },
+      { header: "Institution", key: "institution", width: 24 },
+      { header: "Amount ($)", key: "amount", width: 14 },
+      { header: "Platform Share", key: "platform", width: 16 },
+      { header: "Institution Share", key: "institutionShare", width: 18 },
+      { header: "Pool Share", key: "pool", width: 14 },
+      { header: "Reference", key: "reference", width: 28 },
+    ]
+    for (const tx of transactions) {
+      txSheet.addRow({
+        date: tx.createdAt.toISOString(),
+        type: tx.type,
+        institution: (tx as any).institution?.name ?? "—",
+        amount: this.toNum(tx.amountUsd),
+        platform: this.toNum(tx.platformShareUsd),
+        institutionShare: this.toNum(tx.institutionShareUsd),
+        pool: this.toNum(tx.poolShareUsd),
+        reference: tx.referenceId ?? "—",
+      })
+    }
+
+    const buf = await workbook.xlsx.writeBuffer()
+    return {
+      contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      filename: `veridaq-analytics-${new Date().toISOString().slice(0, 10)}.xlsx`,
+      data: Buffer.from(buf as ArrayBuffer),
+    }
   }
 
   async getPlatformStats() {

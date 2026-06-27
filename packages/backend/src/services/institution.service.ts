@@ -12,6 +12,8 @@ import { formatEther } from "viem"
 import { decrypt } from "../utils/crypto.js"
 import { hexToField } from "../utils/field.js"
 import { BlockchainService } from "./blockchain.service.js"
+import { EarningsService } from "./earnings.service.js"
+import { config } from "../config/index.js"
 
 const log = pino({ name: "institution-service" })
 
@@ -404,6 +406,14 @@ export class InstitutionService {
       }
     }
 
+    // Credit institution earnings immediately — the manual review work is done
+    const earningsSvc = new EarningsService(this.prisma)
+    await earningsSvc
+      .creditVerification(request.institution.id, request.id, config.VERIFICATION_PRICE_USD, "0", isFreeVerification)
+      .catch((err: unknown) => {
+        log.error({ err, requestId }, "Failed to credit earnings on manual approve")
+      })
+
     const institutionKeyHex = decrypt(
       request.institution.institutionKeyEncrypted,
       request.institution.institutionKeyIv,
@@ -427,7 +437,8 @@ export class InstitutionService {
           threshold: request.threshold,
         },
         request.institution.id,
-        isFreeVerification
+        isFreeVerification,
+        true // skipEarningsCredit — already credited above
       )
       .catch((error: unknown) => {
         log.error({ error, requestId }, "Manual verification approval proof generation failed")
@@ -437,12 +448,71 @@ export class InstitutionService {
   }
 
   async declineVerification(requestId: string, institutionId: string, comment?: string) {
-    const updated = await this.prisma.verificationRequest.updateMany({
+    const request = await this.prisma.verificationRequest.findFirst({
       where: {
         id: requestId,
         institutionId,
         status: "AWAITING_INSTITUTION",
       },
+      select: {
+        id: true,
+        employerId: true,
+        institution: { select: { id: true } },
+      },
+    })
+
+    if (!request) {
+      return { ok: false, error: "Verification request not found" }
+    }
+
+    // Deduct credits from employer
+    let isFreeVerification = true
+    if (request.employerId) {
+      const employer = await this.prisma.employer.findUnique({
+        where: { id: request.employerId },
+        select: { id: true, walletAddress: true, freeVerificationsRemaining: true, verificationCredits: true },
+      })
+
+      if (employer?.walletAddress) {
+        try {
+          const remaining = await this.blockchainSvc.getRemainingFreeVerifications(
+            employer.walletAddress as `0x${string}`
+          )
+          if (remaining <= 0) {
+            const dbRemaining = employer.freeVerificationsRemaining
+            if (dbRemaining <= 0) {
+              if ((employer.verificationCredits ?? 0) > 0) {
+                await this.prisma.employer.update({
+                  where: { id: employer.id },
+                  data: { verificationCredits: { decrement: 1 } },
+                })
+                isFreeVerification = false
+              }
+            } else {
+              await this.prisma.employer.update({
+                where: { id: employer.id },
+                data: { freeVerificationsRemaining: { decrement: 1 } },
+              })
+            }
+          } else {
+            await this.blockchainSvc.consumeFreeVerification(employer.walletAddress as `0x${string}`)
+          }
+        } catch (err) {
+          log.error({ err, requestId }, "Failed to consume free verification on decline")
+        }
+      }
+    }
+
+    // Credit institution earnings even on decline
+    const earningsSvc = new EarningsService(this.prisma)
+    await earningsSvc
+      .creditVerification(institutionId, request.id, config.VERIFICATION_PRICE_USD, "0", isFreeVerification)
+      .catch((err: unknown) => {
+        log.error({ err, requestId }, "Failed to credit earnings on manual decline")
+      })
+
+    await this.prisma.verificationRequest.update({
+      where: { id: request.id },
       data: {
         status: "COMPLETED",
         result: "RECORD_NOT_FOUND",
@@ -450,10 +520,6 @@ export class InstitutionService {
         adminNote: comment ?? null,
       },
     })
-
-    if (updated.count === 0) {
-      return { ok: false, error: "Verification request not found" }
-    }
 
     return { ok: true }
   }
