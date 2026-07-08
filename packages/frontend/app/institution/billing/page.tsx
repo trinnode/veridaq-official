@@ -107,7 +107,7 @@ export default function InstitutionBilling() {
                   className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
                     data?.tier === "PAID"
                       ? "bg-accent/10 text-accent"
-                      : "bg-amber-500/10 text-amber-500"
+                      : "bg-warning/10 text-warning"
                   }`}
                 >
                   {data?.tier === "PAID" ? "Active" : "Free Tier"}
@@ -276,8 +276,8 @@ export default function InstitutionBilling() {
                           <td className="py-3 pr-4">
                             <span className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                               p.status === "COMPLETED" ? "border-accent/20 bg-accent/10 text-accent" :
-                              p.status === "PENDING" ? "border-amber-500/20 bg-amber-500/10 text-amber-500" :
-                              "border-red-500/20 bg-red-500/10 text-red-400"
+                              p.status === "PENDING" ? "border-warning/20 bg-warning/10 text-warning" :
+                              "border-error/20 bg-error/10 text-error"
                             }`}>
                               {p.status}
                             </span>

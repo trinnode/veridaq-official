@@ -104,7 +104,7 @@ export default function TechnicalResourcesPage() {
     { term: "Circom", def: "A domain-specific language for writing arithmetic circuits that compile to R1CS constraint systems. Veridaq's credential circuit is written in Circom 2.0.8." },
     { term: "Commitment (Hash)", def: "A one-way cryptographic value submitted on-chain. The commitment binds the prover to specific data without revealing it. Veridaq uses Poseidon hash commitments." },
     { term: "ERC-4337", def: "The Ethereum account abstraction standard that allows smart contract wallets (accounts) to initiate transactions. Veridaq uses it so institutions can submit batches without holding ETH." },
-    { term: "Groth16", def: "A zero-knowledge proving system introduced by Jens Groth in 2016. Produces constant-size proofs (3 group elements) with constant-time verification. Requires a trusted setup." },
+    { term: "Groth16", def: "A zero knowledge proving system introduced by Jens Groth in 2016. Produces constant-size proofs (3 group elements) with constant-time verification. Requires a trusted setup." },
     { term: "Nullifier", def: "A unique public value derived from the credential data. Prevents the same credential from being verified more than once. Also used for revocation." },
     { term: "Paymaster", def: "An ERC-4337 entity that sponsors gas fees for UserOperations. Veridaq's PaymasterVault maintains per-institution ETH balances and deducts gas costs after execution." },
     { term: "Poseidon", def: "A ZKP-friendly hash function designed by Grassi, Khovratovich, and others. Highly efficient inside arithmetic circuits. Veridaq uses it for all credential commitments." },
@@ -117,8 +117,8 @@ export default function TechnicalResourcesPage() {
 
   const readingList = [
     { title: "Groth16: On the Size of Pairing-Based Non-Interactive Arguments", author: "Jens Groth (2016)", url: "https://eprint.iacr.org/2016/260" },
-    { title: "Poseidon: A New Hash Function for Zero-Knowledge Proof Systems", author: "Grassi, Khovratovich, Rechberger, Roy, Schofnegger (2021)", url: "https://eprint.iacr.org/2019/458" },
-    { title: "Circom 2: A Circuit Compiler for Zero-Knowledge Proofs", author: "iden3 (2023)", url: "https://docs.circom.io/" },
+    { title: "Poseidon: A New Hash Function for Zero Knowledge Proof Systems", author: "Grassi, Khovratovich, Rechberger, Roy, Schofnegger (2021)", url: "https://eprint.iacr.org/2019/458" },
+    { title: "Circom 2: A Circuit Compiler for Zero Knowledge Proofs", author: "iden3 (2023)", url: "https://docs.circom.io/" },
     { title: "ERC-4337: Account Abstraction Using Alt Mempool", author: "Buterin, et al. (2023)", url: "https://eips.ethereum.org/EIPS/eip-4337" },
     { title: "Base: A Secure, Low-Cost Ethereum L2", author: "Coinbase (2024)", url: "https://docs.base.org/" },
     { title: "Hermez: Powers of Tau Ceremony", author: "Hermez Network (2022)", url: "https://hermez.io/" },

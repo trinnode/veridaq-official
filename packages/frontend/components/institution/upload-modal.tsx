@@ -174,7 +174,7 @@ function Spinner({ label }: { label?: string }) {
 function Alert({ variant, children }: { variant: "error" | "warn" | "ok"; children: React.ReactNode }) {
   const styles = {
     error: "border-error/20 bg-error/5 text-red-400",
-    warn: "border-warning/20 bg-warning/5 text-yellow-400",
+    warn: "border-warning/20 bg-warning/5 text-warning",
     ok: "border-success/20 bg-success/5 text-green-400",
   }
   const icons = {
@@ -414,7 +414,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/80 p-4 backdrop-blur-sm">
       <div className="border-surface-border bg-surface-card flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border shadow-2xl">
         {/* Header */}
         <div className="border-surface-border flex shrink-0 items-center justify-between border-b px-6 py-4">
@@ -508,7 +508,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                       setFile(null)
                       setFileError("")
                     }}
-                    className="text-muted transition-colors hover:text-red-400"
+                    className="text-muted transition-colors hover:text-error"
                   >
                     <X size={16} />
                   </button>
@@ -641,7 +641,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                       <button
                         onClick={predeployAccount}
                         disabled={predeploying}
-                        className="mt-3 rounded-lg border border-warning/30 px-3 py-1.5 text-xs text-yellow-400 transition-colors hover:bg-warning/10 disabled:opacity-50"
+                        className="mt-3 rounded-lg border border-warning/30 px-3 py-1.5 text-xs text-warning transition-colors hover:bg-warning/10 disabled:opacity-50"
                       >
                         {predeploying && (
                           <Loader2 size={12} className="mr-1 inline animate-spin" />
@@ -649,7 +649,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                         {predeploying ? "Deploying..." : "Predeploy Account"}
                       </button>
                       {predeployMsg && (
-                        <p className="mt-2 text-xs text-yellow-400">{predeployMsg}</p>
+                        <p className="mt-2 text-xs text-warning">{predeployMsg}</p>
                       )}
                     </div>
                   )}
@@ -695,7 +695,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                           <tr key={i} className="border-surface-border/40 border-b">
                             <td className="px-3 py-2 font-mono text-muted">{e.row > 0 ? `Row ${e.row}` : "—"}</td>
                             <td className="px-3 py-2 text-muted">{e.column ?? "—"}</td>
-                            <td className="px-3 py-2 text-red-400">{e.error}</td>
+                            <td className="px-3 py-2 text-error">{e.error}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -812,11 +812,11 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
             <div className="flex flex-col items-center gap-6 py-8 text-center">
               {pollData?.status === "FAILED" ? (
                 <div className="flex h-16 w-16 items-center justify-center rounded-full border border-error/30 bg-error/10">
-                  <AlertCircle size={32} className="text-red-400" />
+                  <AlertCircle size={32} className="text-error" />
                 </div>
               ) : (
                 <div className="flex h-16 w-16 items-center justify-center rounded-full border border-success/30 bg-success/10">
-                  <CheckCircle2 size={32} className="text-green-400" />
+                  <CheckCircle2 size={32} className="text-success" />
                 </div>
               )}
 
@@ -850,7 +850,7 @@ export function UploadModal({ onDismiss, onSuccess }: UploadModalProps) {
                   <div className="space-y-2">
                     {pollData.errorReport.map((e, i) => (
                       <div key={i} className="border-surface-border/40 border-b pb-2 text-xs last:border-0">
-                        <p className="text-red-400">{e.error ?? "Unknown error"}</p>
+                        <p className="text-error">{e.error ?? "Unknown error"}</p>
                         {e.txRef && <p className="mt-0.5 text-muted">Ref: {e.txRef}</p>}
                         {e.userOpHash && (
                           <p className="mt-0.5 text-muted">

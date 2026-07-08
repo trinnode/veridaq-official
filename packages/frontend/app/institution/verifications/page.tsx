@@ -5,6 +5,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
+import { CardLift } from "@/components/ui/card-lift"
 import { Check, X, Clock, CheckCircle2, XCircle, ChevronRight, Building2, Mail } from "@/lib/icons"
 
 const CLAIM_MAP: Record<number, string> = {
@@ -117,13 +118,13 @@ export default function VerificationsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "AWAITING_INSTITUTION":
-        return <span className="flex items-center gap-1 text-orange-400 bg-orange-400/10 px-2 py-1 text-xs border border-orange-400/20 rounded"><Clock className="w-3 h-3" /> Manual Review</span>
+        return <span className="flex items-center gap-1 text-warning bg-warning/10 px-2 py-1 text-xs border border-warning/20 rounded"><Clock className="w-3 h-3" /> Manual Review</span>
       case "PROCESSING":
-        return <span className="flex items-center gap-1 text-blue-400 bg-blue-400/10 px-2 py-1 text-xs border border-blue-400/20 rounded"><Clock className="w-3 h-3" /> Generating Proof</span>
+        return <span className="flex items-center gap-1 text-info bg-info/10 px-2 py-1 text-xs border border-info/20 rounded"><Clock className="w-3 h-3" /> Generating Proof</span>
       case "COMPLETED":
         return <span className="flex items-center gap-1 text-accent bg-accent/10 px-2 py-1 text-xs border border-accent/20 rounded"><CheckCircle2 className="w-3 h-3" /> Completed</span>
       case "FAILED":
-        return <span className="flex items-center gap-1 text-red-500 bg-red-500/10 px-2 py-1 text-xs border border-red-500/20 rounded"><XCircle className="w-3 h-3" /> Failed/Rejected</span>
+        return <span className="flex items-center gap-1 text-error bg-error/10 px-2 py-1 text-xs border border-error/20 rounded"><XCircle className="w-3 h-3" /> Failed/Rejected</span>
       default:
         return <span className="text-muted text-xs border border-surface-border px-2 py-1 rounded">{status}</span>
     }
@@ -137,7 +138,8 @@ export default function VerificationsPage() {
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         {/* Table */}
-        <div className={`${selected ? "lg:w-1/2" : "lg:w-full"} overflow-x-auto border border-surface-border rounded bg-surface-card`}>
+        <CardLift className={`${selected ? "lg:w-1/2" : "lg:w-full"}`}>
+        <div className="overflow-x-auto border border-surface-border rounded bg-surface-card">
           <table className="w-full text-left text-sm text-foreground">
             <thead className="bg-void/50 text-xs uppercase text-muted border-b border-surface-border">
               <tr>
@@ -183,17 +185,19 @@ export default function VerificationsPage() {
               ))}
             </tbody>
           </table>
-          {loading && (
+            {loading && (
             <div className="text-muted py-8 text-center text-sm">Loading...</div>
-          )}
-        </div>
+            )}
+          </div>
+        </CardLift>
 
         {/* Detail Panel */}
         {selected && (
-          <div className="lg:w-1/2 border border-surface-border rounded bg-surface-card">
+          <CardLift className="lg:w-1/2">
+          <div className="border border-surface-border rounded bg-surface-card">
             <div className="p-5">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-base font-semibold text-foreground">Request Details</h2>
+                <h2 className="text-base font-display font-semibold text-foreground">Request Details</h2>
                 <button onClick={() => setSelected(null)} className="text-muted hover:text-foreground text-xs border border-surface-border px-2 py-1 rounded transition-colors">Close</button>
               </div>
 
@@ -276,7 +280,7 @@ export default function VerificationsPage() {
                   <button
                     onClick={openDeclineModal}
                     disabled={processingId === selected.id}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium text-red-400 bg-red-400/10 hover:bg-red-400/20 border border-red-400/30 rounded transition-colors disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium text-error bg-error/10 hover:bg-error/20 border border-error/20 rounded transition-colors disabled:opacity-50"
                   >
                     <X className="w-4 h-4" /> Decline
                   </button>
@@ -284,14 +288,16 @@ export default function VerificationsPage() {
               )}
             </div>
           </div>
+          </CardLift>
         )}
       </div>
 
       {/* Decline comment modal */}
       {declineModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/80 p-4 backdrop-blur-sm">
+          <CardLift>
           <div className="border-surface-border bg-surface-card w-full max-w-md rounded-xl border p-6 shadow-2xl">
-            <h3 className="text-base font-semibold text-foreground">Decline Verification</h3>
+            <h3 className="text-base font-display font-semibold text-foreground">Decline Verification</h3>
             <p className="text-muted mt-1 text-sm">This record will be marked as not found.</p>
             <div className="mt-4">
               <label className="mb-1.5 block text-xs font-medium text-foreground">
@@ -313,12 +319,13 @@ export default function VerificationsPage() {
               </button>
               <button
                 onClick={confirmDecline}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-foreground transition-opacity hover:bg-red-700"
+                className="rounded-lg bg-error px-4 py-2 text-sm font-medium text-foreground transition-opacity hover:bg-error/80"
               >
                 Confirm Decline
               </button>
             </div>
           </div>
+          </CardLift>
         </div>
       )}
     </DashboardLayout>

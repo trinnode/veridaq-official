@@ -22,7 +22,7 @@ const orbitron = Orbitron({
 export const metadata: Metadata = {
   title: "VERIDAQ",
   description:
-    "Censor-Resistant Academic Truth. Zero-Knowledge Proofs for academic truth.",
+    "Censor-Resistant Academic Truth. Zero Knowledge Proofs for academic truth.",
   icons: {
     icon: "/logo-white.png",
   },

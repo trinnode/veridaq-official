@@ -30,16 +30,16 @@ export default function AdminAudit() {
   }, [])
 
   const actionColor: Record<string, string> = {
-    INSTITUTION_REGISTERED: "text-blue-500 bg-blue-500/10",
-    EMPLOYER_REGISTERED: "text-cyan-500 bg-cyan-500/10",
+    INSTITUTION_REGISTERED: "text-info bg-info/10",
+    EMPLOYER_REGISTERED: "text-info bg-info/10",
     TIER_CHANGED: "text-purple-500 bg-purple-500/10",
-    PAYMENT_INSTITUTION_UPGRADE: "text-green-500 bg-green-500/10",
-    PAYMENT_INSTITUTION_FUNDING: "text-emerald-500 bg-emerald-500/10",
-    PAYMENT_EMPLOYER_TOPUP: "text-teal-500 bg-teal-500/10",
+    PAYMENT_INSTITUTION_UPGRADE: "text-success bg-success/10",
+    PAYMENT_INSTITUTION_FUNDING: "text-success bg-success/10",
+    PAYMENT_EMPLOYER_TOPUP: "text-success bg-success/10",
     BATCH_CONFIRMED: "text-accent bg-accent/10",
-    CREDENTIAL_REVOKED: "text-red-500 bg-red-500/10",
-    INSTITUTION_DEACTIVATED: "text-orange-500 bg-orange-500/10",
-    EMPLOYER_DEACTIVATED: "text-orange-500 bg-orange-500/10",
+    CREDENTIAL_REVOKED: "text-error bg-error/10",
+    INSTITUTION_DEACTIVATED: "text-warning bg-warning/10",
+    EMPLOYER_DEACTIVATED: "text-warning bg-warning/10",
   }
 
   function getActionBadge(action: string) {

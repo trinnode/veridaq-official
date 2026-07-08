@@ -126,7 +126,7 @@ export function CrossmintCheckout({ amountUsd, paymentType, onSuccess, onClose, 
   if (step === "completed") {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <CheckCircle2 className="h-12 w-12 text-green-500" />
+        <CheckCircle2 className="h-12 w-12 text-success" />
         <p className="text-lg font-semibold text-foreground">Payment Confirmed!</p>
         <p className="text-muted text-sm text-center">
           Your payment of ${amountUsd} has been processed.
@@ -144,7 +144,7 @@ export function CrossmintCheckout({ amountUsd, paymentType, onSuccess, onClose, 
   if (step === "failed") {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <XCircle className="h-12 w-12 text-red-500" />
+        <XCircle className="h-12 w-12 text-error" />
         <p className="text-lg font-semibold text-foreground">Payment Failed</p>
         <p className="text-muted text-sm text-center">{error ?? "An error occurred"}</p>
         <div className="flex gap-3">

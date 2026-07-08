@@ -137,7 +137,7 @@ export function DepositModal({ open, onClose, onSuccess }: DepositModalProps) {
   const txPending = isWriting || isConfirming
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/80 backdrop-blur-sm">
       <div className="bg-surface-card border-surface-border mx-4 w-full max-w-md rounded-xl border p-6 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
@@ -298,7 +298,7 @@ export function DepositModal({ open, onClose, onSuccess }: DepositModalProps) {
             {isConfirmed && !loading && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center gap-3 py-4">
-                  <CheckCircle2 className="h-10 w-10 text-green-500" />
+                  <CheckCircle2 className="h-10 w-10 text-success" />
                   <p className="text-foreground font-medium">Transaction Confirmed</p>
                   {txHash && (
                     <p className="text-muted max-w-full truncate px-4 text-xs font-mono">{txHash}</p>
@@ -328,7 +328,7 @@ export function DepositModal({ open, onClose, onSuccess }: DepositModalProps) {
 
         {step === "success" && (
           <div className="flex flex-col items-center gap-4 py-6">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
+            <CheckCircle2 className="h-12 w-12 text-success" />
             <p className="text-lg font-semibold text-foreground">Deposit Successful!</p>
             <p className="text-muted text-sm text-center">
               ${effectiveUsd} worth of ETH has been credited to your institution.
@@ -344,7 +344,7 @@ export function DepositModal({ open, onClose, onSuccess }: DepositModalProps) {
 
         {step === "error" && (
           <div className="flex flex-col items-center gap-4 py-6">
-            <div className="text-error flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+            <div className="text-error flex h-12 w-12 items-center justify-center rounded-full bg-error/10">
               <span className="text-2xl">!</span>
             </div>
             <p className="text-lg font-semibold text-foreground">Transaction Failed</p>

@@ -222,7 +222,7 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
               {MANUAL_CLAIM_CODES.includes(claimType) ? "Submitting for Review..." : "Verifying Credential..."}
             </p>
             <p className="text-muted text-xs">
-              {MANUAL_CLAIM_CODES.includes(claimType) ? "The institution will confirm your claim" : "Generating zero-knowledge proof"}
+              {MANUAL_CLAIM_CODES.includes(claimType) ? "The institution will confirm your claim" : "Generating zero knowledge proof"}
             </p>
           </div>
         </motion.div>
@@ -235,7 +235,7 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
       )}
 
       {result && result.status === "AWAITING_INSTITUTION" && (
-        <motion.div className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-sm font-medium text-orange-400" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div className="rounded-lg border border-warning/20 bg-warning/10 px-4 py-3 text-sm font-medium text-warning" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span>Awaiting institution review — check back later</span>

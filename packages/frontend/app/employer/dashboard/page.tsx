@@ -3,6 +3,7 @@ import { HistoryTable } from "@/components/employer/history-table"
 import { EmployerLayout } from "@/components/employer/layout"
 import { CreditPurchaseModal } from "@/components/employer/credit-purchase-modal"
 import { VerifyButton } from "@/components/employer/verify-button"
+import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 import { GuardKyc } from "@/components/ui/guard-kyc"
 import { StatCard } from "@/components/ui/stat-card"
 import { api } from "@/lib/api"
@@ -63,12 +64,14 @@ export default function EmployerDashboard() {
             <h1 className="text-2xl font-semibold text-foreground">
               Welcome back, {profile?.name || "Employer"}!
             </h1>
+            <ScrollReveal direction="up" delay={0}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
               <StatCard label="Free Trials Left" value={profile?.freeVerificationsRemaining ?? 0} />
               <StatCard label="Paid Credits" value={profile?.verificationCredits ?? 0} accent />
               <StatCard label="Total Available" value={totalAvailable} />
               <StatCard label="Account Status" value={profile?.kycApproved ? "Active" : "Pending"} />
             </div>
+            </ScrollReveal>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowPurchase(true)}
@@ -81,7 +84,7 @@ export default function EmployerDashboard() {
             <div className="bg-surface-border/20 border-surface-border rounded-lg border p-5">
               <h2 className="mb-2 flex items-center gap-2 font-medium text-foreground">Quick Guide</h2>
               <p className="text-muted mb-3 text-sm leading-relaxed">
-                Veridaq uses Zero-Knowledge Proofs to verify student credentials mathematically
+                Veridaq uses Zero Knowledge Proofs to verify student credentials mathematically
                 without revealing their plain-text records.
               </p>
               <ul className="text-muted list-inside list-disc space-y-2 text-sm">

@@ -43,10 +43,10 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="mb-4 text-lg font-bold uppercase tracking-widest text-foreground">
-              2. Zero-Knowledge Cryptography Acknowledgment
+              2. Zero Knowledge Cryptography Acknowledgment
             </h2>
             <p>
-              The Protocol utilizes Groth16 Zero-Knowledge Proofs (ZKPs) and Poseidon hash
+              The Protocol utilizes Groth16 Zero Knowledge Proofs (ZKPs) and Poseidon hash
               commitments. By establishing credentials or requesting verification, you acknowledge
               that mathematical guarantees verify the truth without relying on human intermediaries.
               Veridaq Foundation provides the cryptographic rails but assumes no liability for the

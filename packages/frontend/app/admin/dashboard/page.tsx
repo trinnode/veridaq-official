@@ -1,5 +1,6 @@
 "use client"
 import { AdminLayout } from "@/components/admin/layout"
+import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 import { StatCard } from "@/components/ui/stat-card"
 import { toast } from "@/components/ui/toast"
 import { api, BASE_URL } from "@/lib/api"
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
       ) : (
         <div className="animate-fade-in space-y-8">
           {/* Bento grid — Main Key Stats */}
+          <ScrollReveal direction="up" delay={0}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div className="group transition-transform duration-300 [perspective:500px] hover:[transform:rotateX(0.5deg)]">
               <StatCard label="Total Institutions" value={stats?.institutions ?? 0} />
@@ -71,6 +73,8 @@ export default function AdminDashboard() {
               />
             </div>
           </div>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delay={0.1}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="group transition-transform duration-300 [perspective:500px] hover:[transform:rotateX(0.5deg)]">
               <StatCard label="Total Credentials" value={stats?.totalCredentials ?? 0} />
@@ -79,13 +83,14 @@ export default function AdminDashboard() {
               <StatCard label="Revoked Credentials" value={stats?.revokedCredentials ?? 0} />
             </div>
           </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Wallet Info — glass card with 3D tilt */}
             <div
               className={`group overflow-hidden border transition-all duration-500 [perspective:500px] hover:[transform:rotateX(1deg)] ${
                 isLowBalance
-                  ? "border-red-500/50 bg-red-500/5"
+                  ? "border-error/20 bg-error/10"
                   : "bg-surface-card border-surface-border"
               } relative flex flex-col justify-center p-6`}
             >
@@ -106,8 +111,8 @@ export default function AdminDashboard() {
                   {adminBalanceEth.toFixed(4)} <span className="text-muted text-sm">ETH</span>
                 </p>
                 {isLowBalance && (
-                  <p className="mt-2 flex items-center gap-1 text-xs text-red-400">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
+                  <p className="mt-2 flex items-center gap-1 text-xs text-error">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-error" />
                     Balance low — operations may fail without gas.
                   </p>
                 )}
@@ -122,12 +127,12 @@ export default function AdminDashboard() {
               <div className="relative">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="font-display text-foreground flex items-center gap-2 text-sm font-semibold tracking-wide">
-                    <Activity className="h-4 w-4 text-orange-400" />
+                    <Activity className="h-4 w-4 text-warning" />
                     Paymaster Vault
                   </h3>
                 </div>
                 <div className="mb-2 space-y-1.5">
-                  <div className="flex items-baseline justify-between rounded bg-black/20 px-3 py-2">
+                    <div className="flex items-baseline justify-between rounded bg-void/40 px-3 py-2">
                     <span className="text-muted text-xs">Sponsored Pool</span>
                     <span className="font-mono text-xl tracking-tight">
                       {stats?.sponsoredPoolEth
@@ -136,7 +141,7 @@ export default function AdminDashboard() {
                       <span className="text-muted text-xs">ETH</span>
                     </span>
                   </div>
-                  <div className="flex items-baseline justify-between rounded bg-black/20 px-3 py-2">
+                  <div className="flex items-baseline justify-between rounded bg-void/40 px-3 py-2">
                     <span className="text-muted text-xs">EntryPoint Deposit</span>
                     <span className="font-mono text-sm">
                       {stats?.entryPointDepositEth
@@ -145,7 +150,7 @@ export default function AdminDashboard() {
                       <span className="text-muted text-xs">ETH</span>
                     </span>
                   </div>
-                  <div className="flex items-baseline justify-between rounded bg-black/20 px-3 py-2">
+                  <div className="flex items-baseline justify-between rounded bg-void/40 px-3 py-2">
                     <span className="text-muted text-xs">Contract Balance</span>
                     <span className="text-muted font-mono text-sm">
                       {stats?.paymasterBalance
@@ -169,7 +174,7 @@ export default function AdminDashboard() {
                 <div className="absolute inset-0 bg-gradient-to-br from-green-500/[0.02] to-transparent" />
               </div>
               <h3 className="font-display text-foreground mb-4 flex items-center gap-2 text-sm font-semibold tracking-wide">
-                <Activity className="h-4 w-4 text-green-400" />
+                <Activity className="h-4 w-4 text-success" />
                 Active Institutions ({stats.activeInstitutionNames.length})
               </h3>
               <div className="flex flex-wrap gap-2">
