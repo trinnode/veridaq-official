@@ -429,7 +429,7 @@ export default function LandingPage() {
                 direction="up"
                 revealContent={
                   <span className="text-accent flex items-center gap-1 text-xs font-semibold uppercase tracking-wider">
-                    Access Portal <span aria-hidden>→</span>
+                    <span aria-hidden>→</span>Secured and Safe<span aria-hidden>→</span>
                   </span>
                 }
               >
@@ -466,7 +466,7 @@ export default function LandingPage() {
                 direction="up"
                 revealContent={
                   <span className="text-accent flex items-center gap-1 text-xs font-semibold uppercase tracking-wider">
-                    Secured and Safe <span aria-hidden>→</span>
+                    <span aria-hidden>→</span>Secured and Safe <span aria-hidden>→</span>
                   </span>
                 }
               >
@@ -503,7 +503,7 @@ export default function LandingPage() {
                 direction="up"
                 revealContent={
                   <span className="text-accent flex items-center gap-1 text-xs font-semibold uppercase tracking-wider">
-                    Secured and Safe <span aria-hidden>→</span>
+                    <span aria-hidden>→</span>Secured and Safe <span aria-hidden>→</span>
                   </span>
                 }
               >
