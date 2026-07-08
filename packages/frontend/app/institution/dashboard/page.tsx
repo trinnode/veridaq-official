@@ -6,6 +6,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { ArrowRight, FileCheck2, ShieldCheck, Upload } from "@/lib/icons"
 import { EarningsSummary } from "@/components/institution/earnings-summary"
+import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 import { toast } from "@/components/ui/toast"
 import { SafeLink as Link } from "@/components/safe-link"
 import { useEffect, useState } from "react"
@@ -52,9 +53,10 @@ export default function InstitutionDashboard() {
         <div className="text-muted flex h-64 items-center justify-center text-sm">Loading…</div>
       ) : (
         <GuardKyc>
+          <ScrollReveal direction="up" delay={0}>
           <div className="animate-fade-in space-y-8">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <h1 className="text-2xl font-semibold text-foreground">
+              <h1 className="text-2xl font-display font-semibold text-foreground">
                 Welcome back, {stats?.name || "Institution"}!
               </h1>
 
@@ -78,14 +80,14 @@ export default function InstitutionDashboard() {
               <StatCard label="Total Credentials" value={stats?.totalCredentials ?? 0} />
               <StatCard label="Requests (This Month)" value={stats?.requestsThisMonth ?? 0} />
 
-              <div className="card bg-surface-card border-surface-border flex flex-col justify-between rounded-xl border p-4">
+              <div className="bg-surface-card border-surface-border flex flex-col justify-between rounded-xl border p-4">
                 <p className="text-muted text-sm">Pending Manual Reviews</p>
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-2xl font-semibold text-foreground">{stats?.pendingManual ?? 0}</p>
                   {stats?.pendingManual > 0 && (
                     <Link
                       href="/institution/verifications?status=AWAITING_INSTITUTION"
-                      className="rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-500 hover:underline"
+                      className="rounded bg-warning/20 px-2 py-1 text-xs text-warning hover:underline"
                     >
                       Review Now
                     </Link>
@@ -110,7 +112,7 @@ export default function InstitutionDashboard() {
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="card ">
+              <div className="border-surface-border bg-surface-card rounded-xl border p-6">
                 <h3 className="mb-4 flex items-center gap-2 font-medium text-foreground">
                   <FileCheck2 size={18} className="text-accent" /> Subscription & Last Batch
                 </h3>
@@ -131,7 +133,7 @@ export default function InstitutionDashboard() {
                       {stats?.lastBatch ? (
                         <>
                           <span
-                            className={`h-2 w-2 rounded-full ${stats.lastBatch.status === "CONFIRMED" ? "bg-green-500" : stats.lastBatch.status === "FAILED" ? "bg-red-500" : "bg-yellow-500"}`}
+                            className={`h-2 w-2 rounded-full ${stats.lastBatch.status === "CONFIRMED" ? "bg-success" : stats.lastBatch.status === "FAILED" ? "bg-error" : "bg-warning"}`}
                           ></span>
                           {stats.lastBatch.status} (
                           {new Date(stats.lastBatch.createdAt).toLocaleDateString()})
@@ -144,7 +146,7 @@ export default function InstitutionDashboard() {
                 </div>
               </div>
 
-              <div className="card bg-accent/5 border-accent/20 relative flex max-h-64 flex-col items-center justify-center overflow-hidden border p-8 text-center backdrop-blur-sm">
+              <div className="bg-accent/5 border-accent/20 relative flex max-h-64 flex-col items-center justify-center overflow-hidden border p-8 text-center backdrop-blur-sm">
                 <div className="bg-accent/10 pointer-events-none absolute right-0 top-0 -mr-10 -mt-10 min-h-[200px] min-w-[200px] rounded-full p-12 blur-3xl"></div>
                 <h3 className="z-10 mb-2 text-lg font-semibold text-foreground">
                   Verification Requests
@@ -162,6 +164,7 @@ export default function InstitutionDashboard() {
               </div>
             </div>
           </div>
+          </ScrollReveal>
         </GuardKyc>
       )}
     </DashboardLayout>

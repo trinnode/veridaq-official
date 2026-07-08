@@ -25,7 +25,7 @@ export default function InstitutionVerifyPage() {
         <p className="text-muted mb-6 text-sm">
           You are acting as an employer to verify a credential from another institution.
         </p>
-        <div className="card card-3d shimmer-sweep">
+        <div className="border-surface-border bg-surface-card rounded-xl border p-6">
           <VerifyButton onComplete={() => {}} />
         </div>
       </div>

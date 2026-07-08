@@ -1,7 +1,7 @@
 "use client"
 
 import { AdminLayout } from "@/components/admin/layout"
-import { api, BASE_URL } from "@/lib/api"
+import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState, useCallback } from "react"
 import {
@@ -280,7 +280,7 @@ export default function AdminAnalyticsPage() {
                       <tr key={tx.id} className="hover:bg-void/30">
                         <td className="px-3 py-2 text-muted whitespace-nowrap">{new Date(tx.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
                         <td className="px-3 py-2"><span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                          tx.type === "EARNED" ? "bg-accent/10 text-accent" : tx.type === "WITHDRAWN" ? "bg-red-500/10 text-red-400" : "bg-blue-500/10 text-blue-400"
+                          tx.type === "EARNED" ? "bg-accent/10 text-accent" : tx.type === "WITHDRAWN" ? "bg-error/10 text-error" : "bg-info/10 text-info"
                         }`}>{tx.type}</span></td>
                         <td className="px-3 py-2">{tx.institutionName ?? "—"}</td>
                         <td className="px-3 py-2">{fmt(tx.amountUsd)}</td>

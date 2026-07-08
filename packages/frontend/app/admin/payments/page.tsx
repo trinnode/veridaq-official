@@ -35,10 +35,10 @@ export default function AdminPayments() {
   }, [filter])
 
   const statusColor: Record<string, string> = {
-    PENDING: "text-amber-500 bg-amber-500/10",
-    COMPLETED: "text-green-500 bg-green-500/10",
-    FAILED: "text-red-500 bg-red-500/10",
-    REFUNDED: "text-orange-500 bg-orange-500/10",
+    PENDING: "text-warning bg-warning/10",
+    COMPLETED: "text-success bg-success/10",
+    FAILED: "text-error bg-error/10",
+    REFUNDED: "text-warning bg-warning/10",
   }
 
   return (

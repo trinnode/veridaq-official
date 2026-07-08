@@ -35,9 +35,9 @@ export default function DocumentationPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 bg-surface-card border-b border-surface-border gap-2">
         <div className="flex items-center gap-4">
           <div className="flex gap-1.5 shrink-0">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500/20" />
+            <div className="w-2.5 h-2.5 rounded-full bg-error/20" />
             <div className="w-2.5 h-2.5 rounded-full bg-accent/20" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500/20" />
+            <div className="w-2.5 h-2.5 rounded-full bg-success/20" />
           </div>
           {filename && <span className="text-xs font-mono text-muted break-words line-clamp-1">{filename}</span>}
         </div>
@@ -202,7 +202,7 @@ export default function DocumentationPage() {
                     <tbody>
                       <tr className="border-b border-surface-border/50">
                         <td className="p-3 text-accent font-bold">VERIDAQ</td>
-                        <td className="p-3 text-accent">Zero-knowledge proofs</td>
+                        <td className="p-3 text-accent">Zero knowledge proofs</td>
                         <td className="p-3">Poseidon hash only (32 bytes)</td>
                         <td className="p-3">Groth16 on-chain</td>
                         <td className="p-3">Paymaster sponsors</td>
@@ -239,7 +239,7 @@ export default function DocumentationPage() {
                   </table>
                 </div>
                 <p className="text-muted text-sm leading-relaxed">
-                  Veridaq is the only solution that combines zero-knowledge proofs, on-chain verification,
+                  Veridaq is the only solution that combines zero knowledge proofs, on-chain verification,
                   and a sponsorship gas model that removes the blockchain complexity from end users.
                   Competitors either expose data on-chain (Blockcerts), require users to hold cryptocurrency
                   (Dock), or rely on permissioned ledgers that recreate the centralization problem.
@@ -581,7 +581,7 @@ const { proof, publicSignals } = await snarkjs.groth16.fullProve(
                   revoked. The result is stored on chain and the employer receives the verification
                   status. The entire on chain operation costs approximately 236,000 gas.
                 </p>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-yellow-500/10 border border-yellow-500/20 text-yellow-200 text-sm mt-4 w-full">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-warning/10 border border-warning/20 text-warning text-sm mt-4 w-full">
                   <Activity className="w-5 h-5 shrink-0" />
                   <span>The proof generation happens off chain. Only the verification executes on chain.
                   This keeps gas costs low and proof generation fast.</span>
@@ -857,16 +857,16 @@ const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
               <div className="border border-surface-border p-6 md:p-8 bg-surface-card w-full mt-8">
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-3"><AlertTriangle className="text-accent" /> Security Considerations</h3>
                 <div className="space-y-3 text-muted text-sm">
-                  <div className="p-4 border border-yellow-500/20 bg-yellow-500/5">
-                    <h4 className="font-bold text-yellow-200 text-sm mb-1">Trusted Setup Risk</h4>
+                  <div className="p-4 border border-warning/20 bg-warning/5">
+                    <h4 className="font-bold text-warning text-sm mb-1">Trusted Setup Risk</h4>
                     <p className="text-xs">The Groth16 proving system requires a trusted setup. If the phase 2 setup is compromised, an attacker could forge proofs. Veridaq uses a random beacon from the Unix timestamp to destroy toxic waste. In production, a multi-party ceremony should be used.</p>
                   </div>
-                  <div className="p-4 border border-yellow-500/20 bg-yellow-500/5">
-                    <h4 className="font-bold text-yellow-200 text-sm mb-1">Nullifier Reuse</h4>
+                  <div className="p-4 border border-warning/20 bg-warning/5">
+                    <h4 className="font-bold text-warning text-sm mb-1">Nullifier Reuse</h4>
                     <p className="text-xs">The CredentialRegistry enforces unique nullifiers at the contract level. However, if the backend generates the same nullifier for two different records due to a bug, the second registration would revert. The backend must ensure nullifier uniqueness before submitting batches.</p>
                   </div>
-                  <div className="p-4 border border-yellow-500/20 bg-yellow-500/5">
-                    <h4 className="font-bold text-yellow-200 text-sm mb-1">Paymaster Drain</h4>
+                  <div className="p-4 border border-warning/20 bg-warning/5">
+                    <h4 className="font-bold text-warning text-sm mb-1">Paymaster Drain</h4>
                     <p className="text-xs">The PaymasterVault holds ETH for each institution. If the validatePaymasterUserOp function has a bug, an attacker could drain the vault by submitting UserOperations that pass validation but execute expensive operations. The postOperation hook deducts actual gas spent, but validation must still be thorough.</p>
                   </div>
                 </div>

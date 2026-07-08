@@ -12,9 +12,9 @@ export default function ZKPDefinitionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 bg-surface-card border-b border-surface-border gap-2">
         <div className="flex items-center gap-4">
           <div className="flex gap-1.5 shrink-0">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500/20" />
+            <div className="w-2.5 h-2.5 rounded-full bg-error/20" />
             <div className="w-2.5 h-2.5 rounded-full bg-accent/20" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500/20" />
+            <div className="w-2.5 h-2.5 rounded-full bg-success/20" />
           </div>
           {filename && <span className="text-xs font-mono text-muted break-words line-clamp-1">{filename}</span>}
         </div>
@@ -39,7 +39,7 @@ export default function ZKPDefinitionsPage() {
           <span className="text-accent uppercase">ZKP Circom Definitions</span>
         </div>
 
-        <h1 className="mb-6 text-3xl font-black uppercase tracking-tight text-foreground md:text-5xl">
+        <h1 className="mb-6 font-display text-3xl font-black uppercase tracking-tight text-foreground md:text-5xl">
           ZKP Circom Definitions
         </h1>
 
@@ -52,7 +52,7 @@ export default function ZKPDefinitionsPage() {
           {/* ═══════════════ GROTH16 OVERVIEW ═══════════════ */}
           <ScrollReveal direction="up" delay={0}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <Cpu className="text-accent h-5 w-5 shrink-0" /> The Groth16 Proof System
               </h2>
               <p className="text-muted leading-relaxed">
@@ -78,7 +78,7 @@ export default function ZKPDefinitionsPage() {
           {/* ═══════════════ TRUSTED SETUP ═══════════════ */}
           <ScrollReveal direction="up" delay={0.1}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <Shield className="text-accent h-5 w-5 shrink-0" /> Trusted Setup Ceremony
               </h2>
               <p className="text-muted leading-relaxed">
@@ -126,7 +126,7 @@ snarkjs zkey export solidityverifier credential_final.zkey ZKVerifier.sol`}
           {/* ═══════════════ HASH COMMITMENT ═══════════════ */}
           <ScrollReveal direction="up" delay={0.15}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <Hash className="text-accent h-5 w-5 shrink-0" /> The Poseidon Hash Commitment
               </h2>
               <p className="text-muted leading-relaxed">
@@ -135,7 +135,7 @@ snarkjs zkey export solidityverifier credential_final.zkey ZKVerifier.sol`}
                 combined with a random blinding factor.
               </p>
               <p className="text-muted mt-4 leading-relaxed">
-                Poseidon is a zero-knowledge-friendly hash function designed specifically for use
+                Poseidon is a zero knowledge-friendly hash function designed specifically for use
                 inside arithmetic circuits. Unlike SHA-256 or keccak256, which require thousands
                 of R1CS constraints per hash, Poseidon compiles to approximately 100 constraints
                 per permutation. This is why Veridaq uses Poseidon instead of keccak256.
@@ -174,7 +174,7 @@ commitment = Poseidon(
           {/* ═══════════════ PRIVATE VS PUBLIC ═══════════════ */}
           <ScrollReveal direction="up" delay={0.2}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <EyeOff className="text-accent h-5 w-5 shrink-0" /> Private vs Public Signals
               </h2>
               <p className="text-muted leading-relaxed mb-6">
@@ -184,7 +184,7 @@ commitment = Poseidon(
               </p>
               <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="border-surface-border rounded border bg-surface-card p-6 text-sm">
-                  <h3 className="mb-2 font-bold uppercase tracking-wide text-accent flex items-center gap-2">
+                  <h3 className="mb-2 font-display font-bold uppercase tracking-wide text-accent flex items-center gap-2">
                     <EyeOff className="h-4 w-4" /> Private Inputs (8)
                   </h3>
                   <p className="text-muted-subtle mb-4 text-xs">Known only to the backend. Destroyed after proof generation. Never submitted on-chain.</p>
@@ -254,7 +254,7 @@ commitment = Poseidon(
           {/* ═══════════════ SIX CLAIM TYPES ═══════════════ */}
           <ScrollReveal direction="up" delay={0.25}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <GanttChartSquare className="text-accent h-5 w-5 shrink-0" /> The Six Claim Types
               </h2>
               <p className="text-muted leading-relaxed mb-6">
@@ -287,7 +287,7 @@ commitment = Poseidon(
           {/* ═══════════════ CONSTRAINT SYSTEM ═══════════════ */}
           <ScrollReveal direction="up" delay={0.3}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <CircuitBoard className="text-accent h-5 w-5 shrink-0" /> The R1CS Constraint System
               </h2>
               <p className="text-muted leading-relaxed">
@@ -379,7 +379,7 @@ template CredentialVerifier() {
           {/* ═══════════════ CLAIM DECODER ═══════════════ */}
           <ScrollReveal direction="up" delay={0.35}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <Binary className="text-accent h-5 w-5 shrink-0" /> The ClaimDecoder Template
               </h2>
               <p className="text-muted leading-relaxed">
@@ -437,7 +437,7 @@ template CredentialVerifier() {
           {/* ═══════════════ PROOF GENERATION FLOW ═══════════════ */}
           <ScrollReveal direction="up" delay={0.4}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <Workflow className="text-accent h-5 w-5 shrink-0" /> Proof Generation and Verification Flow
               </h2>
               <p className="text-muted leading-relaxed mb-6">
@@ -487,7 +487,7 @@ template CredentialVerifier() {
           {/* ═══════════════ PERFORMANCE ═══════════════ */}
           <ScrollReveal direction="up" delay={0.45}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <Activity className="text-accent h-5 w-5 shrink-0" /> Performance and Benchmarks
               </h2>
               <p className="text-muted leading-relaxed mb-6">
@@ -523,11 +523,11 @@ template CredentialVerifier() {
           {/* ═══════════════ SECURITY MODEL ═══════════════ */}
           <ScrollReveal direction="up" delay={0.5}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <Lock className="text-accent h-5 w-5 shrink-0" /> Security Model and Limitations
               </h2>
               <p className="text-muted leading-relaxed mb-4">
-                The zero-knowledge proof provides soundness: if the proof verifies, the prover
+                The zero knowledge proof provides soundness: if the proof verifies, the prover
                 possesses a valid witness that satisfies all circuit constraints. Soundness relies
                 on the security of the Groth16 trusted setup and the BN254 curve.
               </p>
@@ -542,7 +542,7 @@ template CredentialVerifier() {
                   </ul>
                 </div>
                 <div className="p-4 bg-surface-card border border-surface-border">
-                  <h4 className="font-bold text-foreground text-sm mb-2 flex items-center gap-2"><Zap className="text-yellow-500 h-4 w-4" /> What the ZKP does NOT guarantee</h4>
+                  <h4 className="font-bold text-foreground text-sm mb-2 flex items-center gap-2"><Zap className="text-warning h-4 w-4" /> What the ZKP does NOT guarantee</h4>
                   <ul className="text-muted text-xs space-y-2 list-disc pl-5">
                     <li>The accuracy of the original data. If the institution uploaded incorrect data, the proof will be valid but the credential is wrong. This is a data quality problem, not a cryptographic one.</li>
                     <li>The identity of the person submitting the proof. The backend has access to all private data and could generate proofs without the student's knowledge. The institution is trusted to control access to its backend.</li>
@@ -556,7 +556,7 @@ template CredentialVerifier() {
           {/* ═══════════════ WHY POSEIDON ═══════════════ */}
           <ScrollReveal direction="up" delay={0.55}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <FileCode2 className="text-accent h-5 w-5 shrink-0" /> Why Poseidon Instead of SHA-256 or Keccak256
               </h2>
               <p className="text-muted leading-relaxed mb-6">
@@ -614,7 +614,7 @@ template CredentialVerifier() {
           {/* ═══════════════ COMPARISON ═══════════════ */}
           <ScrollReveal direction="up" delay={0.6}>
             <section>
-              <h2 className="mb-4 text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
+              <h2 className="mb-4 font-display text-xl font-bold uppercase tracking-widest text-foreground flex items-center gap-3">
                 <Network className="text-accent h-5 w-5 shrink-0" /> Comparison with Alternative Approaches
               </h2>
               <div className="overflow-x-auto">

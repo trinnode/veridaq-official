@@ -112,19 +112,19 @@ export default function InstitutionEarningsPage() {
     <DashboardLayout title="Earnings">
       {/* Summary Cards */}
       <div className="grid gap-6 md:grid-cols-3">
-        <div className="card bg-surface-card border-surface-border rounded-xl border p-5">
+        <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Total Earned</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
             ${safeUsd(summary?.totalEarnedUsd)}
           </div>
         </div>
-        <div className="card bg-surface-card border-surface-border rounded-xl border p-5">
+        <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Available</div>
           <div className="mt-1 text-2xl font-bold text-accent">
             ${safeUsd(summary?.availableUsd)}
           </div>
         </div>
-        <div className="card bg-surface-card border-surface-border rounded-xl border p-5">
+        <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Withdrawn</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
             ${safeUsd(summary?.withdrawnUsd)}
@@ -134,7 +134,7 @@ export default function InstitutionEarningsPage() {
 
       {/* Withdraw + Wallet Section */}
       <div className="mt-6 rounded-xl border border-surface-border bg-surface-card p-5">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">Withdraw Funds</h3>
+        <h3 className="mb-3 font-display text-sm font-semibold text-foreground">Withdraw Funds</h3>
         {summary?.payoutWallet ? (
           <div className="flex items-center gap-3">
             <button
@@ -185,7 +185,7 @@ export default function InstitutionEarningsPage() {
 
       {/* Transaction History */}
       <div className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold text-foreground">
+        <h2 className="mb-3 font-display text-sm font-semibold text-foreground">
           Transaction History
           {txnResponse && <span className="text-muted ml-2 font-normal">({txnResponse.total})</span>}
         </h2>
@@ -208,8 +208,8 @@ export default function InstitutionEarningsPage() {
                         </span>
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase ${
                           tx.type === "EARNED" ? "bg-accent/10 text-accent" :
-                          tx.type === "WITHDRAWN" ? "bg-orange-500/10 text-orange-400" :
-                          "bg-blue-500/10 text-blue-400"
+                          tx.type === "WITHDRAWN" ? "bg-warning/10 text-warning" :
+                          "bg-info/10 text-info"
                         }`}>
                           {tx.type}
                         </span>

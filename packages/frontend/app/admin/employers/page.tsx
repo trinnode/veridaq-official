@@ -1,5 +1,6 @@
 "use client"
 import { AdminLayout } from "@/components/admin/layout"
+import { CardLift } from "@/components/ui/card-lift"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
@@ -61,6 +62,7 @@ export default function EmployersPage() {
       {loading ? (
         <div className="text-muted py-12 text-center text-sm">Loading…</div>
       ) : (
+        <CardLift>
         <div className="bg-surface-card border-surface-border group [perspective:500px] hover:[transform:rotateX(0.5deg)] rounded-xl border transition-all duration-500 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -82,11 +84,11 @@ export default function EmployersPage() {
                   <td className="py-3 text-foreground">{emp.freeVerificationsRemaining}</td>
                   <td className="py-3">
                     {!emp.active ? (
-                      <span className="inline-block rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400">Deactivated</span>
+                      <span className="inline-block rounded-full border border-error/20 bg-error/10 px-2.5 py-0.5 text-xs font-medium text-error">Deactivated</span>
                     ) : emp.kycApproved ? (
                       <span className="inline-block rounded-full border border-accent/20 bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">Approved</span>
                     ) : (
-                      <span className="inline-block rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-400">Pending</span>
+                      <span className="inline-block rounded-full border border-warning/20 bg-warning/10 px-2.5 py-0.5 text-xs font-medium text-warning">Pending</span>
                     )}
                   </td>
                   <td className="py-3">
@@ -101,7 +103,7 @@ export default function EmployersPage() {
                       )}
                       {emp.kycApproved && emp.active && (
                         <button
-                          className="rounded bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/20"
+                          className="rounded bg-error/10 px-2.5 py-1 text-xs font-medium text-error transition-colors hover:bg-error/20"
                           onClick={() => setDeactivatingId(emp.id)}
                         >
                           Deactivate
@@ -109,21 +111,21 @@ export default function EmployersPage() {
                       )}
                     </div>
                     {deactivatingId === emp.id && (
-                      <div className="group mt-2 rounded-lg border border-red-500/20 bg-red-500/[0.02] p-4 transition-all">
+                      <div className="group mt-2 rounded-lg border border-error/20 bg-error/[0.02] p-4 transition-all">
                         <p className="text-muted mb-2 text-xs">
                           A valid reason is required. This will email the employer.
                         </p>
                         <input
                           type="text"
                           placeholder="Reason (min 10 chars)..."
-                          className="border-surface-border bg-void mb-3 w-full rounded border px-3 py-2 text-xs text-foreground transition-colors focus:border-red-400 focus:outline-none"
+                          className="border-surface-border bg-void mb-3 w-full rounded border px-3 py-2 text-xs text-foreground transition-colors focus:border-error focus:outline-none"
                           value={deactivateReason}
                           onChange={(e) => setDeactivateReason(e.target.value)}
                         />
                         <div className="flex space-x-3">
                           <button
                             onClick={() => submitDeactivate(emp.id)}
-                            className="rounded bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-red-600 active:scale-[0.97]"
+                            className="rounded bg-error px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-error/80 active:scale-[0.97]"
                           >
                             Confirm Closure
                           </button>
@@ -142,6 +144,7 @@ export default function EmployersPage() {
             </tbody>
           </table>
         </div>
+        </CardLift>
       )}
     </AdminLayout>
   )

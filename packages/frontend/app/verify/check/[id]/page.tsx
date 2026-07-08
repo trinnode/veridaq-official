@@ -100,7 +100,7 @@ export default function VerifyCheckPage() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-muted/20">
               <span className="font-mono text-lg text-muted">!</span>
             </div>
-            <h1 className="mb-1 text-base font-semibold text-foreground">Not Found</h1>
+            <h1 className="mb-1 font-display text-base font-semibold text-foreground">Not Found</h1>
             <p className="font-mono text-xs text-muted">{error}</p>
             <a
               href="/"
@@ -117,19 +117,19 @@ export default function VerifyCheckPage() {
 
             {/* Status Badge */}
             <div className="mb-2 flex items-center justify-center gap-2">
-              <div className={`h-1.5 w-1.5 rounded-full ${isVerified ? "bg-green-500" : "bg-muted"}`} />
+              <div className={`h-1.5 w-1.5 rounded-full ${isVerified ? "bg-success" : "bg-muted"}`} />
               <span className="font-mono text-[10px] uppercase tracking-widest text-muted-subtle">
                 {isVerified ? "Verified" : "Not Satisfied"}
               </span>
             </div>
 
             {/* Title */}
-            <h1 className="text-center text-lg font-semibold text-foreground">
+            <h1 className="text-center font-display text-lg font-semibold text-foreground">
               {isVerified ? "Credential Verified" : "Claim Not Satisfied"}
             </h1>
             <p className="mx-auto mt-1 max-w-sm text-center font-mono text-[11px] leading-relaxed text-muted">
               {isVerified
-                ? "This credential was cryptographically verified using a zero-knowledge proof on the Base blockchain."
+                ? "This credential was cryptographically verified using a zero knowledge proof on the Base blockchain."
                 : "The submitted credential does not satisfy the requested claim."
               }
             </p>

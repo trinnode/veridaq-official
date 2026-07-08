@@ -8,10 +8,10 @@ export default function VerifyPage() {
       <div className="max-w-lg">
         <p className="text-muted mb-6 text-sm leading-relaxed">
           Enter the institution, the candidate&apos;s matriculation number, and select the academic
-          claim you want to verify. The system will generate a Zero-Knowledge Proof and return a
+          claim you want to verify. The system will generate a Zero Knowledge Proof and return a
           VERIFIED or CLAIM NOT SATISFIED result.
         </p>
-        <div className="card card-3d shimmer-sweep">
+        <div className="border-surface-border bg-surface-card rounded-xl border p-6">
           <VerifyButton onComplete={() => {}} />
         </div>
       </div>

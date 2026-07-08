@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-void p-8 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-error/30 bg-error/10">
-            <svg className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-8 w-8 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="max-w-md text-sm text-muted">
             {this.props.portal ? `The ${this.props.portal} portal encountered an error.` : "An unexpected error occurred."}
           </p>
-          <pre className="max-w-lg overflow-auto rounded border border-surface-border bg-surface-card p-4 text-left font-mono text-xs text-red-400">
+          <pre className="max-w-lg overflow-auto rounded border border-surface-border bg-surface-card p-4 text-left font-mono text-xs text-error">
             {this.state.error?.message ?? "Unknown error"}
           </pre>
           <button

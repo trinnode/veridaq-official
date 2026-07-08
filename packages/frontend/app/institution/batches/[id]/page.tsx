@@ -54,7 +54,7 @@ function RevokeModal({
   ]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/80 p-4 backdrop-blur-sm">
       <div className="border-surface-border bg-surface-card w-full max-w-md rounded-xl border p-6 shadow-2xl">
         <h3 className="text-base font-semibold text-foreground">Revoke Credential</h3>
         <p className="text-muted mt-1 text-xs">
@@ -102,7 +102,7 @@ function RevokeModal({
               }
             }}
             disabled={busy}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-foreground transition-opacity hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg bg-error px-4 py-2 text-sm font-semibold text-foreground transition-opacity hover:bg-error/80 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {busy ? "Revoking…" : "Confirm Revocation"}
           </button>
@@ -225,7 +225,7 @@ export default function BatchDetailPage() {
                   {c.status === "ACTIVE" || c.status === "CONFIRMED" ? (
                     <button
                       onClick={() => setRevoking(c)}
-                      className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-red-400 transition-colors hover:bg-red-400/10"
+                      className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-error transition-colors hover:bg-error/10"
                     >
                       <Ban size={12} /> Revoke
                     </button>

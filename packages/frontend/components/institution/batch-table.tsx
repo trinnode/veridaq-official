@@ -90,7 +90,7 @@ export function BatchTable({ batches, onDismiss }: { batches: Batch[]; onDismiss
               <td className="text-muted py-3 text-xs">
                 {b.status === "FAILED" && b.errorReport?.length ? (
                   <details className="group">
-                    <summary className="cursor-pointer text-red-400 hover:text-red-300">
+                    <summary className="cursor-pointer text-error hover:text-error/80">
                       View details
                     </summary>
                     <div className="glass-panel shimmer-sweep border-surface-border bg-void mt-2 rounded border p-3 text-xs text-foreground">
@@ -101,7 +101,7 @@ export function BatchTable({ batches, onDismiss }: { batches: Batch[]; onDismiss
                             key={i}
                             className="border-surface-border/60 border-b pb-2 last:border-b-0"
                           >
-                            <div className="text-red-300">{err.error || "Unknown error"}</div>
+                            <div className="text-error/80">{err.error || "Unknown error"}</div>
                             {err.txRef && <div className="text-muted">Tx Ref: {err.txRef}</div>}
                             {err.userOpHash && (
                               <div className="text-muted">UserOp: {err.userOpHash}</div>
@@ -136,7 +136,7 @@ export function BatchTable({ batches, onDismiss }: { batches: Batch[]; onDismiss
                               </div>
                             )}
                             {err.fundingShortfallEth && err.fundingShortfallEth !== "0" && (
-                              <div className="text-red-300">
+                              <div className="text-error/80">
                                 Funding Shortfall: {err.fundingShortfallEth}
                               </div>
                             )}

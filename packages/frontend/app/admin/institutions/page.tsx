@@ -1,5 +1,7 @@
 "use client"
 import { AdminLayout } from "@/components/admin/layout"
+import { ScrollReveal } from "@/components/parallax/scroll-reveal"
+import { CardLift } from "@/components/ui/card-lift"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, Key, Building2, Clock, Hash, Loader2, Edit, FileJson, Download, Mail, User } from "@/lib/icons"
@@ -228,6 +230,8 @@ export default function InstitutionsPage() {
           <h3 className="mb-2 text-lg font-medium text-foreground">No Institutions Found</h3>
         </div>
       ) : (
+        <ScrollReveal direction="up" delay={0}>
+        <CardLift>
         <div className="bg-surface-card border-surface-border overflow-x-auto rounded-xl border">
           <table className="w-full text-left text-sm text-foreground">
               <thead className="text-muted border-surface-border border-b text-xs uppercase">
@@ -254,7 +258,7 @@ export default function InstitutionsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`${inst.tier === 'FREE' ? 'border-orange-500/20 bg-orange-500/10 text-orange-400' : 'border-blue-500/20 bg-blue-500/10 text-blue-400'} inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium`}
+                      className={`${inst.tier === 'FREE' ? 'border-warning/20 bg-warning/10 text-warning' : 'border-info/20 bg-info/10 text-info'} inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium`}
                     >
                       {inst.tier}
                     </span>
@@ -268,24 +272,24 @@ export default function InstitutionsPage() {
                         <ShieldCheck className="h-3 w-3" /> VERIFIED
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs font-medium text-orange-400">
+                      <span className="flex items-center gap-1 text-xs font-medium text-warning">
                         <ShieldAlert className="h-3 w-3" /> PENDING
                       </span>
                     )}
                   </td>
                   <td className="hidden px-4 py-3 md:table-cell">
                     {inst.blockchainStatus === "REGISTERED" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-900/30 text-blue-400 rounded-full text-xs">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-info/10 text-info rounded-full text-xs">
                         <ShieldCheck className="w-3 h-3" />
                         Registered
                       </span>
                     ) : inst.blockchainStatus === "PENDING" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-900/30 text-orange-400 rounded-full text-xs">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-warning/10 text-warning rounded-full text-xs">
                         <Loader2 className="w-3 h-3 animate-spin" />
                         Pending
                       </span>
                     ) : inst.blockchainStatus === "FAILED" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-900/30 text-red-400 rounded-full text-xs">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-error/10 text-error rounded-full text-xs">
                         <X className="w-3 h-3" />
                         Failed
                       </span>
@@ -329,7 +333,7 @@ export default function InstitutionsPage() {
                               setReviewTarget(inst)
                               setReviewWallet(inst.adminWallet ?? "")
                             }}
-                            className="bg-orange-500/20 text-orange-400 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
+                            className="bg-warning/20 text-warning flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
                           >
                             <RefreshCcw className="h-3 w-3" /> Re-register
                           </button>
@@ -363,6 +367,8 @@ export default function InstitutionsPage() {
             </tbody>
           </table>
         </div>
+        </CardLift>
+        </ScrollReveal>
       )}
 
       {/* ── Review & Approve Modal ── */}
@@ -391,7 +397,7 @@ export default function InstitutionsPage() {
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
                   <span className="text-muted text-xs">Tier</span>
-                  <span className={`text-xs font-medium ${reviewTarget.tier === 'FREE' ? 'text-orange-400' : 'text-blue-400'}`}>
+                  <span className={`text-xs font-medium ${reviewTarget.tier === 'FREE' ? 'text-warning' : 'text-info'}`}>
                     {reviewTarget.tier}
                   </span>
                 </div>
@@ -496,7 +502,7 @@ export default function InstitutionsPage() {
                 />
               </div>
 
-              {fundError && <p className="mt-3 text-xs text-red-400">{fundError}</p>}
+              {fundError && <p className="mt-3 text-xs text-error">{fundError}</p>}
               {fundTxHash && <p className="text-muted mt-3 break-all font-mono text-xs">Tx: {fundTxHash}</p>}
 
               <div className="mt-6 flex justify-end gap-3">
@@ -563,13 +569,13 @@ export default function InstitutionsPage() {
                   </div>
                   <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
                     <span className="text-muted text-xs">Tier</span>
-                    <span className={`text-xs font-medium ${detailTarget.tier === 'FREE' ? 'text-orange-400' : 'text-blue-400'}`}>
+                    <span className={`text-xs font-medium ${detailTarget.tier === 'FREE' ? 'text-warning' : 'text-info'}`}>
                       {detailTarget.tier}
                     </span>
                   </div>
                   <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
                     <span className="text-muted text-xs">KYC Status</span>
-                    <span className={`text-xs font-medium ${detailTarget.kycApproved ? 'text-accent' : 'text-orange-400'}`}>
+                    <span className={`text-xs font-medium ${detailTarget.kycApproved ? 'text-accent' : 'text-warning'}`}>
                       {detailTarget.kycApproved ? "VERIFIED" : "PENDING"}
                     </span>
                   </div>
@@ -757,7 +763,7 @@ export default function InstitutionsPage() {
                           </div>
                           <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
                             <span className="text-muted text-xs">Status</span>
-                            <span className={`text-xs font-medium ${detailTarget.employerProfile.kycApproved ? 'text-accent' : 'text-orange-400'}`}>
+                            <span className={`text-xs font-medium ${detailTarget.employerProfile.kycApproved ? 'text-accent' : 'text-warning'}`}>
                               {detailTarget.employerProfile.kycApproved ? "Approved" : "Pending"}
                             </span>
                           </div>

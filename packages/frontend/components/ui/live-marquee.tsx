@@ -61,7 +61,7 @@ function MarqueeItem({
     <div className="flex items-center space-x-2 font-mono text-sm">
       <span className="text-muted uppercase tracking-widest">{label}:</span>
       {status === "green" && <span className="h-2 w-2 animate-pulse rounded-full bg-[#00e699]" />}
-      {status === "red" && <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+      {status === "red" && <span className="h-2 w-2 animate-pulse rounded-full bg-error" />}
       <span className="font-bold text-foreground">{value}</span>
     </div>
   )

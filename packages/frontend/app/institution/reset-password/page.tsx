@@ -54,7 +54,7 @@ function ResetPasswordForm() {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="w-full max-w-md space-y-4 text-center">
-          <h1 className="text-2xl font-bold text-foreground">Invalid Link</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">Invalid Link</h1>
           <p className="text-muted">This password reset link is invalid or missing the token.</p>
         </div>
       </div>
@@ -68,13 +68,13 @@ function ResetPasswordForm() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-border text-muted">
             <LockKeyhole size={24} />
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Reset Password</h2>
+          <h2 className="text-2xl font-display font-bold text-foreground">Reset Password</h2>
           <p className="mt-2 text-sm text-muted">Enter your new password below</p>
         </div>
 
         {success ? (
           <div className="flex flex-col items-center gap-4 py-6 text-center">
-            <CheckCircle2 size={48} className="text-green-500" />
+            <CheckCircle2 size={48} className="text-success" />
             <p className="font-medium text-foreground">Password successfully reset!</p>
             <button 
               onClick={() => router.push("/institution/login")}
@@ -86,7 +86,7 @@ function ResetPasswordForm() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-lg border border-error/20 bg-error/5 p-3 text-sm text-red-400">
+              <div className="rounded-lg border border-error/20 bg-error/5 p-3 text-sm text-error">
                 {error}
               </div>
             )}

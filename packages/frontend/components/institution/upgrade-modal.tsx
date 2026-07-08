@@ -126,7 +126,7 @@ export function UpgradeModal({ open, onClose, onSuccess }: UpgradeModalProps) {
   const txPending = isWriting || isConfirming
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/80 backdrop-blur-sm">
       <div className="bg-surface-card border-surface-border mx-4 w-full max-w-md rounded-xl border p-6 shadow-2xl shadow-accent-glow/20">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Upgrade to PAID Tier</h2>
@@ -154,7 +154,7 @@ export function UpgradeModal({ open, onClose, onSuccess }: UpgradeModalProps) {
                           <Wallet className="h-4 w-4" /> Connect Wallet
                         </button>
                       ) : chain.id !== baseSepolia.id ? (
-                        <button onClick={openChainModal} className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 flex w-full items-center justify-center gap-2 rounded border border-amber-500/30 px-4 py-3 font-medium transition-colors">
+                        <button onClick={openChainModal} className="bg-warning/10 text-warning hover:bg-warning/20 flex w-full items-center justify-center gap-2 rounded border border-warning/30 px-4 py-3 font-medium transition-colors">
                           Switch to Base Sepolia
                         </button>
                       ) : (
@@ -209,7 +209,7 @@ export function UpgradeModal({ open, onClose, onSuccess }: UpgradeModalProps) {
             {isConfirmed && !loading && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center gap-3 py-4">
-                  <CheckCircle2 className="h-10 w-10 text-green-500" />
+                  <CheckCircle2 className="h-10 w-10 text-success" />
                   <p className="text-foreground font-medium">Transaction Confirmed</p>
                   {txHash && (
                     <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="text-accent flex items-center gap-1 text-xs hover:underline">
@@ -243,7 +243,7 @@ export function UpgradeModal({ open, onClose, onSuccess }: UpgradeModalProps) {
 
         {step === "success" && (
           <div className="flex flex-col items-center gap-4 py-6">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
+            <CheckCircle2 className="h-12 w-12 text-success" />
             <p className="text-lg font-semibold text-foreground">Upgrade Successful!</p>
             <p className="text-muted text-sm text-center">Your institution is now PAID tier.</p>
             <button onClick={onClose} className="bg-accent text-void hover:bg-accent/90 mt-2 rounded px-6 py-2 text-sm font-medium transition-colors">Done</button>
@@ -252,7 +252,7 @@ export function UpgradeModal({ open, onClose, onSuccess }: UpgradeModalProps) {
 
         {step === "error" && (
           <div className="flex flex-col items-center gap-4 py-6">
-            <div className="text-error flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10"><span className="text-2xl">!</span></div>
+            <div className="text-error flex h-12 w-12 items-center justify-center rounded-full bg-error/10"><span className="text-2xl">!</span></div>
             <p className="text-lg font-semibold text-foreground">Payment Failed</p>
             <p className="text-muted text-sm text-center">{error ?? "An error occurred"}</p>
             <button onClick={() => { setStep("choose"); setError(null) }} className="bg-accent text-void hover:bg-accent/90 rounded px-6 py-2 text-sm font-medium transition-colors">Try Again</button>

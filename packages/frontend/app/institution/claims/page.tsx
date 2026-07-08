@@ -2,6 +2,7 @@
 import { DashboardLayout } from "@/components/institution/layout"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
+import { CardLift } from "@/components/ui/card-lift"
 import { Edit, Info, Plus, Settings, X } from "@/lib/icons"
 import { useEffect, useState } from "react"
 import { toast } from "@/components/ui/toast"
@@ -170,8 +171,8 @@ export default function ClaimsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {claims.map((c) => (
+            <CardLift key={c.id}>
             <div
-              key={c.id}
               className="bg-surface-card border-surface-border group relative flex flex-col border p-5"
             >
               <div className="mb-3 flex items-start justify-between">
@@ -179,7 +180,7 @@ export default function ClaimsPage() {
 
                 {/* Status Indicator */}
                 <div
-                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${c.active ? "bg-accent" : "bg-red-500"}`}
+                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${c.active ? "bg-accent" : "bg-error"}`}
                   title={c.active ? "Active" : "Inactive"}
                 />
               </div>
@@ -190,7 +191,7 @@ export default function ClaimsPage() {
 
               <div className="mb-6 flex items-center gap-2">
                 <span
-                  className={`border px-2 py-0.5 text-xs font-medium ${c.reviewType === "AUTO" ? "bg-accent/10 text-accent border-accent/20" : "border-orange-500/20 bg-orange-500/10 text-orange-400"}`}
+                  className={`border px-2 py-0.5 text-xs font-medium ${c.reviewType === "AUTO" ? "bg-accent/10 text-accent border-accent/20" : "border-warning/20 bg-warning/10 text-warning"}`}
                 >
                   {c.reviewType}
                 </span>
@@ -202,7 +203,7 @@ export default function ClaimsPage() {
               <div className="border-surface-border mt-auto flex items-center justify-between border-t pt-4">
                 <button
                   onClick={() => toggleActive(c)}
-                  className={`px-3 py-1 text-xs font-medium ${c.active ? "text-red-400 hover:bg-red-400/10" : "text-accent hover:bg-accent/10"} transition-colors`}
+                  className={`px-3 py-1 text-xs font-medium ${c.active ? "text-error hover:bg-error/10" : "text-accent hover:bg-accent/10"} transition-colors`}
                 >
                   {c.active ? "Deactivate" : "Activate"}
                 </button>
@@ -214,6 +215,7 @@ export default function ClaimsPage() {
                 </button>
               </div>
             </div>
+            </CardLift>
           ))}
         </div>
       )}
@@ -229,7 +231,7 @@ export default function ClaimsPage() {
               <X className="h-5 w-5" />
             </button>
 
-            <h2 className="mb-6 text-xl font-semibold text-foreground">
+            <h2 className="mb-6 font-display text-xl font-semibold text-foreground">
               {editingClaim ? "Edit Claim" : "Create Claim"}
             </h2>
 
@@ -336,7 +338,7 @@ export default function ClaimsPage() {
                   <p className="text-sm font-medium text-foreground">{label}</p>
                   {description && <p className="text-muted mt-1 text-xs">{description}</p>}
                   <div className="mt-2 flex items-center gap-2">
-                    <span className={`px-1.5 py-0.5 text-[10px] font-medium ${reviewType === "AUTO" ? "bg-accent/10 text-accent" : "bg-orange-500/10 text-orange-400"}`}>
+                    <span className={`px-1.5 py-0.5 text-[10px] font-medium ${reviewType === "AUTO" ? "bg-accent/10 text-accent" : "bg-warning/10 text-warning"}`}>
                       {reviewType === "AUTO" ? "Instant (ZK Proof)" : "Manual Review"}
                     </span>
                     <span className="text-muted border-surface-border border px-1.5 py-0.5 text-[10px]">
