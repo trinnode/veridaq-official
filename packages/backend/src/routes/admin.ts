@@ -300,6 +300,11 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     return adminSvc.getRegistrationAnalytics(Number(q.days ?? 30))
   })
 
+  app.get("/analytics/monthly", async (req) => {
+    const q = req.query as { months?: string }
+    return adminSvc.getMonthlyAnalytics(Number(q.months ?? 6))
+  })
+
   app.get("/analytics/transactions", async (req) => {
     const q = req.query as Record<string, string | undefined>
     return adminSvc.listAllTransactions({

@@ -586,6 +586,114 @@ export class InstitutionService {
     }
   }
 
+  async getDashboardCharts(institutionId: string, months = 6) {
+    const since = new Date()
+    since.setMonth(since.getMonth() - months)
+    since.setDate(1)
+    since.setHours(0, 0, 0, 0)
+
+    const verifications = await this.prisma.verificationRequest.findMany({
+      where: {
+        institutionId,
+        createdAt: { gte: since },
+      },
+      select: { createdAt: true, result: true, status: true },
+      orderBy: { createdAt: "asc" },
+    })
+
+    const batches = await this.prisma.batch.findMany({
+      where: {
+        institutionId,
+        createdAt: { gte: since },
+      },
+      select: { createdAt: true, status: true, studentCount: true },
+      orderBy: { createdAt: "asc" },
+    })
+
+    const earnings = await this.prisma.earningTransaction.findMany({
+      where: {
+        institutionId,
+        type: "EARNED",
+        createdAt: { gte: since },
+      },
+      select: { createdAt: true, amountUsd: true, institutionShareUsd: true },
+      orderBy: { createdAt: "asc" },
+    })
+
+    const monthMap = new Map<string, {
+      month: string
+      verifications: number
+      verified: number
+      failed: number
+      pending: number
+      batches: number
+      credentials: number
+      earnedUsd: number
+      institutionShare: number
+    }>()
+
+    const cursor = new Date(since)
+    while (cursor <= new Date()) {
+      const key = cursor.toISOString().slice(0, 7)
+      monthMap.set(key, {
+        month: key,
+        verifications: 0,
+        verified: 0,
+        failed: 0,
+        pending: 0,
+        batches: 0,
+        credentials: 0,
+        earnedUsd: 0,
+        institutionShare: 0,
+      })
+      cursor.setMonth(cursor.getMonth() + 1)
+    }
+
+    for (const v of verifications) {
+      const key = v.createdAt.toISOString().slice(0, 7)
+      const entry = monthMap.get(key)
+      if (entry) {
+        entry.verifications++
+        if (v.result === "VERIFIED") entry.verified++
+        else if (v.result === "CLAIM_NOT_SATISFIED" || v.result === "RECORD_NOT_FOUND" || v.result === "CREDENTIAL_REVOKED") entry.failed++
+        else if (v.status === "PENDING" || v.status === "PROCESSING" || v.status === "AWAITING_INSTITUTION") entry.pending++
+        else entry.failed++
+      }
+    }
+
+    for (const b of batches) {
+      const key = b.createdAt.toISOString().slice(0, 7)
+      const entry = monthMap.get(key)
+      if (entry) {
+        entry.batches++
+        entry.credentials += b.studentCount ?? 0
+      }
+    }
+
+    for (const e of earnings) {
+      const key = e.createdAt.toISOString().slice(0, 7)
+      const entry = monthMap.get(key)
+      if (entry) {
+        entry.earnedUsd += e.amountUsd.toNumber()
+        entry.institutionShare += e.institutionShareUsd?.toNumber() ?? 0
+      }
+    }
+
+    const series = Array.from(monthMap.values())
+    return {
+      months: series.length,
+      series,
+      totals: {
+        verifications: series.reduce((s, m) => s + m.verifications, 0),
+        verified: series.reduce((s, m) => s + m.verified, 0),
+        batches: series.reduce((s, m) => s + m.batches, 0),
+        credentials: series.reduce((s, m) => s + m.credentials, 0),
+        earnedUsd: parseFloat(series.reduce((s, m) => s + m.earnedUsd, 0).toFixed(2)),
+        institutionShare: parseFloat(series.reduce((s, m) => s + m.institutionShare, 0).toFixed(2)),
+      },
+    }
+  }
+
   async getProfile(institutionId: string) {
     return this.prisma.institution.findUnique({
       where: { id: institutionId },
