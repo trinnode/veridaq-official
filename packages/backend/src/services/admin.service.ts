@@ -936,6 +936,115 @@ export class AdminService {
     return { daily: series }
   }
 
+  // ─── Monthly Analytics (for charts) ───────────────────────────────────
+
+  async getMonthlyAnalytics(months = 6) {
+    const since = new Date()
+    since.setMonth(since.getMonth() - months)
+    since.setDate(1)
+    since.setHours(0, 0, 0, 0)
+
+    const [institutions, employers, credentials, verifications, earnings] = await Promise.all([
+      this.prisma.institution.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.employer.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.credential.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.verificationRequest.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true, result: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.earningTransaction.findMany({
+        where: { createdAt: { gte: since }, type: "EARNED" },
+        select: { createdAt: true, amountUsd: true, platformShareUsd: true, poolShareUsd: true, institutionShareUsd: true },
+        orderBy: { createdAt: "asc" },
+      }),
+    ])
+
+    const monthMap = new Map<string, {
+      month: string
+      institutions: number
+      employers: number
+      credentials: number
+      verifications: number
+      verified: number
+      revenue: number
+      platformShare: number
+      institutionShare: number
+      poolShare: number
+    }>()
+
+    const cursor = new Date(since)
+    while (cursor <= new Date()) {
+      const key = cursor.toISOString().slice(0, 7)
+      monthMap.set(key, {
+        month: key,
+        institutions: 0,
+        employers: 0,
+        credentials: 0,
+        verifications: 0,
+        verified: 0,
+        revenue: 0,
+        platformShare: 0,
+        institutionShare: 0,
+        poolShare: 0,
+      })
+      cursor.setMonth(cursor.getMonth() + 1)
+    }
+
+    for (const i of institutions) {
+      const key = i.createdAt.toISOString().slice(0, 7)
+      monthMap.get(key)!.institutions++
+    }
+    for (const e of employers) {
+      const key = e.createdAt.toISOString().slice(0, 7)
+      monthMap.get(key)!.employers++
+    }
+    for (const c of credentials) {
+      const key = c.createdAt.toISOString().slice(0, 7)
+      monthMap.get(key)!.credentials++
+    }
+    for (const v of verifications) {
+      const key = v.createdAt.toISOString().slice(0, 7)
+      const entry = monthMap.get(key)!
+      entry.verifications++
+      if (v.result === "VERIFIED") entry.verified++
+    }
+    for (const e of earnings) {
+      const key = e.createdAt.toISOString().slice(0, 7)
+      const entry = monthMap.get(key)!
+      entry.revenue += this.toNum(e.amountUsd)
+      entry.platformShare += this.toNum(e.platformShareUsd)
+      entry.institutionShare += this.toNum(e.institutionShareUsd)
+      entry.poolShare += this.toNum(e.poolShareUsd)
+    }
+
+    const series = Array.from(monthMap.values())
+    return {
+      months: series.length,
+      series,
+      totals: {
+        institutions: series.reduce((s, m) => s + m.institutions, 0),
+        employers: series.reduce((s, m) => s + m.employers, 0),
+        credentials: series.reduce((s, m) => s + m.credentials, 0),
+        verifications: series.reduce((s, m) => s + m.verifications, 0),
+        verified: series.reduce((s, m) => s + m.verified, 0),
+        revenue: parseFloat(series.reduce((s, m) => s + m.revenue, 0).toFixed(2)),
+      },
+    }
+  }
+
   // ─── Transaction History with Filters ──────────────────────────────────
 
   async listAllTransactions(filters: {

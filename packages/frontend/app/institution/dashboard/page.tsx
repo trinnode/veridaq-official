@@ -9,12 +9,15 @@ import { EarningsSummary } from "@/components/institution/earnings-summary"
 import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 import { toast } from "@/components/ui/toast"
 import { SafeLink as Link } from "@/components/safe-link"
+import { ActivityChart } from "@/components/ui/activity-chart"
 import { useEffect, useState } from "react"
 
 export default function InstitutionDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<any>(null)
+  const [chartData, setChartData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [chartLoading, setChartLoading] = useState(true)
   const [polling, setPolling] = useState(false)
 
   async function loadDashboard() {
@@ -29,9 +32,20 @@ export default function InstitutionDashboard() {
     }
   }
 
+  async function loadCharts() {
+    try {
+      const res = await api.get("/institution/dashboard/charts")
+      setChartData(res.data)
+    } catch {
+    } finally {
+      setChartLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!user) return
     loadDashboard()
+    loadCharts()
   }, [user])
 
   // Poll every 15s while dashboard has active items
@@ -109,6 +123,32 @@ export default function InstitutionDashboard() {
                   {stats?.tier === "PAID" ? "PAID tier — batch upload fees apply" : "FREE tier — gas sponsored for ≤999 students"}
                 </p>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <ActivityChart
+                title="Verifications Over Time"
+                series={chartData?.series ?? []}
+                metrics={[
+                  { key: "verified", label: "Verified", color: "#22c55e" },
+                  { key: "failed", label: "Failed", color: "#ef4444" },
+                  { key: "pending", label: "Pending", color: "#eab308" },
+                ]}
+                isLoading={chartLoading}
+                defaultMode="bar"
+              />
+              <ActivityChart
+                title="Credentials & Revenue"
+                description="Batches submitted and earnings accrued per month"
+                series={chartData?.series ?? []}
+                metrics={[
+                  { key: "credentials", label: "Credentials", color: "#a78bfa" },
+                  { key: "earnedUsd", label: "Earned (USD)", color: "#22d3ee" },
+                ]}
+                isLoading={chartLoading}
+                defaultMode="area"
+                showCredits
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
