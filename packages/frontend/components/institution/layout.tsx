@@ -16,12 +16,12 @@ const baseNav = [
   { href: "/institution/claims", label: "Claims", icon: "file-check" },
   { href: "/institution/verifications", label: "Verifications", icon: "shield-check" },
   { href: "/institution/billing", label: "Billing", icon: "wallet" },
+  { href: "/institution/settings", label: "Settings", icon: "settings" },
 ]
 
 const employerNav = [
   { href: "/institution/verify", label: "Verify", icon: "shield-check" },
   { href: "/institution/earnings", label: "Earnings", icon: "wallet" },
-  { href: "/institution/settings", label: "Settings", icon: "settings" },
 ]
 
 export function DashboardLayout({ children, title }: { children: React.ReactNode; title: string }) {
