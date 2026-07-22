@@ -195,12 +195,16 @@ export class AdminService {
     // Auto-create default claim definitions for newly approved institutions
     await this.createDefaultClaims(institutionId)
 
-    // Send the good news
-    await this.emailService.sendKycApproval({
-      to: inst.email,
-      orgName: inst.name,
-      role: "institution",
-    })
+    // Send the good news (best-effort — don't fail the request if email is down)
+    try {
+      await this.emailService.sendKycApproval({
+        to: inst.email,
+        orgName: inst.name,
+        role: "institution",
+      })
+    } catch (emailErr) {
+      log.error({ emailErr, institutionId }, "Failed to send KYC approval email")
+    }
 
     // Return the current blockchain status
     const updated = await this.prisma.institution.findUnique({ where: { id: institutionId } })
