@@ -53,4 +53,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 
 # Sync database schema (safe for existing DBs with migration mismatches), then start
 # Run seed manually after first deploy: node dist/backend/prisma/seed.js
-CMD ["sh", "-c", "pnpm exec prisma db push --schema=packages/backend/prisma/schema.prisma && node dist/backend/src/server.js"]
+CMD ["sh", "-c", "pnpm exec prisma db push --schema=packages/backend/prisma/schema.prisma --accept-data-loss && node dist/backend/src/server.js"]
