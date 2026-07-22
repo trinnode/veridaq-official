@@ -9,12 +9,15 @@ import { EarningsSummary } from "@/components/institution/earnings-summary"
 import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 import { toast } from "@/components/ui/toast"
 import { SafeLink as Link } from "@/components/safe-link"
+import { ActivityChart } from "@/components/ui/activity-chart"
 import { useEffect, useState } from "react"
 
 export default function InstitutionDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<any>(null)
+  const [chartData, setChartData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [chartLoading, setChartLoading] = useState(true)
   const [polling, setPolling] = useState(false)
 
   async function loadDashboard() {
@@ -29,9 +32,20 @@ export default function InstitutionDashboard() {
     }
   }
 
+  async function loadCharts() {
+    try {
+      const res = await api.get("/institution/dashboard/charts")
+      setChartData(res.data)
+    } catch {
+    } finally {
+      setChartLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!user) return
     loadDashboard()
+    loadCharts()
   }, [user])
 
   // Poll every 15s while dashboard has active items
@@ -109,6 +123,55 @@ export default function InstitutionDashboard() {
                   {stats?.tier === "PAID" ? "PAID tier — batch upload fees apply" : "FREE tier — gas sponsored for ≤999 students"}
                 </p>
               </div>
+            </div>
+
+            {user && !user.alsoEmployer && (
+              <div className="border-accent/20 bg-accent/[0.02] relative overflow-hidden rounded-xl border p-6">
+                <div className="bg-accent/10 pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full blur-3xl" />
+                <div className="relative">
+                  <div className="mb-3 flex items-center gap-2">
+                    <ShieldCheck size={20} className="text-accent" />
+                    <h3 className="text-sm font-semibold text-foreground">Also verify credentials from other institutions</h3>
+                  </div>
+                  <p className="text-muted mb-4 max-w-lg text-xs leading-relaxed">
+                    Enable employer access to verify credentials issued by other institutions on VERIDAQ.
+                    Your institution will get a linked employer profile, and you can earn revenue from
+                    verification requests.
+                  </p>
+                  <Link
+                    href="/institution/settings"
+                    className="bg-accent text-void inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+                  >
+                    <ArrowRight size={14} /> Enable Employer Access
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <ActivityChart
+                title="Verifications Over Time"
+                series={chartData?.series ?? []}
+                metrics={[
+                  { key: "verified", label: "Verified", color: "#22c55e" },
+                  { key: "failed", label: "Failed", color: "#ef4444" },
+                  { key: "pending", label: "Pending", color: "#eab308" },
+                ]}
+                isLoading={chartLoading}
+                defaultMode="bar"
+              />
+              <ActivityChart
+                title="Credentials & Revenue"
+                description="Batches submitted and earnings accrued per month"
+                series={chartData?.series ?? []}
+                metrics={[
+                  { key: "credentials", label: "Credentials", color: "#a78bfa" },
+                  { key: "earnedUsd", label: "Earned (USD)", color: "#22d3ee" },
+                ]}
+                isLoading={chartLoading}
+                defaultMode="area"
+                showCredits
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

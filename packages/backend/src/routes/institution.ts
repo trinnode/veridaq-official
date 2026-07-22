@@ -616,6 +616,14 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
     return { ok: true, alsoEmployer: enabled }
   })
 
+  // ── Charts ──────────────────────────────────────────────────────────────
+
+  app.get("/dashboard/charts", async (req) => {
+    const q = req.query as { months?: string }
+    const months = Math.max(1, Math.min(24, Number(q.months ?? 6)))
+    return instSvc.getDashboardCharts(req.jwtPayload.sub, months)
+  })
+
   // ── Profile and billing ─────────────────────────────────────────────────
 
   app.get("/dashboard", async (req) => {
