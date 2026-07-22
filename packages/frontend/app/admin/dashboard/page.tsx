@@ -7,12 +7,15 @@ import { api, BASE_URL } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { Activity, Settings, ShieldCheck } from "@/lib/icons"
 import { SafeLink as Link } from "@/components/safe-link"
+import { ActivityChart } from "@/components/ui/activity-chart"
 import { useEffect, useState } from "react"
 
 export default function AdminDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<any>(null)
+  const [monthlyData, setMonthlyData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [chartLoading, setChartLoading] = useState(true)
 
   useEffect(() => {
     if (!user) return
@@ -26,6 +29,12 @@ export default function AdminDashboard() {
         toast.error(msg)
       })
       .finally(() => setLoading(false))
+
+    api
+      .get("/admin/analytics/monthly")
+      .then(({ data }) => setMonthlyData(data))
+      .catch(() => {})
+      .finally(() => setChartLoading(false))
 
     // Server-Sent Events for realtime updates from /api/stats/streaming
     const evtSource = new EventSource(`${BASE_URL}/api/stats/streaming`)
@@ -165,6 +174,34 @@ export default function AdminDashboard() {
                 Sponsors gas fees for Institution transactions via ERC-4337.
               </p>
             </div>
+          </div>
+
+          {/* Analytics Charts */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <ActivityChart
+              title="Registrations & Activity"
+              description="New institutions, employers, and credentials per month"
+              series={monthlyData?.series ?? []}
+              metrics={[
+                { key: "institutions", label: "Institutions", color: "#22c55e" },
+                { key: "employers", label: "Employers", color: "#3b82f6" },
+                { key: "credentials", label: "Credentials", color: "#a78bfa" },
+              ]}
+              isLoading={chartLoading}
+              defaultMode="bar"
+            />
+            <ActivityChart
+              title="Verifications & Revenue"
+              description="Monthly verification volume and platform revenue"
+              series={monthlyData?.series ?? []}
+              metrics={[
+                { key: "verifications", label: "Verifications", color: "#eab308" },
+                { key: "verified", label: "Verified", color: "#22c55e" },
+                { key: "revenue", label: "Revenue (USD)", color: "#22d3ee" },
+              ]}
+              isLoading={chartLoading}
+              defaultMode="area"
+            />
           </div>
 
           {/* Active Institutions — bento pill display */}
