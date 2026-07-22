@@ -160,47 +160,6 @@ export default function InstitutionDashboard() {
                 isLoading={chartLoading}
                 defaultMode="bar"
               />
-              <ActivityChart
-                title="Credentials & Revenue"
-                description="Batches submitted and earnings accrued per month"
-                series={chartData?.series ?? []}
-                metrics={[
-                  { key: "credentials", label: "Credentials", color: "#a78bfa" },
-                  { key: "earnedUsd", label: "Earned (USD)", color: "#22d3ee" },
-                ]}
-                isLoading={chartLoading}
-                defaultMode="area"
-                showCredits
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <ActivityChart
-                title="Verifications Over Time"
-                series={chartData?.series ?? []}
-                metrics={[
-                  { key: "verified", label: "Verified", color: "#22c55e" },
-                  { key: "failed", label: "Failed", color: "#ef4444" },
-                  { key: "pending", label: "Pending", color: "#eab308" },
-                ]}
-                isLoading={chartLoading}
-                defaultMode="bar"
-              />
-              <ActivityChart
-                title="Credentials & Revenue"
-                description="Batches submitted and earnings accrued per month"
-                series={chartData?.series ?? []}
-                metrics={[
-                  { key: "credentials", label: "Credentials", color: "#a78bfa" },
-                  { key: "earnedUsd", label: "Earned (USD)", color: "#22d3ee" },
-                ]}
-                isLoading={chartLoading}
-                defaultMode="area"
-                showCredits
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="border-surface-border bg-surface-card rounded-xl border p-6">
                 <h3 className="mb-4 flex items-center gap-2 font-medium text-foreground">
                   <FileCheck2 size={18} className="text-accent" /> Subscription & Last Batch
@@ -234,7 +193,21 @@ export default function InstitutionDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <ActivityChart
+                title="Credentials & Revenue"
+                description="Batches submitted and earnings accrued per month"
+                series={chartData?.series ?? []}
+                metrics={[
+                  { key: "credentials", label: "Credentials", color: "#a78bfa" },
+                  { key: "earnedUsd", label: "Earned (USD)", color: "#22d3ee" },
+                ]}
+                isLoading={chartLoading}
+                defaultMode="area"
+                showCredits
+              />
               <div className="bg-accent/5 border-accent/20 relative flex max-h-64 flex-col items-center justify-center overflow-hidden border p-8 text-center backdrop-blur-sm">
                 <div className="bg-accent/10 pointer-events-none absolute right-0 top-0 -mr-10 -mt-10 min-h-[200px] min-w-[200px] rounded-full p-12 blur-3xl"></div>
                 <h3 className="z-10 mb-2 text-lg font-semibold text-foreground">
