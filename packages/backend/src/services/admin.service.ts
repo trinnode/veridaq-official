@@ -192,10 +192,14 @@ export class AdminService {
       }),
     ])
 
-    // Auto-create default claim definitions for newly approved institutions
-    await this.createDefaultClaims(institutionId)
+    // Best-effort post-approval operations — never fail the HTTP response
+    // because all were already committed to the DB.
+    try {
+      await this.createDefaultClaims(institutionId)
+    } catch (claimsErr) {
+      log.error({ claimsErr, institutionId }, "Failed to create default claims")
+    }
 
-    // Send the good news (best-effort — don't fail the request if email is down)
     try {
       await this.emailService.sendKycApproval({
         to: inst.email,

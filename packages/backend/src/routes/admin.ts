@@ -163,9 +163,15 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   // Approve employer access for an institution
   app.post("/institutions/:id/approve-employer", async (req, rep) => {
     const { id } = req.params as { id: string }
-    const result = await adminSvc.approveInstitutionEmployerAccess(id, req.jwtPayload.sub)
-    if (!result) return rep.code(404).send({ error: "Institution not found" })
-    return result
+    try {
+      const result = await adminSvc.approveInstitutionEmployerAccess(id, req.jwtPayload.sub)
+      if (!result) return rep.code(404).send({ error: "Institution not found" })
+      return result
+    } catch (err) {
+      req.log.error({ err, institutionId: id }, "Employer approval threw after DB commit")
+      const msg = err instanceof Error ? err.message : "Failed to approve employer access"
+      return rep.code(500).send({ error: msg })
+    }
   })
 
   // Generate or set a wallet for an institution
