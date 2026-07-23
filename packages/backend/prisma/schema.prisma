@@ -245,6 +245,9 @@ model Credential {
   graduationYear Int
   status         CredentialStatus @default(ACTIVE)
   createdAt      DateTime         @default(now())
+  revokedAt      DateTime?
+  revokedReason  String?
+  revokedBy      String?
 
   verificationRequests VerificationRequest[]
 
@@ -297,6 +300,8 @@ model VerificationRequest {
   txHash        String?
   // Internal note from institution admin when declining a manual verification (not shared externally)
   adminNote     String?
+  // Public note shared with employer (e.g., revocation reason)
+  institutionNote String?
   createdAt     DateTime            @default(now())
   completedAt   DateTime?
 

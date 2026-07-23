@@ -152,6 +152,14 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     return { ok: true }
   })
 
+  app.post("/institutions/:id/reactivate", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    const result = await adminSvc.reactivateInstitution(id, req.jwtPayload.sub)
+    if (result === null) return rep.code(404).send({ error: "Institution not found" })
+    if (result === false) return rep.code(400).send({ error: "Institution is already active" })
+    return { ok: true }
+  })
+
   // Approve employer access for an institution
   app.post("/institutions/:id/approve-employer", async (req, rep) => {
     const { id } = req.params as { id: string }

@@ -59,6 +59,8 @@ export class VerificationService {
         encryptedIv: true,
         encryptedTag: true,
         status: true,
+        revokedReason: true,
+        revokedAt: true,
       },
     })
 
@@ -105,13 +107,36 @@ export class VerificationService {
     const credential = await this.findCredentialByMatric(institution.id, input.matricNumber)
 
     if (!credential) return { error: "NOT_FOUND" as const }
-    if (credential.status === "REVOKED") return { error: "REVOKED" as const }
 
-    try {
-      const revoked = await this.blockchainSvc.isRevoked(BigInt(credential.nullifier))
-      if (revoked) return { error: "REVOKED" as const }
-    } catch (err) {
-      log.error({ err }, "Failed to check on-chain revocation status")
+    // Check revocation status — if revoked, create a COMPLETED request with CREDENTIAL_REVOKED
+    let isRevoked = credential.status === "REVOKED"
+    if (!isRevoked) {
+      try {
+        isRevoked = await this.blockchainSvc.isRevoked(BigInt(credential.nullifier))
+      } catch (err) {
+        log.error({ err }, "Failed to check on-chain revocation status")
+      }
+    }
+
+    if (isRevoked) {
+      const request = await this.prisma.verificationRequest.create({
+        data: {
+          employerId: input.employerId,
+          institutionId: institution.id,
+          credentialId: credential.id,
+          matricNumber: input.matricNumber,
+          courseName: input.courseName ?? null,
+          claimType: input.claimType,
+          threshold: input.threshold,
+          status: "COMPLETED",
+          result: "CREDENTIAL_REVOKED",
+          completedAt: new Date(),
+          institutionNote: credential.revokedReason
+            ? `Credential revoked: ${credential.revokedReason}`
+            : "Credential has been revoked",
+        },
+      })
+      return { requestId: request.id, status: request.status, result: "CREDENTIAL_REVOKED" }
     }
 
     // Determine if this claim requires manual institution review
@@ -297,6 +322,7 @@ export class VerificationService {
         threshold: true,
         createdAt: true,
         completedAt: true,
+        institutionNote: true,
         institution: {
           select: {
             name: true,
@@ -324,6 +350,7 @@ export class VerificationService {
         claimType: true,
         createdAt: true,
         completedAt: true,
+        institutionNote: true,
         institution: {
           select: {
             name: true,

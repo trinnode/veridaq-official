@@ -422,6 +422,42 @@ export class AdminService {
     return true
   }
 
+  async reactivateInstitution(institutionId: string, adminId: string) {
+    const inst = await this.prisma.institution.findUnique({ where: { id: institutionId } })
+    if (!inst) return null
+    if (inst.active) return false
+
+    await this.prisma.$transaction([
+      this.prisma.institution.update({
+        where: { id: institutionId },
+        data: {
+          active: true,
+          deactivatedAt: null,
+          deactivationReason: null,
+        },
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          action: "INSTITUTION_REACTIVATED",
+          details: { orgName: inst.name },
+          adminId,
+          institutionId: inst.id,
+        },
+      }),
+    ])
+
+    if (inst.onChainId && config.INSTITUTION_REGISTRY_ADDRESS) {
+      try {
+        await this.blockchainSvc.reactivateInstitutionOnChain(inst.onChainId as `0x${string}`)
+        log.info({ institutionId }, "Institution reactivated on-chain")
+      } catch (err) {
+        log.error({ err, institutionId }, "Failed to reactivate institution on-chain (DB already updated)")
+      }
+    }
+
+    return true
+  }
+
   async deactivateEmployer(employerId: string, adminId: string, reason: string) {
     const emp = await this.prisma.employer.findUnique({ where: { id: employerId } })
     if (!emp) return null

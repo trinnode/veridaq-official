@@ -173,11 +173,11 @@ describe("VerificationService.createRequest — with a real credential", () => {
     }
   })
 
-  it("returns REVOKED when the credential is revoked in the database", async () => {
+  it("returns CREDENTIAL_REVOKED when the credential is revoked in the database", async () => {
     // Mark the credential as revoked
     await prisma.credential.update({
       where: { nullifier: credentialNullifier },
-      data: { status: "REVOKED" },
+      data: { status: "REVOKED", revokedReason: "Student re-enrolled" },
     })
 
     const result = await verifySvc.createRequest({
@@ -188,12 +188,22 @@ describe("VerificationService.createRequest — with a real credential", () => {
       threshold: 0,
     })
 
-    expect(result.error).toBe("REVOKED")
+    expect(result.requestId).toBeDefined()
+    expect(result.result).toBe("CREDENTIAL_REVOKED")
+    const reqId = result.requestId!
 
-    // Restore
+    // Verify a VerificationRequest was persisted
+    const req = await prisma.verificationRequest.findUnique({ where: { id: reqId } })
+    expect(req).not.toBeNull()
+    expect(req!.result).toBe("CREDENTIAL_REVOKED")
+    expect(req!.status).toBe("COMPLETED")
+    expect(req!.institutionNote).toContain("Student re-enrolled")
+
+    // Clean up
+    await prisma.verificationRequest.delete({ where: { id: reqId } })
     await prisma.credential.update({
       where: { nullifier: credentialNullifier },
-      data: { status: "ACTIVE" },
+      data: { status: "ACTIVE", revokedReason: null },
     })
   })
 })

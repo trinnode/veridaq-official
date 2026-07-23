@@ -33,6 +33,10 @@ export default function InstitutionsPage() {
   const [generatedWallet, setGeneratedWallet] = useState("")
   const [manualWalletInput, setManualWalletInput] = useState("")
   const [showManualWallet, setShowManualWallet] = useState(false)
+  const [deactivateTarget, setDeactivateTarget] = useState<any>(null)
+  const [deactivateReason, setDeactivateReason] = useState("")
+  const [deactivating, setDeactivating] = useState(false)
+  const [reactivatingId, setReactivatingId] = useState<string | null>(null)
 
   async function load(page = 1) {
     try {
@@ -216,6 +220,35 @@ export default function InstitutionsPage() {
     }
   }
 
+  async function deactivateInstitution() {
+    if (!deactivateTarget || !deactivateReason.trim()) return
+    setDeactivating(true)
+    try {
+      await api.post(`/admin/institutions/${deactivateTarget.id}/deactivate`, { reason: deactivateReason })
+      toast.success("Institution deactivated")
+      setDeactivateTarget(null)
+      setDeactivateReason("")
+      load()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? "Failed to deactivate")
+    } finally {
+      setDeactivating(false)
+    }
+  }
+
+  async function reactivateInstitution(id: string) {
+    setReactivatingId(id)
+    try {
+      await api.post(`/admin/institutions/${id}/reactivate`)
+      toast.success("Institution reactivated")
+      load()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? "Failed to reactivate")
+    } finally {
+      setReactivatingId(null)
+    }
+  }
+
   return (
     <AdminLayout title="Institution Management">
       <p className="text-muted mb-6 max-w-2xl text-sm">
@@ -360,6 +393,27 @@ export default function InstitutionsPage() {
                         >
                           Fund
                         </button>
+                        {inst.active === false ? (
+                          <button
+                            onClick={() => reactivateInstitution(inst.id)}
+                            disabled={reactivatingId === inst.id}
+                            className="bg-accent text-void flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                          >
+                            {reactivatingId === inst.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <ShieldCheck className="h-3 w-3" />
+                            )}
+                            {reactivatingId === inst.id ? "..." : "Reactivate"}
+                          </button>
+                        ) : inst.kycApproved ? (
+                          <button
+                            onClick={() => setDeactivateTarget(inst)}
+                            className="bg-error/10 text-error flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
+                          >
+                            <ShieldAlert className="h-3 w-3" /> Deactivate
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                 </tr>
@@ -806,6 +860,55 @@ export default function InstitutionsPage() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deactivation Modal */}
+      {deactivateTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="border-surface-border bg-surface-card w-full max-w-md overflow-hidden rounded-2xl border shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <ShieldAlert className="h-4 w-4 text-error" />
+                Deactivate Institution
+              </h3>
+              <button onClick={() => { setDeactivateTarget(null); setDeactivateReason("") }} className="text-muted hover:text-foreground">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="space-y-4 p-6">
+              <p className="text-muted text-xs leading-relaxed">
+                This will revoke the institution&apos;s license. They will lose access to all features
+                until reactivated. Existing credentials verified before deactivation remain valid.
+              </p>
+              <div>
+                <label className="text-muted mb-1.5 block text-xs font-medium">Reason for deactivation</label>
+                <textarea
+                  value={deactivateReason}
+                  onChange={(e) => setDeactivateReason(e.target.value)}
+                  placeholder="e.g. Accreditation not renewed, Terms of service violation..."
+                  rows={3}
+                  className="w-full rounded-lg border border-white/10 bg-void/60 px-3 py-2 text-xs text-foreground outline-none placeholder:text-white/20 focus:border-error/50"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-white/5 px-6 py-4">
+              <button
+                onClick={() => { setDeactivateTarget(null); setDeactivateReason("") }}
+                className="border-surface-border text-muted hover:text-foreground rounded-lg border px-4 py-2 text-xs font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deactivateInstitution}
+                disabled={deactivating || !deactivateReason.trim()}
+                className="bg-error text-void flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+              >
+                {deactivating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldAlert className="h-3.5 w-3.5" />}
+                {deactivating ? "Deactivating..." : "Confirm Deactivation"}
+              </button>
             </div>
           </div>
         </div>
