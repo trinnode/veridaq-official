@@ -728,6 +728,10 @@ export class AdminService {
           where: { id: inst.employerProfile.id },
           data: { active: true, kycApproved: true },
         }),
+        this.prisma.institution.update({
+          where: { id: institutionId },
+          data: { alsoEmployer: true },
+        }),
         this.prisma.auditLog.create({
           data: {
             action: "EMPLOYER_ACCESS_APPROVED",

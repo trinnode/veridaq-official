@@ -185,10 +185,22 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     const skip = (page - 1) * limit
     const [total, items] = await app.prisma.$transaction([
       app.prisma.institution.count({
-        where: { alsoEmployer: true, employerProfile: null },
+        where: {
+          alsoEmployer: true,
+          OR: [
+            { employerProfile: null },
+            { employerProfile: { kycApproved: false } },
+          ],
+        },
       }),
       app.prisma.institution.findMany({
-        where: { alsoEmployer: true, employerProfile: null },
+        where: {
+          alsoEmployer: true,
+          OR: [
+            { employerProfile: null },
+            { employerProfile: { kycApproved: false } },
+          ],
+        },
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
@@ -198,6 +210,7 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
           email: true,
           createdAt: true,
           alsoEmployer: true,
+          employerProfile: { select: { id: true, kycApproved: true, active: true } },
         },
       }),
     ])

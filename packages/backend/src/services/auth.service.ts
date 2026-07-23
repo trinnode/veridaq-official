@@ -187,7 +187,10 @@ export class AuthService {
   // ─── Login ───────────────────────────────────────────────────────────────
 
   async loginInstitution(email: string, password: string) {
-    const inst = await this.prisma.institution.findUnique({ where: { email } })
+    const inst = await this.prisma.institution.findUnique({
+      where: { email },
+      include: { employerProfile: { select: { active: true, kycApproved: true } } },
+    })
     if (!inst || !inst.active) return null
 
     const ok = await bcryptjs.compare(password, inst.passwordHash)
@@ -203,6 +206,7 @@ export class AuthService {
         role: "INSTITUTION",
         kycApproved: inst.kycApproved,
         alsoEmployer: inst.alsoEmployer,
+        employerActive: inst.employerProfile ? inst.employerProfile.active && inst.employerProfile.kycApproved : false,
       },
     }
   }

@@ -598,6 +598,19 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
           freeVerificationsRemaining: 3,
         },
       })
+    } else if (enabled && inst.employerProfile && !inst.employerProfile.active) {
+      // Re-enabling after deactivation — reactivate but require admin re-approval
+      await app.prisma.$transaction([
+        app.prisma.employer.update({
+          where: { id: inst.employerProfile.id },
+          data: { active: true, kycApproved: false },
+        }),
+        app.prisma.institution.update({
+          where: { id: institutionId },
+          data: { alsoEmployer: true },
+        }),
+      ])
+      return { ok: true, alsoEmployer: true, pendingAdminApproval: true }
     }
 
     if (!enabled && inst.employerProfile) {

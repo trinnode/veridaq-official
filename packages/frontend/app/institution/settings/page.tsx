@@ -15,15 +15,22 @@ export default function InstitutionSettingsPage() {
   async function handleToggle() {
     setToggling(true)
     try {
-      await api.patch("/institution/employer-access", { enabled: !alsoEmployer })
-      setAlsoEmployer(!alsoEmployer)
-      toast.success(alsoEmployer ? "Employer access deactivated" : "Employer access activated")
+      const { data } = await api.patch("/institution/employer-access", { enabled: !alsoEmployer })
+      setAlsoEmployer(data.alsoEmployer)
+      if (data.pendingAdminApproval) {
+        toast.success("Employer access request sent — pending admin approval")
+      } else {
+        toast.success(data.alsoEmployer ? "Employer access activated" : "Employer access deactivated")
+      }
     } catch {
       toast.error("Failed to update employer access")
     } finally {
       setToggling(false)
     }
   }
+
+  const employerActive = user?.employerActive ?? false
+  const pendingApproval = alsoEmployer && !employerActive
 
   if (loading || !user) return null
 
@@ -39,8 +46,12 @@ export default function InstitutionSettingsPage() {
         <div className="flex items-center justify-between rounded-lg border border-surface-border p-4">
           <div>
             <div className="text-sm font-medium text-foreground">Also act as an employer</div>
-            <div className="text-muted text-xs">
-              {alsoEmployer ? "Enabled — you can verify credentials" : "Disabled"}
+            <div className="text-xs" style={{ color: pendingApproval ? "#facc15" : undefined }}>
+              {pendingApproval
+                ? "Pending admin approval — your request has been sent"
+                : alsoEmployer
+                  ? "Enabled — you can verify credentials"
+                  : "Disabled"}
             </div>
           </div>
           <button
@@ -61,6 +72,13 @@ export default function InstitutionSettingsPage() {
             )}
           </button>
         </div>
+
+        {pendingApproval && (
+          <p className="mt-3 text-xs leading-relaxed" style={{ color: "#facc15" }}>
+            Your employer access is pending platform admin approval. You will be notified
+            once your request is reviewed.
+          </p>
+        )}
       </div>
     </DashboardLayout>
   )
