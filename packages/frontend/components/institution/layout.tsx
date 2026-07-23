@@ -1,7 +1,7 @@
 "use client"
 import { OrbitalLoader } from "@/components/ui/orbital-loader"
 import { useAuth } from "@/lib/auth"
-import { LogOut, Menu, X, ChevronRight, Building2 } from "@/lib/icons"
+import { LogOut, Menu, X, ChevronRight, Building2, ShieldAlert } from "@/lib/icons"
 import { usePathname, useRouter } from "next/navigation"
 import { SafeLink } from "@/components/safe-link"
 import { ErrorBoundary } from "@/components/ui/error-boundary"
@@ -72,6 +72,47 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
   if (!user) {
     window.location.href = "/institution/login"
     return null
+  }
+
+  if (user.active === false) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-void p-6">
+        <PortalBg />
+        <div className="border-surface-border bg-surface-card relative max-w-lg overflow-hidden rounded-2xl border p-8 text-center">
+          <div className="bg-error/10 pointer-events-none absolute -inset-1 opacity-50 blur-3xl" />
+          <div className="relative">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-error/20">
+              <ShieldAlert className="h-8 w-8 text-error" />
+            </div>
+            <h1 className="text-foreground mb-2 text-xl font-bold">License Revoked</h1>
+            <p className="text-muted mb-4 text-sm leading-relaxed">
+              Your institution&apos;s license has been revoked. You no longer have access to VERIDAQ
+              features.
+            </p>
+            {user.deactivationReason && (
+              <div className="bg-error/5 border-error/20 mb-4 rounded-lg border p-3 text-left">
+                <p className="text-error mb-1 text-xs font-semibold">Reason</p>
+                <p className="text-foreground text-sm">{user.deactivationReason}</p>
+              </div>
+            )}
+            {user.deactivatedAt && (
+              <p className="text-muted mb-6 text-xs">
+                Revoked on {new Date(user.deactivatedAt).toLocaleDateString()}
+              </p>
+            )}
+            <button
+              onClick={() => {
+                logout().catch(() => {})
+                window.location.href = "/institution/login"
+              }}
+              className="border-surface-border text-muted hover:text-foreground rounded-lg border px-6 py-2 text-sm font-medium transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

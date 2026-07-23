@@ -223,7 +223,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       if (admin) user = { id: admin.id, email: admin.email, name: admin.name, role: "ADMIN" }
     } else if (role === "INSTITUTION") {
       const inst = await app.prisma.institution.findUnique({ where: { id: sub } })
-      if (inst && inst.active)
+      if (inst)
         user = {
           id: inst.id,
           email: inst.email,
@@ -231,6 +231,9 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
           role: "INSTITUTION",
           kycApproved: inst.kycApproved,
           alsoEmployer: inst.alsoEmployer,
+          active: inst.active,
+          deactivatedAt: inst.deactivatedAt,
+          deactivationReason: inst.deactivationReason,
         }
     } else if (role === "EMPLOYER") {
       const emp = await app.prisma.employer.findUnique({ where: { id: sub } })

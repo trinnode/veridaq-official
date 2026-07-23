@@ -225,10 +225,33 @@ export class InstitutionService {
       }
     }
 
-    await this.prisma.credential.update({
-      where: { id: credential.id },
-      data: { status: "REVOKED" },
-    })
+    const reasonLabels: Record<number, string> = {
+      1: "Data entry error corrected",
+      2: "Student re-enrolled",
+      3: "Fraudulent document detected",
+      4: "Institutional error",
+      5: "Other",
+    }
+    const revokedReason = reasonLabels[reasonCode] ?? "Unknown reason"
+
+    await this.prisma.$transaction([
+      this.prisma.credential.update({
+        where: { id: credential.id },
+        data: {
+          status: "REVOKED",
+          revokedAt: new Date(),
+          revokedReason,
+          revokedBy: "institution",
+        },
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          action: "CREDENTIAL_REVOKED",
+          details: { nullifier, reasonCode, reason: revokedReason },
+          institutionId,
+        },
+      }),
+    ])
 
     return { ok: true }
   }

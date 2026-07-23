@@ -68,13 +68,16 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
     }
     const result = await verifySvc.createRequest(payload)
 
-    if (result.error === "REVOKED") return rep.code(409).send({ error: "Credential revoked" })
     if (result.error === "NOT_FOUND") return rep.code(404).send({ error: "Record not found" })
     if (result.error === "INSTITUTION_KEY_MISSING") {
       return rep.code(500).send({ error: "Institution key missing" })
     }
     if (result.error === "NO_FREE_VERIFICATIONS") {
       return rep.code(402).send({ error: "Free verifications exhausted. Please upgrade." })
+    }
+
+    if (result.result === "CREDENTIAL_REVOKED") {
+      return rep.code(200).send({ requestId: result.requestId, status: result.status, result: "CREDENTIAL_REVOKED" })
     }
 
     return rep.code(202).send({ requestId: result.requestId, status: result.status })
