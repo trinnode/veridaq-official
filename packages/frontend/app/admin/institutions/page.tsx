@@ -73,8 +73,14 @@ export default function InstitutionsPage() {
     setApprovingId(id)
     setReviewTarget(null)
     try {
-      await api.post(`/admin/institutions/${id}/approve`, walletOverride ? { adminWallet: walletOverride } : {})
-      toast.success("Institution approved and registered on-chain")
+      const { data } = await api.post(`/admin/institutions/${id}/approve`, walletOverride ? { adminWallet: walletOverride } : {})
+      if (data?.blockchainStatus === "FAILED") {
+        toast.success("Institution KYC approved — on-chain registration pending retry")
+      } else if (data?.blockchainStatus === "PENDING") {
+        toast.success("Institution approved — awaiting on-chain registration")
+      } else {
+        toast.success("Institution approved and registered on-chain")
+      }
       load()
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? err?.message ?? "Approval failed"
@@ -209,8 +215,8 @@ export default function InstitutionsPage() {
     if (!detailTarget) return
     setApprovingEmployer(true)
     try {
-      await api.post(`/admin/institutions/${detailTarget.id}/approve-employer`)
-      toast.success("Employer access granted")
+      const { data } = await api.post(`/admin/institutions/${detailTarget.id}/approve-employer`)
+      toast.success(data?.message ?? "Employer access granted")
       load()
       loadAuditLogs(detailTarget.id)
     } catch (err: any) {

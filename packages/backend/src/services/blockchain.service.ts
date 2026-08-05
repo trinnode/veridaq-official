@@ -870,7 +870,7 @@ export class BlockchainService {
       functionName: "createAccount",
       args: [ownerAddress, salt],
     })
-    await this.publicClient.waitForTransactionReceipt({ hash: txHash })
+    await this.publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 30_000 })
 
     return { sender, deployed: true, txHash }
   }
@@ -1123,7 +1123,7 @@ export class BlockchainService {
       functionName: "setInstitutionTier",
       args: [institutionId, tierValue],
     })
-    await this.publicClient.waitForTransactionReceipt({ hash })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
@@ -1144,7 +1144,7 @@ export class BlockchainService {
       functionName: "initialiseEmployer",
       args: [employerAddress],
     })
-    await this.publicClient.waitForTransactionReceipt({ hash })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
@@ -1155,7 +1155,7 @@ export class BlockchainService {
       functionName: "consumeFreeVerification",
       args: [employerAddress],
     })
-    await this.publicClient.waitForTransactionReceipt({ hash })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
@@ -1233,7 +1233,7 @@ export class BlockchainService {
       args: [institutionId],
       value: amountWei,
     })
-    await this.publicClient.waitForTransactionReceipt({ hash })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
@@ -1244,7 +1244,7 @@ export class BlockchainService {
       functionName: "fundSponsoredPool",
       value: amountWei,
     })
-    await this.publicClient.waitForTransactionReceipt({ hash })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
@@ -1296,7 +1296,7 @@ export class BlockchainService {
       to,
       value: amountWei,
     })
-    await this.publicClient.waitForTransactionReceipt({ hash })
+    await this.publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })
     return hash
   }
 
