@@ -1,0 +1,52 @@
+# fly.toml — VERIDAQ Backend on Fly.io
+# Secrets are NOT stored here; they're set via `fly secrets set` (see .env production block).
+# Internal app port 4000 matches server.ts (config.PORT default) and Dockerfile EXPOSE.
+
+app = "veridaq-backend"
+primary_region = "jnb"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[mounts]
+  # No persistent volume needed — Postgres (Neon) and Redis (Upstash) are external.
+
+[env]
+  PORT = "4000"
+  NODE_ENV = "production"
+  FRONTEND_URL = "https://veridaq-official.vercel.app"
+  # CIRCUIT paths must be absolute inside the container (/app is Docker WORKDIR).
+  CIRCUIT_ZKEY_PATH = "/app/packages/circuits/build/credential_final.zkey"
+  CIRCUIT_WASM_PATH = "/app/packages/circuits/build/credential_js/credential.wasm"
+
+[[services]]
+  internal_port = 4000
+  protocol = "tcp"
+
+  [[services.ports]]
+    # Public HTTPS on *:443, HTTP on *:80 (auto-redirect to HTTPS by Fly)
+    port = 443
+    handlers = ["tls", "http"]
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.http_checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "60s"
+    path = "/health"
+    method = "GET"
+
+# Single instance. The BullMQ batch worker runs in-process (server.ts imports it),
+# so scaling horizontally is NOT safe here — keep machines pinned to 1.
+[services.concurrency]
+  type = "requests"
+  hard_limit = 25
+  soft_limit = 20
+
+[vm]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
