@@ -51,6 +51,9 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
-# Sync database schema (safe for existing DBs with migration mismatches), then start
-# Run seed manually after first deploy: node dist/backend/prisma/seed.js
-CMD ["sh", "-c", "pnpm exec prisma db push --schema=packages/backend/prisma/schema.prisma --accept-data-loss && node dist/backend/src/server.js"]
+# Sync schema automatically at boot, then start the API.
+# NOTE: this intentionally omits --accept-data-loss. When the schema already
+# matches (it does — your DB is in sync), db push is a fast no-op. If a change
+# would ever destroy data, it fails loudly instead of silently dropping rows.
+# Additive migrations (new tables/columns) apply automatically on deploy.
+CMD ["sh", "-c", "pnpm exec prisma db push --schema=packages/backend/prisma/schema.prisma && node dist/backend/src/server.js"]

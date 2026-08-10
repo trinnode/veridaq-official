@@ -1,0 +1,96 @@
+# Render Blueprint — VERIDAQ Backend
+# Usage: connect this repo to Render, then New + "Blueprint" → this file is auto-detected.
+# Secrets marked sync:false must be filled in the Render dashboard after first deploy.
+
+services:
+  - type: web
+    name: veridaq-backend
+    runtime: docker
+    repo: https://github.com/trinnode/veridaq-official
+    rootDir: .
+    dockerfilePath: ./Dockerfile
+    branch: main
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # ── App basics ──
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://veridaq-official.vercel.app
+      - key: BACKEND_URL
+        sync: false # set to https://veridaq-backend.onrender.com after first deploy
+
+      # ── Database / cache (already external — do NOT use Render managed DB) ──
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+
+      # ── Auth secrets ──
+      - key: JWT_SECRET
+        sync: false
+      - key: REFRESH_SECRET
+        sync: false
+
+      # ── Blockchain ──
+      - key: ALCHEMY_API_KEY
+        sync: false
+      - key: ALCHEMY_BASE_SEPOLIA_URL
+        sync: false
+      - key: INSTITUTION_REGISTRY_ADDRESS
+        sync: false
+      - key: CREDENTIAL_REGISTRY_ADDRESS
+        sync: false
+      - key: REVOCATION_REGISTRY_ADDRESS
+        sync: false
+      - key: PAYMASTER_VAULT_ADDRESS
+        sync: false
+      - key: SUBSCRIPTION_MANAGER_ADDRESS
+        sync: false
+      - key: ZK_VERIFIER_ADDRESS
+        sync: false
+      - key: ENTRY_POINT_ADDRESS
+        sync: false
+      - key: BUNDLER_RPC_URL
+        sync: false
+      - key: AA_SIMPLE_ACCOUNT_FACTORY_ADDRESS
+        sync: false
+      - key: AA_SIMPLE_ACCOUNT_OWNER_PRIVATE_KEY
+        sync: false
+      - key: AA_SIMPLE_ACCOUNT_SALT
+        sync: false
+      - key: PLATFORM_ADMIN_PRIVATE_KEY
+        sync: false
+      - key: PLATFORM_ADMIN_ADDRESS
+        sync: false
+
+      # ── Circuit files — absolute container paths (Docker workdir is /app) ──
+      - key: CIRCUIT_ZKEY_PATH
+        value: /app/packages/circuits/build/credential_final.zkey
+      - key: CIRCUIT_WASM_PATH
+        value: /app/packages/circuits/build/credential_js/credential.wasm
+
+      # ── Encryption ──
+      - key: ENCRYPTION_KEY
+        sync: false
+
+      # ── Email ──
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+      # ── Optional ──
+      - key: BASESCAN_API_KEY
+        sync: false
+      - key: CROSSMINT_SERVER_API_KEY
+        sync: false
+      - key: CROSSMINT_WEBHOOK_SECRET
+        sync: false
