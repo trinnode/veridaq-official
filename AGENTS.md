@@ -581,6 +581,27 @@ contract Groth16Verifier {
 
 ---
 
+## Git identity
+
+All commits and pushes must be authored as the human owner, **not** as any
+agent, tool, or bot identity. The repository remote uses a personal access
+token from `trinnode`. Before any commit or push:
+
+```bash
+git config user.name "trinnode"
+git config user.email "trinnode@users.noreply.github.com"
+```
+
+The pre-push Husky hook runs `pnpm typecheck`, `pnpm test:backend`, and
+`pnpm test:contracts`. When `.env` points at unreachable cloud services
+(Neon/Upstash) during a push, override with local values so the hook passes:
+
+```bash
+DATABASE_URL="postgresql://veridaq:veridaq_dev@localhost:5432/veridaq" \
+REDIS_URL="redis://localhost:6379" \
+git push origin <branch>
+```
+
 ## What not to do
 
 - Do not create a `package.json` inside `packages/contracts`, `packages/circuits`,
