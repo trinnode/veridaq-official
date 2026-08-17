@@ -8,9 +8,6 @@ primary_region = "jnb"
 [build]
   dockerfile = "Dockerfile"
 
-[mounts]
-  # No persistent volume needed — Postgres (Neon) and Redis (Upstash) are external.
-
 [env]
   PORT = "4000"
   NODE_ENV = "production"
