@@ -5,7 +5,8 @@ import {Test, console} from "forge-std/Test.sol";
 import {PaymasterVault} from "../src/PaymasterVault.sol";
 import {SubscriptionManager} from "../src/SubscriptionManager.sol";
 import {InstitutionRegistry} from "../src/InstitutionRegistry.sol";
-import {IEntryPoint} from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import {IPaymaster} from "account-abstraction/contracts/interfaces/IPaymaster.sol";
+import {UserOperation} from "account-abstraction/contracts/interfaces/UserOperation.sol";
 
 // ── Minimal EntryPoint mock ───────────────────────────────────────────────────
 // We only need depositTo, withdrawTo, and balanceOf for these tests.
@@ -68,6 +69,29 @@ contract PaymasterVaultTest is Test {
 
         // Fund the vault so the EntryPoint mock has a balance
         vm.deal(admin, 10 ether);
+    }
+
+    /// @dev Builds a UserOperation carrying the given paymasterAndData, so tests
+    ///      exercise the same struct the EntryPoint hands to the paymaster.
+    function _op(bytes memory paymasterAndData) internal pure returns (UserOperation memory op) {
+        op.paymasterAndData = paymasterAndData;
+    }
+
+    /// @notice Guards the exact mistake that shipped: a locally-invented
+    ///         signature that compiles but answers the wrong selector.
+    function test_validate_selector_matches_entrypoint_v06() public pure {
+        assertEq(PaymasterVault.validatePaymasterUserOp.selector, bytes4(0xf465c77e));
+        assertEq(PaymasterVault.postOp.selector, bytes4(0xa9a23409));
+    }
+
+    function test_validate_reverts_on_short_paymaster_data() public {
+        bytes memory tooShort = abi.encodePacked(address(vault), INST_ID);
+
+        vm.prank(address(entryPoint));
+        vm.expectRevert(
+            abi.encodeWithSelector(PaymasterVault.InvalidPaymasterData.selector, tooShort.length)
+        );
+        vault.validatePaymasterUserOp(_op(tooShort), bytes32(0), 0.1 ether);
     }
 
     // ── Sponsored pool funding ────────────────────────────────────────────────
@@ -264,7 +288,7 @@ contract PaymasterVaultTest is Test {
         // Only the EntryPoint can call validatePaymasterUserOp
         vm.prank(address(entryPoint));
         (bytes memory context, uint256 validationData) =
-            vault.validatePaymasterUserOp(paymasterAndData, maxCost);
+            vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), maxCost);
 
         assertEq(validationData, 0); // 0 = valid
         assertEq(vault.sponsoredPool(), 2 ether - maxCost);
@@ -292,7 +316,7 @@ contract PaymasterVaultTest is Test {
 
         vm.prank(address(entryPoint));
         (bytes memory context, uint256 validationData) =
-            vault.validatePaymasterUserOp(paymasterAndData, maxCost);
+            vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), maxCost);
 
         assertEq(validationData, 0);
         assertEq(vault.institutionBalances(INST_PAID), 1 ether - maxCost);
@@ -317,7 +341,7 @@ contract PaymasterVaultTest is Test {
                 0
             )
         );
-        vault.validatePaymasterUserOp(paymasterAndData, maxCost);
+        vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), maxCost);
     }
 
     function test_validate_reverts_non_entry_point() public {
@@ -328,7 +352,7 @@ contract PaymasterVaultTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(PaymasterVault.OnlyEntryPoint.selector);
-        vault.validatePaymasterUserOp(paymasterAndData, 0.1 ether);
+        vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), 0.1 ether);
     }
 
     // ── postOp ────────────────────────────────────────────────────────────────
@@ -347,13 +371,13 @@ contract PaymasterVaultTest is Test {
             abi.encode(INST_ID, uint256(10))
         );
         vm.prank(address(entryPoint));
-        (bytes memory context,) = vault.validatePaymasterUserOp(paymasterAndData, maxCost);
+        (bytes memory context,) = vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), maxCost);
 
         uint256 poolAfterValidate = vault.sponsoredPool();
 
         // postOp should refund the unused gas
         vm.prank(address(entryPoint));
-        vault.postOp(0, context, actualCost);
+        vault.postOp(IPaymaster.PostOpMode.opSucceeded, context, actualCost);
 
         assertEq(vault.sponsoredPool(), poolAfterValidate + refund);
     }
@@ -372,12 +396,12 @@ contract PaymasterVaultTest is Test {
             abi.encode(INST_PAID, uint256(10))
         );
         vm.prank(address(entryPoint));
-        (bytes memory context,) = vault.validatePaymasterUserOp(paymasterAndData, maxCost);
+        (bytes memory context,) = vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), maxCost);
 
         uint256 balAfterValidate = vault.institutionBalances(INST_PAID);
 
         vm.prank(address(entryPoint));
-        vault.postOp(0, context, actualCost);
+        vault.postOp(IPaymaster.PostOpMode.opSucceeded, context, actualCost);
 
         assertEq(vault.institutionBalances(INST_PAID), balAfterValidate + refund);
     }
@@ -412,7 +436,7 @@ contract PaymasterVaultTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(PaymasterVault.OnlyEntryPoint.selector);
-        vault.postOp(0, context, 0.06 ether);
+        vault.postOp(IPaymaster.PostOpMode.opSucceeded, context, 0.06 ether);
     }
 
     function test_post_op_no_refund_when_cost_equals_max() public {
@@ -427,12 +451,12 @@ contract PaymasterVaultTest is Test {
             abi.encode(INST_ID, uint256(10))
         );
         vm.prank(address(entryPoint));
-        (bytes memory context,) = vault.validatePaymasterUserOp(paymasterAndData, maxCost);
+        (bytes memory context,) = vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), maxCost);
 
         uint256 poolAfterValidate = vault.sponsoredPool();
 
         vm.prank(address(entryPoint));
-        vault.postOp(0, context, actualCost);
+        vault.postOp(IPaymaster.PostOpMode.opSucceeded, context, actualCost);
 
         // Pool should stay the same as after validate (no refund)
         assertEq(vault.sponsoredPool(), poolAfterValidate);
@@ -455,7 +479,7 @@ contract PaymasterVaultTest is Test {
                 0
             )
         );
-        vault.validatePaymasterUserOp(paymasterAndData, 0.1 ether);
+        vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), 0.1 ether);
     }
 
     function test_validate_reverts_insufficient_institution_balance() public {
@@ -478,7 +502,7 @@ contract PaymasterVaultTest is Test {
                 0.05 ether
             )
         );
-        vault.validatePaymasterUserOp(paymasterAndData, 1 ether);
+        vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), 1 ether);
     }
 
     function test_validate_paymaster_user_op_emits_after_post() public {
@@ -491,12 +515,12 @@ contract PaymasterVaultTest is Test {
         );
 
         vm.prank(address(entryPoint));
-        (bytes memory context,) = vault.validatePaymasterUserOp(paymasterAndData, 0.1 ether);
+        (bytes memory context,) = vault.validatePaymasterUserOp(_op(paymasterAndData), bytes32(0), 0.1 ether);
 
         vm.expectEmit(true, true, false, true);
         emit PaymasterVault.GasSponsored(INST_ID, 0.08 ether);
 
         vm.prank(address(entryPoint));
-        vault.postOp(0, context, 0.08 ether);
+        vault.postOp(IPaymaster.PostOpMode.opSucceeded, context, 0.08 ether);
     }
 }

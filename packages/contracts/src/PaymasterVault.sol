@@ -4,6 +4,8 @@ pragma solidity ^0.8.28;
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IEntryPoint} from "account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import {IPaymaster} from "account-abstraction/contracts/interfaces/IPaymaster.sol";
+import {UserOperation} from "account-abstraction/contracts/interfaces/UserOperation.sol";
 import {SubscriptionManager} from "./SubscriptionManager.sol";
 
 /// @title PaymasterVault
@@ -20,7 +22,15 @@ import {SubscriptionManager} from "./SubscriptionManager.sol";
 ///
 ///         This implements the IPaymaster interface from ERC-4337 v0.6.
 ///         EntryPoint address on Base Sepolia: 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
-contract PaymasterVault is AccessControl, ReentrancyGuard {
+///
+///         Inheriting IPaymaster is what keeps the EntryPoint call signature
+///         honest. An earlier version declared a locally-invented
+///         `validatePaymasterUserOp(bytes,uint256)` overload, which compiled
+///         cleanly but answered a selector the EntryPoint never sends — so no
+///         operation was ever sponsored. The interface inheritance makes that
+///         class of mistake a compile error instead of a silent fallback to
+///         the platform paying gas.
+contract PaymasterVault is AccessControl, ReentrancyGuard, IPaymaster {
   bytes32 public constant PLATFORM_ADMIN_ROLE = keccak256("PLATFORM_ADMIN_ROLE");
 
   // ERC-4337 v0.6 EntryPoint — do not change this.
@@ -42,6 +52,7 @@ contract PaymasterVault is AccessControl, ReentrancyGuard {
   error InsufficientInstitutionBalance(bytes32 id, uint256 required, uint256 available);
   error OnlyEntryPoint();
   error ZeroAmount();
+  error InvalidPaymasterData(uint256 length);
 
   modifier onlyEntryPoint() {
     if (address(msg.sender) != address(entryPoint)) revert OnlyEntryPoint();
@@ -118,14 +129,26 @@ contract PaymasterVault is AccessControl, ReentrancyGuard {
   ///         [paymaster address (20 bytes)][institutionId (32 bytes)][batchSize (32 bytes)]
   ///
   ///         Returns context (institutionId + isSponsored flag) for postOp.
+  ///         Reserves maxCost up front; postOp refunds whatever the operation
+  ///         did not actually consume.
   function validatePaymasterUserOp(
-    bytes calldata paymasterAndData,
+    UserOperation calldata userOp,
+    bytes32 /* userOpHash */,
     uint256 maxCost
-  ) external onlyEntryPoint returns (bytes memory context, uint256 validationData) {
-    // Extract institutionId and batchSize from paymasterAndData.
-    // The first 20 bytes are the paymaster address (this contract).
+  )
+    external
+    override
+    onlyEntryPoint
+    returns (bytes memory context, uint256 validationData)
+  {
+    // 20-byte paymaster address followed by two ABI words. Anything shorter
+    // cannot decode, and a silent zero-fill would attribute gas to institution 0.
+    if (userOp.paymasterAndData.length < 84) {
+      revert InvalidPaymasterData(userOp.paymasterAndData.length);
+    }
+
     (bytes32 institutionId, uint256 batchSize) = abi.decode(
-      paymasterAndData[20:],
+      userOp.paymasterAndData[20:],
       (bytes32, uint256)
     );
 
@@ -153,10 +176,10 @@ contract PaymasterVault is AccessControl, ReentrancyGuard {
   /// @notice Called by the EntryPoint after the UserOperation executes to reconcile
   ///         the actual gas cost with the reserved amount.
   function postOp(
-    uint8 /* mode */,
+    PostOpMode, /* mode */
     bytes calldata context,
     uint256 actualGasCost
-  ) external onlyEntryPoint {
+  ) external override onlyEntryPoint {
     (bytes32 institutionId, bool isSponsored, uint256 maxCost) = abi.decode(
       context,
       (bytes32, bool, uint256)
