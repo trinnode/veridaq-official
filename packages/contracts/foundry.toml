@@ -22,7 +22,8 @@ depth   = 32
 base_sepolia = "${ALCHEMY_BASE_SEPOLIA_URL}"
 
 [etherscan]
-base_sepolia = { key = "${BASESCAN_API_KEY}", url = "https://api.basescan.org/api" }
+# Etherscan V2 multichain API — the V1 basescan.org endpoint was retired.
+base_sepolia = { key = "${BASESCAN_API_KEY}", url = "https://api.etherscan.io/v2/api?chainid=84532" }
 
 [fmt]
 line_length   = 100
