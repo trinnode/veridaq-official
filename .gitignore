@@ -86,3 +86,10 @@ FAppendix.md
 SECURITY.md
 Extensionplan.md
 Extensionplan.pdf
+
+# ── Internal planning (not for GitHub) ────────────────────────────────────────
+# Contains commercial judgement, pricing, and unresolved legal positions.
+# See PHASED_PLAN.md header.
+PHASED_PLAN.md
+PHASED_PLAN*.md
+docs/plans/
