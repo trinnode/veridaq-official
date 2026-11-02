@@ -1,0 +1,58 @@
+{
+  "chainId": 84532,
+  "network": "base-sepolia",
+  "entryPoint": {
+    "version": "0.6",
+    "address": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+    "canonical": true
+  },
+  "contracts": {
+    "InstitutionRegistry": {
+      "address": "0xc6b9B82c2B3Bd236AD8C40A5A3E6EdaED3939d99",
+      "transactionHash": "0x0366930af37624875ed13c701a61cfce7e5520bc3ab6246f37b5f500b9e8df3d",
+      "blockNumber": 39262103,
+      "source": "src/InstitutionRegistry.sol:InstitutionRegistry"
+    },
+    "CredentialRegistry": {
+      "address": "0x8070798c999f044498b2C70d5603dFf3C6E413cb",
+      "transactionHash": "0x16801eb36878f558dd07f4c6276adc4353d9d58ff6ecd273a9a9ce02d73dbb34",
+      "blockNumber": 42117614,
+      "source": "src/CredentialRegistry.sol:CredentialRegistry"
+    },
+    "RevocationRegistry": {
+      "address": "0x46368Ba832b31dE8D496f96272E8540578E6fa7c",
+      "transactionHash": "0xeda20d1111f2e02a16b0bdf8444076a230dfcfb9cf39ba857ce65fa27986e2e4",
+      "blockNumber": 42117614,
+      "source": "src/RevocationRegistry.sol:RevocationRegistry"
+    },
+    "SubscriptionManager": {
+      "address": "0x1227A5cfFc9acE8438B7835322910288c3D07318",
+      "transactionHash": "0x82393e06128ed5b8330e808290560b0b15f43cffc23f59e3637672c6915fea4c",
+      "blockNumber": 39143153,
+      "source": "src/SubscriptionManager.sol:SubscriptionManager"
+    },
+    "PaymasterVault": {
+      "address": "0xEA3f76833Bc0dedA821D237B7f1781670D9B1533",
+      "transactionHash": "0xc70329f4cb9214639ae35817b1ec4da876e34416d115c2c38a93fb8674631212",
+      "blockNumber": 53244111,
+      "source": "src/PaymasterVault.sol:PaymasterVault"
+    },
+    "Groth16Verifier": {
+      "address": "0x43F6Bdc6cE5bD4a99c1C1DD6545191399E3AA5D8",
+      "transactionHash": "0x4eaae73ad6dfa852b57d713ba9195d36032036a8a4aee9ae2c3781fa116fbfa0",
+      "blockNumber": 39143253,
+      "source": "src/ZKVerifier.sol:Groth16Verifier"
+    },
+    "VeridaqSimpleAccountFactory": {
+      "address": "0x2330fE67985bB70F204A423e3Dc3926C9bfb7D12",
+      "transactionHash": "0x778b7eb5ae9c9bdda8b01ac97991663bd3e9a83d1886bd3a692074d1d72de82d",
+      "blockNumber": 41375145,
+      "source": "src/VeridaqSimpleAccountFactory.sol:VeridaqSimpleAccountFactory"
+    }
+  },
+  "notes": [
+    "Deployed incrementally over blocks 39,143,153 to 53,244,111; not the output of one script.",
+    "PaymasterVault was redeployed on 2026-11-01 to fix an IPaymaster interface mismatch.",
+    "All addresses are source-verified on Basescan."
+  ]
+}
