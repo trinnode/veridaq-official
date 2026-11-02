@@ -35,10 +35,14 @@ function encryptValue(plaintext: string): { encryptedData: string; encryptedIv: 
   }
 }
 
-function bytes32FromName(name: string): string {
-  const hex = crypto.createHash("sha256").update(name).digest("hex")
-  return `0x${hex}` as `0x${string}`
-}
+// On-chain institution ids are opaque identifiers, fixed once at registration.
+// They must never be derived from the display name: a university that renames
+// itself would silently acquire a new on-chain identity, orphaning every
+// commitment already registered under the old one. The value below is the id
+// that is actually live on Base Sepolia (seen in InstitutionRegistry.getAllIds),
+// and it is the right-aligned ASCII slug "futminna".
+const FUTMINNA_ON_CHAIN_ID =
+  "0x0000000000000000000000000000000000000000000000006675746d696e6e61" as `0x${string}`
 
 async function main() {
   console.info("Seeding database...")
@@ -60,7 +64,7 @@ async function main() {
   const instPk = "0x" + crypto.randomBytes(32).toString("hex")
   const instAccount = privateKeyToAccount(instPk as `0x${string}`)
   const instId = "institution-futminna-001"
-  const instOnChainId = bytes32FromName("Federal University of Technology, Minna")
+  const instOnChainId = FUTMINNA_ON_CHAIN_ID
 
   const adminPk = "0x" + crypto.randomBytes(32).toString("hex")
   const adminKeyEnc = encryptValue(adminPk.slice(2))
@@ -99,7 +103,10 @@ async function main() {
       kycApproved: true,
       active: true,
       blockchainStatus: "REGISTERED",
-      paymasterBalance: "50000000000000000", // 0.05 ETH
+      // Mirror of the on-chain ledger, not a source of truth. The new
+      // PaymasterVault holds nothing for this institution; its batches are
+      // sponsored from the platform pool because shouldSponsor() returns true.
+      paymasterBalance: "0",
       alsoEmployer: true,
     },
   })
