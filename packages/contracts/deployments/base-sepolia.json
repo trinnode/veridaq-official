@@ -32,7 +32,7 @@
       "source": "src/SubscriptionManager.sol:SubscriptionManager"
     },
     "PaymasterVault": {
-      "address": "0xEA3f76833Bc0dedA821D237B7f1781670D9B1533",
+      "address": "0xEA3F76833bc0DEDa821d237b7F1781670D9b1533",
       "transactionHash": "0xc70329f4cb9214639ae35817b1ec4da876e34416d115c2c38a93fb8674631212",
       "blockNumber": 53244111,
       "source": "src/PaymasterVault.sol:PaymasterVault"

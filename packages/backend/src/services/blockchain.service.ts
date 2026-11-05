@@ -20,7 +20,6 @@ import {
     encodeFunctionData,
     formatEther,
     http,
-    parseGwei,
     toHex,
     type Address,
     type Hash,
@@ -464,6 +463,58 @@ export class BlockchainService {
     return BigInt(config.AA_SIMPLE_ACCOUNT_SALT ?? 0)
   }
 
+  /**
+   * Sign a UserOperation with the paymaster account's owner key.
+   *
+   * Bundlers run full validation while estimating gas, so the operation sent to
+   * eth_estimateUserOperationGas needs a signature the account will accept. A
+   * zero-filled 65-byte signature is not that: SimpleAccount calls
+   * ECDSA.recover, and OpenZeppelin 5 *reverts* on v = 0 instead of returning a
+   * non-owner address. The EntryPoint surfaces that as "AA23 reverted (or OOG)"
+   * before any estimate is produced, which is why every call fell back to
+   * hand-picked gas limits.
+   *
+   * Signing must happen after the gas fields are final, because they are part
+   * of the hash the signature covers.
+   */
+  private async signUserOperation(userOp: UserOperation): Promise<`0x${string}`> {
+    const userOpHash = (await this.publicClient.readContract({
+      address: config.ENTRY_POINT_ADDRESS as Address,
+      abi: entryPointAbi,
+      functionName: "getUserOpHash",
+      args: [userOp],
+    })) as `0x${string}`
+
+    return (await this.aaAccount.signMessage({
+      message: { raw: userOpHash },
+    })) as `0x${string}`
+  }
+
+  /**
+   * Fee ceiling for a UserOperation.
+   *
+   * eth_gasPrice is the price of the *next* block. Base moves its base fee by up
+   * to 12.5% per block, so submitting at face value leaves about one block of
+   * headroom: a bundler accepts the operation, the base fee ticks up, and the
+   * operation is never mined. Doubling buys roughly five blocks of headroom for
+   * a cost that is still denominated in fractions of a cent on this chain.
+   */
+  private async getUserOperationFees(): Promise<{
+    maxFeePerGas: bigint
+    maxPriorityFeePerGas: bigint
+  }> {
+    const gasPrice = await this.publicClient.getGasPrice()
+    const priority = await this.publicClient.estimateMaxPriorityFeePerGas().catch(() => 0n)
+
+    // Some nodes answer zero on chains with no priority-fee market. Keep a floor
+    // so the operation is not rejected as underpriced by a strict bundler.
+    const maxPriorityFeePerGas = priority > 0n ? priority : 1_000_000n
+    const maxFeePerGas =
+      gasPrice * 2n > maxPriorityFeePerGas ? gasPrice * 2n : maxPriorityFeePerGas * 2n
+
+    return { maxFeePerGas, maxPriorityFeePerGas }
+  }
+
   private async callBundler<T>(method: string, params: unknown[]): Promise<T> {
     const res = await fetch(this.getBundlerUrl(), {
       method: "POST",
@@ -492,6 +543,45 @@ export class BlockchainService {
       throw new Error("Bundler returned no result")
     }
     return payload.result as T
+  }
+
+  /**
+   * Submit a UserOperation, outbidding a stale one at the same nonce once.
+   *
+   * The EntryPoint orders operations per sender and nonce, so an operation the
+   * bundler accepted but never mined blocks every later one. The bundler then
+   * rejects the new submission as "replacement underpriced" until both fee
+   * fields exceed the queued operation's by 10%. Without this retry the
+   * sponsorship path fails quietly and the worker pays from the admin wallet
+   * instead, which looks like a transient bundler problem rather than a stuck
+   * queue. Doubling is enough: the queued operation was priced at the same
+   * eth_gasPrice.
+   */
+  private async sendUserOperation(userOp: UserOperation, entryPoint: Address): Promise<Hash> {
+    try {
+      return await this.callBundler<Hash>("eth_sendUserOperation", [
+        this.formatUserOperation(userOp),
+        entryPoint,
+      ])
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (!/replacement/i.test(message)) throw err
+
+      userOp.maxFeePerGas *= 2n
+      userOp.maxPriorityFeePerGas *= 2n
+      // Fees are part of the hash, so the signature has to be redone.
+      userOp.signature = await this.signUserOperation(userOp)
+
+      log.warn(
+        { maxFeePerGas: userOp.maxFeePerGas.toString() },
+        "Bundler held an operation at this nonce; resubmitting with doubled fees"
+      )
+
+      return await this.callBundler<Hash>("eth_sendUserOperation", [
+        this.formatUserOperation(userOp),
+        entryPoint,
+      ])
+    }
   }
 
   private parseBundlerNumber(value: unknown): bigint {
@@ -710,10 +800,7 @@ export class BlockchainService {
       args: [sender, 0n],
     })) as bigint
 
-    const gasPrice = await this.publicClient.getGasPrice()
-    const maxPriority = await this.publicClient
-      .estimateMaxPriorityFeePerGas()
-      .catch(() => parseGwei("1"))
+    const { maxFeePerGas, maxPriorityFeePerGas } = await this.getUserOperationFees()
 
     const userOpBase: UserOperation = {
       sender,
@@ -723,11 +810,18 @@ export class BlockchainService {
       callGasLimit: 0n,
       verificationGasLimit: 0n,
       preVerificationGas: 0n,
-      maxFeePerGas: gasPrice,
-      maxPriorityFeePerGas: maxPriority,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
       paymasterAndData,
-      signature: `0x${"0".repeat(130)}` as `0x${string}`,
+      // Filled in below. Every field above is part of the hash being signed, so
+      // the signature cannot be produced inside this literal.
+      signature: "0x" as `0x${string}`,
     }
+
+    // The estimator validates the operation, so it needs a signature the
+    // account accepts. Gas is still zero here; the operation is rebuilt and
+    // re-signed after the estimator answers, because gas is part of the hash.
+    userOpBase.signature = await this.signUserOperation(userOpBase)
 
     let estimation: {
       callGasLimit: string
@@ -804,22 +898,13 @@ export class BlockchainService {
       throw error
     }
 
-    const userOpHash = await this.publicClient.readContract({
-      address: entryPoint,
-      abi: entryPointAbi,
-      functionName: "getUserOpHash",
-      args: [userOp],
-    })
-    const signature = await this.aaAccount.signMessage({ message: { raw: userOpHash } })
-    userOp.signature = signature as `0x${string}`
+    // Sign last: the gas fields the estimator returned are part of the hash.
+    userOp.signature = await this.signUserOperation(userOp)
 
     let sentUserOpHash: Hash | undefined
 
     try {
-      sentUserOpHash = await this.callBundler<Hash>("eth_sendUserOperation", [
-        this.formatUserOperation(userOp),
-        entryPoint,
-      ])
+      sentUserOpHash = await this.sendUserOperation(userOp, entryPoint)
       const txHash = await this.waitForUserOperationReceipt(sentUserOpHash)
       return { txHash, userOpHash: sentUserOpHash }
     } catch (err) {
@@ -956,10 +1041,7 @@ export class BlockchainService {
       args: [sender, 0n],
     })) as bigint
 
-    const gasPrice = await this.publicClient.getGasPrice()
-    const maxPriority = await this.publicClient
-      .estimateMaxPriorityFeePerGas()
-      .catch(() => parseGwei("1"))
+    const { maxFeePerGas, maxPriorityFeePerGas } = await this.getUserOperationFees()
 
     const userOpBase: UserOperation = {
       sender,
@@ -969,11 +1051,17 @@ export class BlockchainService {
       callGasLimit: 0n,
       verificationGasLimit: 0n,
       preVerificationGas: 0n,
-      maxFeePerGas: gasPrice,
-      maxPriorityFeePerGas: maxPriority,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
       paymasterAndData,
-      signature: `0x${"0".repeat(130)}` as `0x${string}`,
+      // Filled in below. Every field above is part of the hash being signed, so
+      // the signature cannot be produced inside this literal.
+      signature: "0x" as `0x${string}`,
     }
+
+    // Same reasoning as the copy in registerBatchWithPaymaster: estimation runs
+    // validation, so the operation needs a real signature before it is sent.
+    userOpBase.signature = await this.signUserOperation(userOpBase)
 
     let estimation: {
       callGasLimit: string

@@ -377,7 +377,11 @@ export const institutionRoutes: FastifyPluginAsync = async (app) => {
       return rep.send({
         valid: true,
         totalRecords: validCount,
-        gasSponsored: billing?.tier === "FREE",
+        // The chain decides sponsorship, not the database. SubscriptionManager
+        // defaults every institution to FREE until an admin sets a tier, so a
+        // seeded PAID row can disagree with the contract. When the simulation
+        // ran, its answer is the one that will actually happen.
+        gasSponsored: simulation?.isSponsored ?? billing?.tier === "FREE",
         estimatedGasWei: "500000000000000",
         simulation,
         simulationError,
