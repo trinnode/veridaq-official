@@ -13,7 +13,6 @@ export default function BatchesPage() {
   const [batches, setBatches] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showUpload, setShowUpload] = useState(false)
-  const [polling, setPolling] = useState(false)
 
   async function load(page = 1) {
     try {
@@ -33,20 +32,17 @@ export default function BatchesPage() {
     }
   }, [user])
 
-  // Poll every 10s when there are active (processing/pending) batches
+  // Poll every 10s while any batch is still pending on chain. The flag is
+  // derived, not stored: storing it made the effect cancel itself in a loop.
+  const hasActiveBatch = (batches?.items ?? []).some(
+    (b: any) => b.status === "PENDING" || b.status === "PROCESSING"
+  )
+
   useEffect(() => {
-    if (!batches?.items) return
-    const hasActive = batches.items.some(
-      (b: any) => b.status === "PENDING" || b.status === "PROCESSING"
-    )
-    if (hasActive && !polling) {
-      setPolling(true)
-      const interval = setInterval(() => load(), 10000)
-      return () => { clearInterval(interval); setPolling(false) }
-    } else if (!hasActive && polling) {
-      setPolling(false)
-    }
-  }, [batches, polling])
+    if (!hasActiveBatch) return
+    const interval = setInterval(() => load(), 10000)
+    return () => clearInterval(interval)
+  }, [hasActiveBatch])
 
   async function downloadTemplate() {
     try {

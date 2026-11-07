@@ -80,6 +80,14 @@ const envSchema = z.object({
   CREDIT_PACK_100_USD: z.coerce.number().positive().default(120),
   CREDIT_PACK_500_USD: z.coerce.number().positive().default(550),
 
+  // Currency display. Every price in the system is stored and charged in USD;
+  // this block only drives the Naira figure shown next to (or instead of) it.
+  // The rate is refreshed on this interval and cached in Redis so all instances
+  // agree, with the last known rate served if the provider is unreachable.
+  FX_REFRESH_MINUTES: z.coerce.number().int().positive().default(30),
+  FX_API_URL: z.string().url().default("https://open.er-api.com/v6/latest/USD"),
+  FX_FALLBACK_USD_NGN: z.coerce.number().positive().default(1350),
+
   // Gas pool
   GAS_POOL_MIN_BALANCE_USD: z.coerce.number().positive().default(10),
   GAS_POOL_LOW_BALANCE_ALERT: z.coerce.boolean().default(false),

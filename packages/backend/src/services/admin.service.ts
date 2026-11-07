@@ -1033,45 +1033,50 @@ export class AdminService {
       poolShare: number
     }>()
 
+    // Buckets must be keyed the same way records are. Using toISOString()
+    // here compares UTC months with a window built from local midnight, so in
+    // any positive-offset timezone (WAT is UTC+1) the current month falls
+    // outside the map and the counters below dereference undefined.
+    const monthKey = (d: Date): string =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+
+    const entryFor = (d: Date) => {
+      const key = monthKey(d)
+      let entry = monthMap.get(key)
+      if (!entry) {
+        entry = {
+          month: key,
+          institutions: 0,
+          employers: 0,
+          credentials: 0,
+          verifications: 0,
+          verified: 0,
+          revenue: 0,
+          platformShare: 0,
+          institutionShare: 0,
+          poolShare: 0,
+        }
+        monthMap.set(key, entry)
+      }
+      return entry
+    }
+
     const cursor = new Date(since)
     while (cursor <= new Date()) {
-      const key = cursor.toISOString().slice(0, 7)
-      monthMap.set(key, {
-        month: key,
-        institutions: 0,
-        employers: 0,
-        credentials: 0,
-        verifications: 0,
-        verified: 0,
-        revenue: 0,
-        platformShare: 0,
-        institutionShare: 0,
-        poolShare: 0,
-      })
+      entryFor(cursor)
       cursor.setMonth(cursor.getMonth() + 1)
     }
 
-    for (const i of institutions) {
-      const key = i.createdAt.toISOString().slice(0, 7)
-      monthMap.get(key)!.institutions++
-    }
-    for (const e of employers) {
-      const key = e.createdAt.toISOString().slice(0, 7)
-      monthMap.get(key)!.employers++
-    }
-    for (const c of credentials) {
-      const key = c.createdAt.toISOString().slice(0, 7)
-      monthMap.get(key)!.credentials++
-    }
+    for (const i of institutions) entryFor(i.createdAt).institutions++
+    for (const e of employers) entryFor(e.createdAt).employers++
+    for (const c of credentials) entryFor(c.createdAt).credentials++
     for (const v of verifications) {
-      const key = v.createdAt.toISOString().slice(0, 7)
-      const entry = monthMap.get(key)!
+      const entry = entryFor(v.createdAt)
       entry.verifications++
       if (v.result === "VERIFIED") entry.verified++
     }
     for (const e of earnings) {
-      const key = e.createdAt.toISOString().slice(0, 7)
-      const entry = monthMap.get(key)!
+      const entry = entryFor(e.createdAt)
       entry.revenue += this.toNum(e.amountUsd)
       entry.platformShare += this.toNum(e.platformShareUsd)
       entry.institutionShare += this.toNum(e.institutionShareUsd)

@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary"
 import { useEffect, useState } from "react"
 import { LogoMark } from "@/components/ui/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { CurrencyToggle } from "@/components/ui/currency-toggle"
 import { PortalBg } from "@/components/parallax/floating-shapes"
 
 const baseNav = [
@@ -170,6 +171,7 @@ export function DashboardLayout({ children, title }: { children: React.ReactNode
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
+            <CurrencyToggle className="hidden sm:flex" />
             <div className="hidden items-center gap-2 sm:flex">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10">
                 <Building2 className="h-3.5 w-3.5 text-accent" />

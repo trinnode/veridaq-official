@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { LogoMark } from "@/components/ui/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { CurrencyToggle } from "@/components/ui/currency-toggle"
 import { Menu, X } from "@/lib/icons"
 
 export function AppHeader() {
@@ -62,6 +63,7 @@ export function AppHeader() {
 
         <div className="flex items-center gap-1 pl-1">
           <ThemeToggle />
+            <CurrencyToggle className="hidden sm:flex" />
           <button
             className="text-muted hover:text-foreground p-1 md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}

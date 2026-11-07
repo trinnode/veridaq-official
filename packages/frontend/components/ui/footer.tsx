@@ -20,7 +20,7 @@ export function Footer() {
             
             <div className="flex items-center gap-2">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-success" />
-              <span className="font-mono text-[10px] text-success/80">Mainnet Active</span>
+              <span className="font-mono text-[10px] text-success/80">Testnet Active</span>
             </div>
           </div>
 

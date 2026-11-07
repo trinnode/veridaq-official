@@ -3,6 +3,7 @@ import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
 import { CreditCard, Loader2, CheckCircle2, XCircle } from "@/lib/icons"
 import { useState, useRef, useEffect } from "react"
+import { useCurrency } from "@/lib/currency"
 
 type CrossmintCheckoutProps = {
   amountUsd: number
@@ -13,6 +14,7 @@ type CrossmintCheckoutProps = {
 }
 
 export function CrossmintCheckout({ amountUsd, paymentType, onSuccess, onClose, label }: CrossmintCheckoutProps) {
+  const { format, formatUsd } = useCurrency()
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState<"init" | "waiting" | "completed" | "failed">("init")
   const [referenceId, setReferenceId] = useState<string | null>(null)
@@ -129,7 +131,7 @@ export function CrossmintCheckout({ amountUsd, paymentType, onSuccess, onClose, 
         <CheckCircle2 className="h-12 w-12 text-success" />
         <p className="text-lg font-semibold text-foreground">Payment Confirmed!</p>
         <p className="text-muted text-sm text-center">
-          Your payment of ${amountUsd} has been processed.
+          Your payment of {format(amountUsd)} has been processed.
         </p>
         <button
           onClick={onClose}
@@ -177,14 +179,14 @@ export function CrossmintCheckout({ amountUsd, paymentType, onSuccess, onClose, 
         ) : (
           <CreditCard className="h-4 w-4" />
         )}
-        {label ?? `Pay $${amountUsd} with Card`}
+        {label ?? `Pay ${format(amountUsd)} with Card`}
       </button>
       <p className="text-muted text-center text-xs">
         Powered by Crossmint &middot; Pay with card, bank transfer, or Apple Pay
       </p>
       {amountUsd > 0 && (
         <p className="text-muted text-center text-xs">
-          You will be charged ${amountUsd} USD
+          Crossmint settles in US dollars: you will be charged {formatUsd(amountUsd)}
         </p>
       )}
     </div>

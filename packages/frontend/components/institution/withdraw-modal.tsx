@@ -4,6 +4,7 @@ import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
 import { Loader2, X } from "@/lib/icons"
 import { useState } from "react"
+import { useCurrency } from "@/lib/currency"
 
 type Props = {
   available: number
@@ -13,6 +14,7 @@ type Props = {
 }
 
 export function WithdrawModal({ available, walletAddress, onClose, onDone }: Props) {
+  const { format, formatNgn, currency } = useCurrency()
   const [amount, setAmount] = useState("")
   const [method, setMethod] = useState<"crypto" | "fiat">("crypto")
   const [wallet, setWallet] = useState(walletAddress ?? "")
@@ -46,9 +48,9 @@ export function WithdrawModal({ available, walletAddress, onClose, onDone }: Pro
         </div>
 
         <div className="text-muted mb-4 text-sm">
-          Available: <span className="font-semibold text-foreground">${available.toFixed(2)}</span>
+          Available: <span className="font-semibold text-foreground">{format(available)}</span>
           <br />
-          Minimum withdrawal: $10.00
+          Minimum withdrawal: {format(10)}
         </div>
 
         <label className="text-muted mb-1 block text-xs font-medium uppercase tracking-wider">Amount (USD)</label>
@@ -62,6 +64,13 @@ export function WithdrawModal({ available, walletAddress, onClose, onDone }: Pro
           placeholder="10.00"
           className="border-surface-border bg-void text-foreground placeholder:text-muted w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-accent"
         />
+        {currency === "NGN" && numericAmount > 0 && (
+          // The input stays in USD because that is what the ledger and the
+          // on-chain payout use. Showing the Naira equivalent here keeps the
+          // figure meaningful without introducing a rounding step on a
+          // money-moving field.
+          <p className="text-muted mt-1 text-xs">≈ {formatNgn(numericAmount)} at the current rate</p>
+        )}
 
         <label className="text-muted mt-4 mb-1 block text-xs font-medium uppercase tracking-wider">Method</label>
         <div className="flex gap-2">
@@ -107,7 +116,7 @@ export function WithdrawModal({ available, walletAddress, onClose, onDone }: Pro
             disabled={!valid || submitting}
             className="bg-accent text-void flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {submitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : `Withdraw $${numericAmount.toFixed(2)}`}
+            {submitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : `Withdraw ${format(numericAmount)}`}
           </button>
         </div>
       </div>

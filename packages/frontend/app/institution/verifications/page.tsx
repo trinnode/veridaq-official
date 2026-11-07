@@ -38,7 +38,6 @@ export default function VerificationsPage() {
   const [requests, setRequests] = useState<VerificationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
-  const [polling, setPolling] = useState(false)
   const [selected, setSelected] = useState<VerificationItem | null>(null)
   const [declineModal, setDeclineModal] = useState<{ id: string; open: boolean }>({ id: "", open: false })
   const [declineComment, setDeclineComment] = useState("")
@@ -58,25 +57,25 @@ export default function VerificationsPage() {
     fetchVerifications()
   }, [user])
 
+  // Poll while a request is awaiting the institution or still processing.
+  // Derive the flag; do not store it in state — setting it re-ran this effect,
+  // whose cleanup reset it, which re-ran the effect forever.
+  const hasActiveRequest = requests.some(
+    (r) => r.status === "AWAITING_INSTITUTION" || r.status === "PROCESSING"
+  )
+
   useEffect(() => {
-    const hasActive = requests.some(
-      (r) => r.status === "AWAITING_INSTITUTION" || r.status === "PROCESSING"
-    )
-    if (hasActive && !polling) {
-      setPolling(true)
-      const interval = setInterval(() => {
-        fetchVerifications()
-        if (selected) {
-          api.get(`/institution/verifications/${selected.id}`)
-            .then(({ data }) => setSelected(data))
-            .catch(() => {})
-        }
-      }, 10000)
-      return () => { clearInterval(interval); setPolling(false) }
-    } else if (!hasActive && polling) {
-      setPolling(false)
-    }
-  }, [requests, polling, selected])
+    if (!hasActiveRequest) return
+    const interval = setInterval(() => {
+      fetchVerifications()
+      if (selected) {
+        api.get(`/institution/verifications/${selected.id}`)
+          .then(({ data }) => setSelected(data))
+          .catch(() => {})
+      }
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [hasActiveRequest, selected?.id])
 
   const handleApprove = async (id: string) => {
     setProcessingId(id)

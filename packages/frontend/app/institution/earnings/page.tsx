@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import { WithdrawModal } from "@/components/institution/withdraw-modal"
 import { ChevronDown, ChevronUp, Wallet, CheckCircle2 } from "@/lib/icons"
 import { toast } from "@/components/ui/toast"
+import { useCurrency } from "@/lib/currency"
 
 type EarningsSummary = {
   totalEarnedUsd: number
@@ -37,14 +38,8 @@ type TxResponse = {
   items: TransactionItem[]
 }
 
-function safeUsd(value: string | number | undefined | null): string {
-  if (value == null) return "0.00"
-  const num = typeof value === "string" ? parseFloat(value) : value
-  if (isNaN(num)) return "0.00"
-  return num.toFixed(2)
-}
-
 export default function InstitutionEarningsPage() {
+  const { format } = useCurrency()
   const { user, loading } = useAuth()
   const router = useRouter()
   const [summary, setSummary] = useState<EarningsSummary | null>(null)
@@ -115,19 +110,19 @@ export default function InstitutionEarningsPage() {
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Total Earned</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${safeUsd(summary?.totalEarnedUsd)}
+            {format(Number(summary?.totalEarnedUsd ?? 0))}
           </div>
         </div>
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Available</div>
           <div className="mt-1 text-2xl font-bold text-accent">
-            ${safeUsd(summary?.availableUsd)}
+            {format(Number(summary?.availableUsd ?? 0))}
           </div>
         </div>
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Withdrawn</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${safeUsd(summary?.withdrawnUsd)}
+            {format(Number(summary?.withdrawnUsd ?? 0))}
           </div>
         </div>
       </div>
@@ -179,7 +174,7 @@ export default function InstitutionEarningsPage() {
           </div>
         )}
         <p className="mt-3 text-xs text-muted">
-          Minimum withdrawal: $10 &middot; Available: ${safeUsd(summary?.availableUsd)}
+          Minimum withdrawal: {format(10)} &middot; Available: {format(Number(summary?.availableUsd ?? 0))}
         </p>
       </div>
 
@@ -223,11 +218,11 @@ export default function InstitutionEarningsPage() {
                     <div className="ml-4 flex items-center gap-3">
                       <div className="text-right">
                         <div className="text-sm font-semibold text-foreground">
-                          ${safeUsd(tx.amountUsd)}
+                          {format(tx.amountUsd)}
                         </div>
                         {tx.type === "EARNED" && tx.institutionShareUsd != null && (
                           <div className="text-accent text-[10px]">
-                            +${safeUsd(tx.institutionShareUsd)} your share
+                            +{format(Number(tx.institutionShareUsd))} your share
                           </div>
                         )}
                       </div>
@@ -242,16 +237,16 @@ export default function InstitutionEarningsPage() {
                         <div className="font-mono text-foreground">{tx.referenceId ?? "—"}</div>
 
                         <div className="text-muted">Total Amount</div>
-                        <div className="text-foreground">${safeUsd(tx.amountUsd)}</div>
+                        <div className="text-foreground">{format(tx.amountUsd)}</div>
 
                         {tx.type === "EARNED" && (
                           <>
                             <div className="text-muted">Platform Share (70%)</div>
-                            <div className="text-foreground">${safeUsd(tx.platformShareUsd)}</div>
+                            <div className="text-foreground">{format(Number(tx.platformShareUsd ?? 0))}</div>
                             <div className="text-muted">Your Share (20%)</div>
-                            <div className="text-accent font-medium">+${safeUsd(tx.institutionShareUsd)}</div>
+                            <div className="text-accent font-medium">+{format(Number(tx.institutionShareUsd ?? 0))}</div>
                             <div className="text-muted">Gas Pool Share (10%)</div>
-                            <div className="text-foreground">${safeUsd(tx.poolShareUsd)}</div>
+                            <div className="text-foreground">{format(Number(tx.poolShareUsd ?? 0))}</div>
                           </>
                         )}
 

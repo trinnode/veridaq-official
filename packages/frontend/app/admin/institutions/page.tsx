@@ -16,7 +16,6 @@ export default function InstitutionsPage() {
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [reviewTarget, setReviewTarget] = useState<any>(null)
   const [reviewWallet, setReviewWallet] = useState("")
-  const [polling, setPolling] = useState(false)
   const [fundTarget, setFundTarget] = useState<any>(null)
   const [fundAmount, setFundAmount] = useState("")
   const [fundError, setFundError] = useState("")
@@ -56,18 +55,18 @@ export default function InstitutionsPage() {
     }
   }, [user])
 
-  // Auto-poll when there are PENDING institutions
+  // Auto-poll while any institution is still waiting on its on-chain
+  // registration. Derived flag, not state — see the note in the institution
+  // dashboard, this pattern used to loop.
+  const hasPendingRegistration = (data?.items ?? []).some(
+    (i: any) => i.blockchainStatus === "PENDING"
+  )
+
   useEffect(() => {
-    if (!data?.items) return
-    const hasPending = data.items.some((i: any) => i.blockchainStatus === "PENDING")
-    if (hasPending && !polling) {
-      setPolling(true)
-      const interval = setInterval(() => load(), 10000)
-      return () => { clearInterval(interval); setPolling(false) }
-    } else if (!hasPending && polling) {
-      setPolling(false)
-    }
-  }, [data?.items, polling])
+    if (!hasPendingRegistration) return
+    const interval = setInterval(() => load(), 10000)
+    return () => clearInterval(interval)
+  }, [hasPendingRegistration])
 
   async function approve(id: string, walletOverride?: string) {
     setApprovingId(id)

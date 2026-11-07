@@ -4,6 +4,7 @@ import { api } from "@/lib/api"
 import { useEffect, useState } from "react"
 import { SafeLink as Link } from "@/components/safe-link"
 import { ArrowRight, Wallet } from "@/lib/icons"
+import { useCurrency } from "@/lib/currency"
 
 type EarningsData = {
   totalEarnedUsd: number
@@ -13,6 +14,7 @@ type EarningsData = {
 }
 
 export function EarningsSummary() {
+  const { format } = useCurrency()
   const [data, setData] = useState<EarningsData | null>(null)
 
   useEffect(() => {
@@ -24,19 +26,19 @@ export function EarningsSummary() {
       <div className="flex items-center justify-between">
         <span className="text-muted text-xs">Available</span>
         <span className="text-accent text-lg font-bold">
-          ${(data?.availableUsd ?? 0).toFixed(2)}
+          {format(Number(data?.availableUsd ?? 0))}
         </span>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-muted text-xs">Total Earned</span>
         <span className="text-foreground text-sm font-medium">
-          ${(data?.totalEarnedUsd ?? 0).toFixed(2)}
+          {format(Number(data?.totalEarnedUsd ?? 0))}
         </span>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-muted text-xs">Withdrawn</span>
         <span className="text-foreground text-sm">
-          ${(data?.withdrawnUsd ?? 0).toFixed(2)}
+          {format(Number(data?.withdrawnUsd ?? 0))}
         </span>
       </div>
       <Link

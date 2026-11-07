@@ -655,51 +655,58 @@ export class InstitutionService {
       institutionShare: number
     }>()
 
+    // Key buckets by local calendar month. toISOString() reports UTC, so in a
+    // positive-offset timezone the current month's cursor lands in the previous
+    // UTC month and the bucket for "now" never exists — records are then either
+    // dropped (here) or crash (admin analytics).
+    const monthKey = (d: Date): string =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+
+    const entryFor = (d: Date) => {
+      const key = monthKey(d)
+      let entry = monthMap.get(key)
+      if (!entry) {
+        entry = {
+          month: key,
+          verifications: 0,
+          verified: 0,
+          failed: 0,
+          pending: 0,
+          batches: 0,
+          credentials: 0,
+          earnedUsd: 0,
+          institutionShare: 0,
+        }
+        monthMap.set(key, entry)
+      }
+      return entry
+    }
+
     const cursor = new Date(since)
     while (cursor <= new Date()) {
-      const key = cursor.toISOString().slice(0, 7)
-      monthMap.set(key, {
-        month: key,
-        verifications: 0,
-        verified: 0,
-        failed: 0,
-        pending: 0,
-        batches: 0,
-        credentials: 0,
-        earnedUsd: 0,
-        institutionShare: 0,
-      })
+      entryFor(cursor)
       cursor.setMonth(cursor.getMonth() + 1)
     }
 
     for (const v of verifications) {
-      const key = v.createdAt.toISOString().slice(0, 7)
-      const entry = monthMap.get(key)
-      if (entry) {
-        entry.verifications++
-        if (v.result === "VERIFIED") entry.verified++
-        else if (v.result === "CLAIM_NOT_SATISFIED" || v.result === "RECORD_NOT_FOUND" || v.result === "CREDENTIAL_REVOKED") entry.failed++
-        else if (v.status === "PENDING" || v.status === "PROCESSING" || v.status === "AWAITING_INSTITUTION") entry.pending++
-        else entry.failed++
-      }
+      const entry = entryFor(v.createdAt)
+      entry.verifications++
+      if (v.result === "VERIFIED") entry.verified++
+      else if (v.result === "CLAIM_NOT_SATISFIED" || v.result === "RECORD_NOT_FOUND" || v.result === "CREDENTIAL_REVOKED") entry.failed++
+      else if (v.status === "PENDING" || v.status === "PROCESSING" || v.status === "AWAITING_INSTITUTION") entry.pending++
+      else entry.failed++
     }
 
     for (const b of batches) {
-      const key = b.createdAt.toISOString().slice(0, 7)
-      const entry = monthMap.get(key)
-      if (entry) {
-        entry.batches++
-        entry.credentials += b.studentCount ?? 0
-      }
+      const entry = entryFor(b.createdAt)
+      entry.batches++
+      entry.credentials += b.studentCount ?? 0
     }
 
     for (const e of earnings) {
-      const key = e.createdAt.toISOString().slice(0, 7)
-      const entry = monthMap.get(key)
-      if (entry) {
-        entry.earnedUsd += e.amountUsd.toNumber()
-        entry.institutionShare += e.institutionShareUsd?.toNumber() ?? 0
-      }
+      const entry = entryFor(e.createdAt)
+      entry.earnedUsd += e.amountUsd.toNumber()
+      entry.institutionShare += e.institutionShareUsd?.toNumber() ?? 0
     }
 
     const series = Array.from(monthMap.values())

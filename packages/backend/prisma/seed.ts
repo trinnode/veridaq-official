@@ -4,7 +4,7 @@
  * and pre-seeded claim definitions (both manual and auto).
  *
  * Credentials (development only — change before any deployment):
- *   Admin:       admin@veridaq.xyz    / Admin2026!@#
+ *   Admin:       admin@veridaq.xyz    / Admin@2026!
  *   Institution: futminna@veridaq.xyz / Inst@2026!
  *   Employer:    firstbank@veridaq.xyz / Emp@2026!
  *
@@ -48,7 +48,7 @@ async function main() {
   console.info("Seeding database...")
 
   // ── Admin ──────────────────────────────────────────────────────────────
-  const adminHash = await bcryptjs.hash("Admin2026!@#", COST)
+  const adminHash = await bcryptjs.hash("Admin@2026!", COST)
   await prisma.admin.upsert({
     where: { email: "admin@veridaq.xyz" },
     update: { passwordHash: adminHash },
@@ -58,7 +58,7 @@ async function main() {
       name: "VERIDAQ ADMIN",
     },
   })
-  console.info("Seeded: admin@veridaq.xyz / Admin2026!@#")
+  console.info("Seeded: admin@veridaq.xyz / Admin@2026!")
 
   // ── Institution: FUTMINNA ─────────────────────────────────────────────
   const instPk = "0x" + crypto.randomBytes(32).toString("hex")

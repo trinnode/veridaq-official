@@ -26,6 +26,22 @@ function cookieSecure(req: FastifyRequest): boolean {
   return req.protocol === "https" || req.headers["x-forwarded-proto"] === "https"
 }
 
+// The cookie's Max-Age must be a number of seconds, but JWT_EXPIRES_IN is
+// written the way the jwt library wants it ("15m", "7d", "900s"). Parsing that
+// with parseInt silently turns "15m" into 15 seconds, which expires the access
+// cookie before the token it carries. Parse the unit properly.
+function expiresInSeconds(value: string | undefined, fallback: number): number {
+  if (!value) return fallback
+  const match = /^(\d+)\s*(s|m|h|d)?$/i.exec(value.trim())
+  if (!match) return fallback
+  const amount = Number(match[1])
+  const unit = (match[2] ?? "s").toLowerCase()
+  const multipliers: Record<string, number> = { s: 1, m: 60, h: 3600, d: 86400 }
+  return amount * (multipliers[unit] ?? 1)
+}
+
+const ACCESS_COOKIE_MAX_AGE = expiresInSeconds(config.JWT_EXPIRES_IN, 900)
+
 const loginBody = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
@@ -85,7 +101,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       sameSite: secure ? "none" : "lax",
       secure,
       path: "/api",
-      maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
+      maxAge: ACCESS_COOKIE_MAX_AGE,
     })
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
@@ -111,7 +127,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       sameSite: secure ? "none" : "lax",
       secure,
       path: "/api",
-      maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
+      maxAge: ACCESS_COOKIE_MAX_AGE,
     })
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
@@ -137,7 +153,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       sameSite: secure ? "none" : "lax",
       secure,
       path: "/api",
-      maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
+      maxAge: ACCESS_COOKIE_MAX_AGE,
     })
     rep.setCookie("refreshToken", result.refreshToken, {
       httpOnly: true,
@@ -178,7 +194,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       sameSite: secure ? "none" : "lax",
       secure,
       path: "/api",
-      maxAge: parseInt(config.JWT_EXPIRES_IN ?? "900", 10),
+      maxAge: ACCESS_COOKIE_MAX_AGE,
     })
 
     return { accessToken: result.accessToken }

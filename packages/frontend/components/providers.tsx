@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "@/lib/auth"
+import { CurrencyProvider } from "@/lib/currency"
 import { ThemeProvider } from "@/components/theme-provider"
 import { WalletProvider } from "@/lib/wallet-provider"
 import { useState } from "react"
@@ -19,9 +20,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
-          <WalletProvider>
-            {children}
-          </WalletProvider>
+          <CurrencyProvider>
+            <WalletProvider>
+              {children}
+            </WalletProvider>
+          </CurrencyProvider>
         </QueryClientProvider>
       </AuthProvider>
     </ThemeProvider>

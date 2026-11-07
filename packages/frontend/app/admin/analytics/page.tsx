@@ -1,5 +1,6 @@
 "use client"
 
+import { useCurrency } from "@/lib/currency"
 import { AdminLayout } from "@/components/admin/layout"
 import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
@@ -31,11 +32,9 @@ type TxItem = {
   createdAt: string
 }
 
-function fmt(n: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n)
-}
-
 export default function AdminAnalyticsPage() {
+  // Naira by default, USD on request; the ledger itself stays USD.
+  const { format: fmt } = useCurrency()
   const [tab, setTab] = useState<Tab>("revenue")
   const [days, setDays] = useState(30)
   const [revenue, setRevenue] = useState<RevenueData | null>(null)
@@ -161,7 +160,7 @@ export default function AdminAnalyticsPage() {
                     <YAxis tick={{ fontSize: 10, fill: "#888" }} tickFormatter={(v: number) => `$${v}`} />
                     <Tooltip
                       contentStyle={{ background: "#0a0a0f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
-                      formatter={(value: number) => [`$${value.toFixed(2)}`]}
+                      formatter={(value: number) => [fmt(value)]}
                     />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                     <Bar dataKey="platform" name="Platform (70%)" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />

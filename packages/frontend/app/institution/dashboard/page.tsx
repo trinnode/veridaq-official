@@ -18,7 +18,6 @@ export default function InstitutionDashboard() {
   const [chartData, setChartData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [chartLoading, setChartLoading] = useState(true)
-  const [polling, setPolling] = useState(false)
 
   async function loadDashboard() {
     try {
@@ -48,18 +47,21 @@ export default function InstitutionDashboard() {
     loadCharts()
   }, [user])
 
-  // Poll every 15s while dashboard has active items
+  // Poll every 15s while the dashboard has active items.
+  //
+  // The previous version stored "polling" in state and depended on it. Setting
+  // it re-ran the effect, whose cleanup cleared the interval and set the flag
+  // back, which re-ran the effect again — an infinite setState loop that never
+  // polled anything. Derive the condition from the data and key the effect on
+  // that boolean alone.
+  const hasActive = (stats?.pendingManual ?? 0) > 0 || (stats?.requestsThisMonth ?? 0) > 0
+
   useEffect(() => {
-    if (!stats) return
-    const hasActive = (stats.pendingManual ?? 0) > 0 || (stats.requestsThisMonth ?? 0) > 0
-    if (hasActive && !polling) {
-      setPolling(true)
-      const interval = setInterval(() => loadDashboard(), 15000)
-      return () => { clearInterval(interval); setPolling(false) }
-    } else if (!hasActive && polling) {
-      setPolling(false)
-    }
-  }, [stats, polling])
+    if (!hasActive) return
+    const interval = setInterval(() => loadDashboard(), 15000)
+    return () => clearInterval(interval)
+    // loadDashboard is stable enough here: it only reads the api client.
+  }, [hasActive])
 
   return (
     <DashboardLayout title="Dashboard">
@@ -202,7 +204,7 @@ export default function InstitutionDashboard() {
                 series={chartData?.series ?? []}
                 metrics={[
                   { key: "credentials", label: "Credentials", color: "#a78bfa" },
-                  { key: "earnedUsd", label: "Earned (USD)", color: "#22d3ee" },
+                  { key: "earnedUsd", label: "Earned", color: "#22d3ee" },
                 ]}
                 isLoading={chartLoading}
                 defaultMode="area"

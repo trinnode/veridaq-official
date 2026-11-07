@@ -8,6 +8,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId 
 import { parseEther, type Address } from "viem"
 import { baseSepolia } from "viem/chains"
 import { useConnectModal } from "@rainbow-me/rainbowkit"
+import { useCurrency } from "@/lib/currency"
 
 const CREDIT_PACKS = [
   { label: "5 Verifications", credits: 5, usd: 7, eth: "0.005", amountWei: parseEther("0.005").toString() },
@@ -35,6 +36,7 @@ type CreditPurchaseModalProps = {
 }
 
 export function CreditPurchaseModal({ open, onClose, onSuccess }: CreditPurchaseModalProps) {
+  const { format, formatUsd } = useCurrency()
   const [step, setStep] = useState<"choose" | "crypto" | "fiat" | "success" | "error">("choose")
   const [selectedPack, setSelectedPack] = useState<typeof CREDIT_PACKS[number] | null>(null)
   const [paymentRef, setPaymentRef] = useState<string | null>(null)
@@ -160,11 +162,11 @@ export function CreditPurchaseModal({ open, onClose, onSuccess }: CreditPurchase
                 >
                   <div>
                     <p className="font-medium text-foreground">{pack.label}</p>
-                    <p className="text-muted text-xs">${pack.usd} USD</p>
+                    <p className="text-muted text-xs">{format(pack.usd)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-muted">{pack.eth} ETH</p>
-                    <p className="text-accent text-xs">${(pack.usd / pack.credits).toFixed(2)}/credit</p>
+                    <p className="text-accent text-xs">{format(pack.usd / pack.credits)}/credit</p>
                   </div>
                 </button>
               ))}
@@ -206,7 +208,7 @@ export function CreditPurchaseModal({ open, onClose, onSuccess }: CreditPurchase
                   paymentType="EMPLOYER_TOPUP"
                   onSuccess={onSuccess}
                   onClose={() => setStep("choose")}
-                  label={`Pay $${selectedPack.usd} with Card`}
+                  label={`Pay ${formatUsd(selectedPack.usd)} with Card`}
                 />
               </div>
             )}

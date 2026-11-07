@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useCurrency } from "@/lib/currency"
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
@@ -36,6 +37,7 @@ type ActivityChartProps = {
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
+  const { format } = useCurrency()
   if (!active || !payload?.length) return null
   return (
     <div className="border-surface-border bg-surface-card/95 rounded-xl border p-3 shadow-lg backdrop-blur-xl">
@@ -50,7 +52,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <span className="text-foreground font-medium">
             {typeof entry.value === "number" ? entry.value.toLocaleString() : entry.value}
             {entry.name.toLowerCase().includes("earn") || entry.name.toLowerCase().includes("share")
-              ? ` $${Number(entry.value).toFixed(2)}`
+              ? ` ${format(Number(entry.value))}`
               : ""}
           </span>
         </div>

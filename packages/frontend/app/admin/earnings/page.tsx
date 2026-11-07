@@ -5,6 +5,7 @@ import { api } from "@/lib/api"
 import { toast } from "@/components/ui/toast"
 import { useEffect, useState } from "react"
 import { Loader2 } from "@/lib/icons"
+import { useCurrency } from "@/lib/currency"
 
 type PoolSummary = {
   availableUsd: number
@@ -41,6 +42,7 @@ type InstitutionListResponse = {
 }
 
 export default function AdminEarningsPage() {
+  const { format } = useCurrency()
   const [pool, setPool] = useState<PoolSummary | null>(null)
   const [platform, setPlatform] = useState<PlatformData | null>(null)
   const [instList, setInstList] = useState<InstitutionListResponse | null>(null)
@@ -87,30 +89,30 @@ export default function AdminEarningsPage() {
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Platform Revenue</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${((platform?.totalEarnedUsd ?? 0) - (platInst?.totalEarnedUsd ?? 0)).toFixed(2)}
+            {format((platform?.totalEarnedUsd ?? 0) - (platInst?.totalEarnedUsd ?? 0))}
           </div>
           <div className="text-muted mt-1 text-xs">
-            Total earned: ${(platform?.totalEarnedUsd ?? 0).toFixed(2)}
+            Total earned: {format(Number(platform?.totalEarnedUsd ?? 0))}
           </div>
         </div>
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Withdrawn (Platform)</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${(platform?.totalWithdrawnUsd ?? 0).toFixed(2)}
+            {format(Number(platform?.totalWithdrawnUsd ?? 0))}
           </div>
           <div className="text-muted mt-1 text-xs">{platform?.totalTransactions ?? 0} transactions</div>
         </div>
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Gas Pool</div>
-          <div className="mt-1 text-2xl font-bold text-accent">${(pool?.availableUsd ?? 0).toFixed(2)}</div>
-          <div className="text-muted mt-1 text-xs">Deposited: ${(pool?.totalDepositedUsd ?? 0).toFixed(2)}</div>
+          <div className="mt-1 text-2xl font-bold text-accent">{format(Number(pool?.availableUsd ?? 0))}</div>
+          <div className="text-muted mt-1 text-xs">Deposited: {format(Number(pool?.totalDepositedUsd ?? 0))}</div>
         </div>
         <div className="bg-surface-card border-surface-border rounded-xl border p-5">
           <div className="text-muted text-xs font-medium uppercase tracking-wider">Institution Earnings</div>
           <div className="mt-1 text-2xl font-bold text-foreground">
-            ${(platInst?.totalEarnedUsd ?? 0).toFixed(2)}
+            {format(Number(platInst?.totalEarnedUsd ?? 0))}
           </div>
-          <div className="text-muted mt-1 text-xs">Available: ${(platInst?.availableUsd ?? 0).toFixed(2)}</div>
+          <div className="text-muted mt-1 text-xs">Available: {format(Number(platInst?.availableUsd ?? 0))}</div>
         </div>
       </div>
 
@@ -135,13 +137,13 @@ export default function AdminEarningsPage() {
                 {instList.items.map((item) => (
                   <tr key={item.id} className="border-surface-border border-b">
                     <td className="py-3 pr-4 font-medium text-foreground">{item.institution.name}</td>
-                    <td className="py-3 pr-4 text-foreground">${item.totalEarnedUsd.toFixed(2)}</td>
+                    <td className="py-3 pr-4 text-foreground">{format(item.totalEarnedUsd)}</td>
                     <td className="py-3 pr-4 text-foreground">
                       <span className={item.availableUsd > 0 ? "text-accent" : ""}>
-                        ${item.availableUsd.toFixed(2)}
+                        {format(item.availableUsd)}
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-muted">${item.withdrawnUsd.toFixed(2)}</td>
+                    <td className="py-3 pr-4 text-muted">{format(item.withdrawnUsd)}</td>
                     <td className="py-3 text-muted font-mono text-xs">
                       {item.payoutWallet
                         ? `${item.payoutWallet.slice(0, 6)}...${item.payoutWallet.slice(-4)}`

@@ -7,6 +7,7 @@ import { toast } from "@/components/ui/toast"
 import { UpgradeModal } from "@/components/institution/upgrade-modal"
 import { CreditCard, Shield, Sparkles, Wallet, Layers, FileText, ArrowDown } from "@/lib/icons"
 import { useEffect, useState } from "react"
+import { useCurrency } from "@/lib/currency"
 
 type BillingData = {
   tier: "FREE" | "PAID"
@@ -33,6 +34,7 @@ type PaymentHistoryItem = {
 }
 
 export default function InstitutionBilling() {
+  const { format, formatUsd, formatNgn } = useCurrency()
   const { user } = useAuth()
   const [data, setData] = useState<BillingData | null>(null)
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([])
@@ -201,8 +203,8 @@ export default function InstitutionBilling() {
                         <tr key={p.range} className="border-surface-border border-b">
                           <td className="py-3 pr-4 font-mono text-foreground">{p.range}</td>
                           <td className="py-3 pr-4 text-muted">{p.txs}</td>
-                          <td className="py-3 pr-4 font-semibold text-foreground">${p.price}</td>
-                          <td className="py-3 pr-4 text-muted">₦{Math.round(p.price * 1361).toLocaleString()}</td>
+                          <td className="py-3 pr-4 font-semibold text-foreground">{formatUsd(p.price)}</td>
+                          <td className="py-3 pr-4 text-muted">{formatNgn(p.price)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -227,9 +229,9 @@ export default function InstitutionBilling() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-foreground">{pack.label}</p>
-                          <p className="text-muted text-xs">${pack.usd} USD</p>
+                          <p className="text-muted text-xs">{format(pack.usd)}</p>
                         </div>
-                        <p className="text-accent text-sm font-semibold">${(pack.usd / pack.credits).toFixed(2)}/credit</p>
+                        <p className="text-accent text-sm font-semibold">{format(pack.usd / pack.credits)}/credit</p>
                       </div>
                     </div>
                   ))}
@@ -271,7 +273,11 @@ export default function InstitutionBilling() {
                           <td className="py-3 pr-4 text-muted">{new Date(p.createdAt).toLocaleDateString()}</td>
                           <td className="py-3 pr-4 text-foreground">{p.type}</td>
                           <td className="py-3 pr-4 font-semibold text-foreground">
-                            {p.amountFiat ? `$${p.amountFiat} ${p.fiatCurrency}` : `${p.amountWei} wei`}
+                            {p.amountFiat
+                              ? p.fiatCurrency === "USD"
+                                ? `${format(Number(p.amountFiat))}`
+                                : `${p.amountFiat} ${p.fiatCurrency}`
+                              : `${p.amountWei} wei`}
                           </td>
                           <td className="py-3 pr-4">
                             <span className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${

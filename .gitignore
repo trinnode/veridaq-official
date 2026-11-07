@@ -93,3 +93,6 @@ Extensionplan.pdf
 PHASED_PLAN.md
 PHASED_PLAN*.md
 docs/plans/
+
+# Playwright MCP artefacts (browser snapshots, screenshots, console logs)
+.playwright-mcp/

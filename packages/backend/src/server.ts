@@ -29,6 +29,7 @@ import { employerRoutes } from "./routes/employer.js"
 import { institutionRoutes } from "./routes/institution.js"
 import { crossmintRoutes } from "./routes/crossmint.js"
 import { earningsRoutes } from "./routes/earnings.js"
+import { fxRoutes } from "./routes/fx.js"
 import { paymentRoutes } from "./routes/payment.js"
 import { statsRoutes } from "./routes/stats.js"
 import { verificationRoutes } from "./routes/verification.js"
@@ -197,6 +198,7 @@ async function bootstrap() {
   await app.register(paymentRoutes, { prefix: "/api/payment" })
   await app.register(crossmintRoutes, { prefix: "/api/crossmint" })
   await app.register(statsRoutes, { prefix: "/api/stats" })
+  await app.register(fxRoutes, { prefix: "/api/fx" })
 
   // Auto-fix stuck PROCESSING verification requests from before the last restart
   try {

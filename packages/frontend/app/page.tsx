@@ -1,6 +1,7 @@
 "use client"
 
 import { AuroraBackground } from "@/components/ui/aurora-background"
+import { useCurrency } from "@/lib/currency"
 import { BackgroundLines } from "@/components/ui/background-lines"
 import { Card3D } from "@/components/ui/card-3d"
 import { CardLift } from "@/components/ui/card-lift"
@@ -70,6 +71,7 @@ const navLinks = [
 ]
 
 export default function LandingPage() {
+  const { format } = useCurrency()
   const { user } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -282,7 +284,7 @@ export default function LandingPage() {
               <div className="border-surface-border relative mt-16 grid grid-cols-2 gap-4 border-t pt-8 md:mt-24 md:grid-cols-4 md:gap-8">
                 {[
                   { value: "0.7s", label: "Proof Generation" },
-                  { value: "~$0.01", label: "Base Gas Fee" },
+                  { value: format(0.01), label: "Base Gas Fee" },
                   { value: "100%", label: "On-Chain Verified" },
                   { value: "0", label: "PII Exposed" },
                 ].map(({ value, label }) => (
@@ -848,8 +850,8 @@ template CredentialVerifier() {
                 <div className="border-surface-border bg-surface-card rounded-lg border p-5">
                   <div className="text-accent font-mono text-xs mb-2">CREDIT PACKS</div>
                   <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-3xl font-bold text-foreground">$7</span>
-                    <span className="text-muted text-sm">to $550</span>
+                    <span className="text-3xl font-bold text-foreground">{format(7)}</span>
+                    <span className="text-muted text-sm">to {format(550)}</span>
                   </div>
                   <p className="text-muted text-xs leading-relaxed">
                     Buy verification credits in packs from 5 to 500. Volume discounts apply.
