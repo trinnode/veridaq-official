@@ -149,6 +149,29 @@ export class VerificationService {
 
     const isManual = claimDef ? claimDef.reviewType === "MANUAL" : true
 
+    // Claim 6 asks the institution to confirm a named programme. Reject the two
+    // cases that can never succeed before any credit is spent: no programme
+    // name supplied, or a credential that carries no course hash (the circuit
+    // proves `courseHash != 0`, so such a credential can never satisfy it).
+    if (input.claimType === 6) {
+      if (!input.courseName || input.courseName.trim().length === 0) {
+        return { error: "COURSE_NAME_REQUIRED" as const }
+      }
+      try {
+        const plaintext = decrypt(
+          credential.encryptedData,
+          credential.encryptedIv,
+          credential.encryptedTag
+        )
+        const attrs = JSON.parse(plaintext) as { courseHash?: string }
+        if (!attrs.courseHash || attrs.courseHash === "0") {
+          return { error: "PROGRAMME_NOT_RECORDED" as const }
+        }
+      } catch {
+        return { error: "PROGRAMME_NOT_RECORDED" as const }
+      }
+    }
+
     // Create the request record
     const request = await this.prisma.verificationRequest.create({
       data: {

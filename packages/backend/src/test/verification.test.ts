@@ -173,6 +173,20 @@ describe("VerificationService.createRequest — with a real credential", () => {
     }
   })
 
+  it("rejects a Programme Completion claim with no programme name", async () => {
+    const result = await verifySvc.createRequest({
+      employerId,
+      institutionOnChainId,
+      matricNumber: "TEST/2024/CS/001",
+      claimType: 6,
+      threshold: 0,
+    })
+
+    // Nothing is created and no credit is spent: the institution has no
+    // programme to confirm without a name.
+    expect(result).toEqual({ error: "COURSE_NAME_REQUIRED" })
+  })
+
   it("returns CREDENTIAL_REVOKED when the credential is revoked in the database", async () => {
     // Mark the credential as revoked
     await prisma.credential.update({

@@ -175,7 +175,25 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
 
       <div>
         <label className="label">Institution</label>
-        <select className="input" value={selectedInst} onChange={(e) => setSelectedInst(e.target.value)}>
+        <select
+          className="input"
+          value={selectedInst}
+          onChange={(e) => {
+            const next = e.target.value
+            setSelectedInst(next)
+            // Point the claim selector at the first claim this institution
+            // actually offers; the previous code could leave it on a code the
+            // institution does not define.
+            const nextClaims = institutions.find((i) => i.onChainId === next)?.claims ?? []
+            const firstClaim = nextClaims[0]
+            if (firstClaim) {
+              setClaimType(firstClaim.claimCode)
+              setThreshold(firstClaim.threshold ?? 0)
+            }
+            setResult(null)
+            setError("")
+          }}
+        >
           <option value="">Select institution…</option>
           {institutions.map((i) => (
             <option key={i.id} value={i.onChainId}>{i.name}</option>
@@ -196,21 +214,26 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
           const match = claims.find(c => c.claimCode === code)
           if (match) setThreshold(match.threshold || 0)
         }}>
-          {claims.map((c) => (
-            <option key={c.id} value={c.claimCode}>{c.label}</option>
-          ))}
-          {claims.length === 0 && <option value={1}>Programme Completion</option>}
+          {claims.length === 0 ? (
+            <option value="">Select an institution first</option>
+          ) : (
+            claims.map((c) => (
+              <option key={c.id} value={c.claimCode}>{c.label}</option>
+            ))
+          )}
         </select>
       </div>
 
 
-
-
-
       {claimType === 6 && (
         <div className="animate-fade-in">
-          <label className="label">Course Name</label>
+          <label className="label">Programme Name</label>
           <input className="input" value={courseName} onChange={(e) => setCourseName(e.target.value)} placeholder="e.g. Computer Science" />
+          {/* The institution confirms this programme by hand, so the name has to
+              be supplied before the request is submitted. */}
+          {courseName.trim().length === 0 && (
+            <p className="text-muted mt-1 text-xs">Required for this claim.</p>
+          )}
         </div>
       )}
 
@@ -260,7 +283,7 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
       <button
         className={`btn-primary justify-center disabled:opacity-50 ${totalAvailable <= 0 ? "border-error/50 bg-error-bg text-error hover:bg-error/20 border" : ""}`}
         onClick={totalAvailable <= 0 ? () => setShowPurchase(true) : handleVerify}
-        disabled={loading || processing || !selectedInst || !matric}
+        disabled={loading || processing || !selectedInst || !matric || (claimType === 6 && courseName.trim().length === 0)}
       >
         {totalAvailable <= 0 ? (
           <span className="inline-flex items-center gap-2"><Sparkles className="h-4 w-4" /> Purchase Credits</span>

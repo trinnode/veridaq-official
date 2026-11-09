@@ -75,15 +75,14 @@ async function main() {
   const inst = await prisma.institution.upsert({
     where: { email: "futminna@veridaq.xyz" },
     update: {
+      // Only non-cryptographic fields are refreshed on a re-run. Rotating the
+      // institution key here would invalidate every credential already issued
+      // under it: the nullifier is Poseidon(matricHash, institutionKey), so a
+      // new key makes old credentials unprovable (witness generation fails on
+      // the nullifier constraint). The same applies to adminWallet, which is
+      // the on-chain admin for this institution.
       passwordHash: instHash,
       onChainId: instOnChainId,
-      adminWallet: instAccount.address,
-      adminKeyEncrypted: adminKeyEnc.encryptedData,
-      adminKeyIv: adminKeyEnc.encryptedIv,
-      adminKeyTag: adminKeyEnc.encryptedTag,
-      institutionKeyEncrypted: institutionKeyEnc.encryptedData,
-      institutionKeyIv: institutionKeyEnc.encryptedIv,
-      institutionKeyTag: institutionKeyEnc.encryptedTag,
     },
     create: {
       id: instId,

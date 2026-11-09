@@ -352,6 +352,8 @@ export default function InstitutionsPage() {
                             setDetailTab("info")
                           }}
                           className="btn-ghost text-xs"
+                          aria-label={`View ${inst.name} details`}
+                          title="View details"
                         >
                           <Eye className="h-3 w-3" />
                         </button>
@@ -382,6 +384,8 @@ export default function InstitutionsPage() {
                           onClick={() => syncBalance(inst.id)}
                           className="btn-ghost text-xs"
                           disabled={syncingId === inst.id}
+                          aria-label={`Sync on-chain balance for ${inst.name}`}
+                          title="Sync on-chain balance"
                         >
                           <RefreshCcw
                             className={`h-3 w-3 ${syncingId === inst.id ? "animate-spin" : ""}`}

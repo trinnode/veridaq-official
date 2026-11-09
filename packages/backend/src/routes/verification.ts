@@ -75,6 +75,14 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
     if (result.error === "NO_FREE_VERIFICATIONS") {
       return rep.code(402).send({ error: "Free verifications exhausted. Please upgrade." })
     }
+    if (result.error === "COURSE_NAME_REQUIRED") {
+      return rep.code(400).send({ error: "Programme name is required for this claim" })
+    }
+    if (result.error === "PROGRAMME_NOT_RECORDED") {
+      return rep
+        .code(400)
+        .send({ error: "This credential has no programme recorded, so this claim cannot be proven" })
+    }
 
     if (result.result === "CREDENTIAL_REVOKED") {
       return rep.code(200).send({ requestId: result.requestId, status: result.status, result: "CREDENTIAL_REVOKED" })

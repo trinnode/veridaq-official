@@ -1,12 +1,14 @@
-import { join } from "path"
 import type { Config } from "tailwindcss"
 
 export default {
   darkMode: "class",
+  // Relative globs rather than path.join(__dirname, ...): Next 15 loads this
+  // file as ESM, where __dirname is undefined and the dev server crashes on
+  // recompile. Tailwind resolves these against the package root.
   content: [
-    join(__dirname, "./app/**/*.{ts,tsx}"),
-    join(__dirname, "./components/**/*.{ts,tsx}"),
-    join(__dirname, "./lib/**/*.{ts,tsx}"),
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
