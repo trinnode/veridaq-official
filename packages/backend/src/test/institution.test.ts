@@ -172,6 +172,138 @@ describe("InstitutionService.revokeCredential", () => {
   })
 })
 
+// ── Manual review charging ───────────────────────────────────────────────────
+
+describe("InstitutionService.declineVerification — charging", () => {
+  /**
+   * Manual (claim 6) requests are charged when the institution reviews them, so
+   * the review path is where the money is decided. These two tests pin both
+   * directions: a decline with nothing to charge must not pay the institution,
+   * and a decline with a credit must charge and pay exactly once.
+   */
+  let employerId: string
+  const requestIds: string[] = []
+
+  beforeAll(async () => {
+    const employer = await prisma.employer.create({
+      data: {
+        email: `decline-charge-${Date.now()}@veridaq.test`,
+        name: "Decline Charge Test Employer",
+        cacNumber: `RC-${Date.now()}`,
+        passwordHash: "not-a-real-hash",
+        walletAddress: "0x00000000000000000000000000000000000000aa",
+        freeVerificationsRemaining: 0,
+        verificationCredits: 0,
+        kycApproved: true,
+      },
+      select: { id: true },
+    })
+    employerId = employer.id
+  })
+
+  afterAll(async () => {
+    if (requestIds.length > 0) {
+      await prisma.earningTransaction
+        .deleteMany({ where: { verificationId: { in: requestIds } } })
+        .catch(() => {})
+      await prisma.verificationRequest
+        .deleteMany({ where: { id: { in: requestIds } } })
+        .catch(() => {})
+    }
+    if (employerId) {
+      await prisma.employer.delete({ where: { id: employerId } }).catch(() => {})
+    }
+  })
+
+  /** A decline with an employer who has nothing left must not create earnings. */
+  it("does not credit the institution when the employer cannot be charged", async () => {
+    const before = await prisma.institutionEarnings.findUnique({
+      where: { institutionId },
+      select: { totalEarnedUsd: true },
+    })
+
+    const request = await prisma.verificationRequest.create({
+      data: {
+        employerId,
+        institutionId,
+        matricNumber: "DECLINE/2026/001",
+        claimType: 6,
+        threshold: 0,
+        courseName: "Computer Science",
+        status: "AWAITING_INSTITUTION",
+      },
+      select: { id: true },
+    })
+    requestIds.push(request.id)
+
+    // Chain says zero free checks, and the database agrees: there is nothing to
+    // spend. The previous code credited earnings regardless.
+    const drainChain = {
+      getRemainingFreeVerifications: async () => 0,
+      consumeFreeVerification: async () => "0x0" as `0x${string}`,
+    } as unknown as import("../services/blockchain.service.js").BlockchainService
+    const svc = new InstitutionService(prisma, drainChain)
+
+    const result = await svc.declineVerification(request.id, institutionId, "No record of this programme")
+    expect(result.ok).toBe(true)
+
+    const earned = await prisma.earningTransaction.count({
+      where: { verificationId: request.id },
+    })
+    expect(earned).toBe(0)
+
+    const after = await prisma.institutionEarnings.findUnique({
+      where: { institutionId },
+      select: { totalEarnedUsd: true },
+    })
+    expect(after?.totalEarnedUsd.toString()).toBe(before?.totalEarnedUsd.toString())
+  })
+
+  /** A decline with a paid credit must charge once and credit earnings once. */
+  it("charges exactly one credit and credits earnings once", async () => {
+    await prisma.employer.update({
+      where: { id: employerId },
+      data: { verificationCredits: 1, freeVerificationsRemaining: 0 },
+    })
+
+    const request = await prisma.verificationRequest.create({
+      data: {
+        employerId,
+        institutionId,
+        matricNumber: "DECLINE/2026/002",
+        claimType: 6,
+        threshold: 0,
+        courseName: "Computer Science",
+        status: "AWAITING_INSTITUTION",
+      },
+      select: { id: true },
+    })
+    requestIds.push(request.id)
+
+    const drainChain = {
+      getRemainingFreeVerifications: async () => 0,
+      consumeFreeVerification: async () => "0x0" as `0x${string}`,
+    } as unknown as import("../services/blockchain.service.js").BlockchainService
+    const svc = new InstitutionService(prisma, drainChain)
+
+    const result = await svc.declineVerification(request.id, institutionId, "No record of this programme")
+    expect(result.ok).toBe(true)
+
+    const employer = await prisma.employer.findUnique({
+      where: { id: employerId },
+      select: { verificationCredits: true },
+    })
+    expect(employer?.verificationCredits).toBe(0)
+
+    const earned = await prisma.earningTransaction.findMany({
+      where: { verificationId: request.id },
+      select: { type: true },
+    })
+    expect(earned.length).toBe(1)
+    expect(earned[0]?.type).toBe("EARNED")
+  })
+})
+
 // ── Dashboard stats ───────────────────────────────────────────────────────────
 
 describe("InstitutionService.getDashboardStats", () => {

@@ -2,6 +2,7 @@
 import { AdminLayout } from "@/components/admin/layout"
 import { ScrollReveal } from "@/components/parallax/scroll-reveal"
 import { CardLift } from "@/components/ui/card-lift"
+import { LoadFailure } from "@/components/ui/load-failure"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { RefreshCcw, ShieldAlert, ShieldCheck, Wallet, X, Eye, Key, Building2, Clock, Hash, Loader2, Edit, FileJson, Download, Mail, User } from "@/lib/icons"
@@ -13,6 +14,8 @@ export default function InstitutionsPage() {
   const { user } = useAuth()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<{ status: number | null; message: string } | null>(null)
+  const [retryingId, setRetryingId] = useState<string | null>(null)
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const [reviewTarget, setReviewTarget] = useState<any>(null)
   const [reviewWallet, setReviewWallet] = useState("")
@@ -40,9 +43,15 @@ export default function InstitutionsPage() {
   async function load(page = 1) {
     try {
       setLoading(true)
+      setLoadError(null)
       const { data: d } = await api.get(`/admin/institutions?page=${page}`)
       setData(d)
-    } catch {
+    } catch (err: any) {
+      setData(null)
+      setLoadError({
+        status: err?.response?.status ?? null,
+        message: err?.response?.data?.error ?? "The institution list could not be loaded.",
+      })
       toast.error("Failed to load institutions")
     } finally {
       setLoading(false)
@@ -67,6 +76,21 @@ export default function InstitutionsPage() {
     const interval = setInterval(() => load(), 10000)
     return () => clearInterval(interval)
   }, [hasPendingRegistration])
+
+  async function retryRegistration(id: string) {
+    setRetryingId(id)
+    try {
+      await api.post(`/admin/institutions/${id}/retry-registration`)
+      toast.success("Institution registered on-chain")
+      load()
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? "Registration failed again"
+      toast.error(msg)
+      load()
+    } finally {
+      setRetryingId(null)
+    }
+  }
 
   async function approve(id: string, walletOverride?: string) {
     setApprovingId(id)
@@ -263,6 +287,8 @@ export default function InstitutionsPage() {
 
       {loading ? (
         <div className="text-muted py-12 text-center text-sm">Loading institutions...</div>
+      ) : loadError ? (
+        <LoadFailure status={loadError.status} message={loadError.message} onRetry={() => load()} />
       ) : data?.items?.length === 0 ? (
         <div className="border-surface-border bg-surface-card flex flex-col items-center border p-12 text-center">
           <h3 className="mb-2 text-lg font-medium text-foreground">No Institutions Found</h3>
@@ -369,13 +395,14 @@ export default function InstitutionsPage() {
                           </button>
                         ) : inst.blockchainStatus !== "REGISTERED" ? (
                           <button
-                            onClick={() => {
-                              setReviewTarget(inst)
-                              setReviewWallet(inst.adminWallet ?? "")
-                            }}
-                            className="bg-warning/20 text-warning flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
+                            onClick={() => retryRegistration(inst.id)}
+                            disabled={retryingId === inst.id}
+                            className="bg-warning/20 text-warning flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
                           >
-                            <RefreshCcw className="h-3 w-3" /> Re-register
+                            <RefreshCcw
+                              className={`h-3 w-3 ${retryingId === inst.id ? "animate-spin" : ""}`}
+                            />
+                            {retryingId === inst.id ? "Registering..." : "Re-register"}
                           </button>
                         ) : (
                           <span className="text-muted text-xs">On-Chain</span>

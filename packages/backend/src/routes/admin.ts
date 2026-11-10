@@ -17,6 +17,7 @@ import { z } from "zod"
 import { AdminService } from "../services/admin.service.js"
 import { EarningsService } from "../services/earnings.service.js"
 import { PaymentService } from "../services/payment.service.js"
+import { ReconcileService } from "../services/reconcile.service.js"
 
 const tierBody = z.object({
   tier: z.enum(["FREE", "PAID"]),
@@ -33,6 +34,7 @@ const fundBody = z.object({
 export const adminRoutes: FastifyPluginAsync = async (app) => {
   const adminSvc = new AdminService(app.prisma)
   const paymentSvc = new PaymentService(app.prisma)
+  const reconcileSvc = new ReconcileService(app.prisma)
 
   app.addHook("preHandler", app.requireAdmin)
 
@@ -53,6 +55,24 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
       return { ok: true }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Approval failed"
+      return rep.code(500).send({ error: msg })
+    }
+  })
+
+  app.post("/institutions/:id/retry-registration", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    try {
+      const result = await adminSvc.retryInstitutionRegistration(id, req.jwtPayload.sub)
+      if (!result) return rep.code(404).send({ error: "Institution not found" })
+      if (!result.ok && result.error === "NO_ADMIN_WALLET") {
+        return rep.code(400).send({ error: "Institution has no admin wallet to register" })
+      }
+      if (!result.ok) {
+        return rep.code(502).send({ error: "On-chain registration failed again", blockchainStatus: result.blockchainStatus })
+      }
+      return result
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Retry failed"
       return rep.code(500).send({ error: msg })
     }
   })
@@ -233,6 +253,29 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     const result = await adminSvc.approveEmployer(id, req.jwtPayload.sub)
     if (!result) return rep.code(404).send({ error: "Employer not found" })
     return { ok: true }
+  })
+
+  // The chain is the source of truth for the three free checks; this re-reads
+  // the mirror when an interrupted request has made the two disagree.
+  app.post("/employers/sync-free", async () => {
+    return reconcileSvc.syncAll()
+  })
+
+  app.post("/employers/:id/sync-free", async (req, rep) => {
+    const { id } = req.params as { id: string }
+    try {
+      const result = await reconcileSvc.syncEmployer(id)
+      if (!result.ok && result.error === "NOT_FOUND") {
+        return rep.code(404).send({ error: "Employer not found" })
+      }
+      if (!result.ok && result.error === "NO_WALLET") {
+        return rep.code(400).send({ error: "Employer has no wallet to check on chain" })
+      }
+      return result
+    } catch (err) {
+      app.log.error({ err, employerId: id }, "free-verification sync failed")
+      return rep.code(502).send({ error: "Could not read the on-chain balance" })
+    }
   })
 
   app.post("/employers/:id/deactivate", async (req, rep) => {

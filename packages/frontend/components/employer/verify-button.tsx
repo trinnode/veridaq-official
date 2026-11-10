@@ -16,7 +16,7 @@ type Institution = {
 
 const MANUAL_CLAIM_CODES = [6]
 
-type Result = { id: string; status: string; result: string | null }
+type Result = { id: string; status: string; result: string | null; institutionNote?: string | null }
 
 export function VerifyButton({ onComplete }: { onComplete(): void }) {
   const { user } = useAuth()
@@ -272,6 +272,12 @@ export function VerifyButton({ onComplete }: { onComplete(): void }) {
             {result.result === "VERIFIED" ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
             <span>{result.result === "VERIFIED" ? "Verified: claim is satisfied." : `Not satisfied: ${result.result?.replace(/_/g, " ")}`}</span>
           </div>
+          {result.result !== "VERIFIED" && result.institutionNote && (
+            <p className="text-foreground/80 mt-2 border-l-2 border-current/30 pl-3 text-xs leading-relaxed">
+              <span className="text-muted">Institution note: </span>
+              {result.institutionNote}
+            </p>
+          )}
           <div className="mt-3">
             <button onClick={() => downloadReport(result.id).catch(() => toast.error("Failed to download report"))} className="btn-ghost inline-flex items-center gap-1 text-xs">
               <FileText className="h-3 w-3" /> Download PDF report

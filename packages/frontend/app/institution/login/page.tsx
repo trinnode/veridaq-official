@@ -37,10 +37,15 @@ export default function InstitutionLogin() {
     <AuthSplit role="institution" title="Sign in" subtitle="Access your institution dashboard to manage credentials." mode="login">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="text-muted mb-1.5 block text-xs font-medium uppercase tracking-wider">
+          <label
+            htmlFor="institution-login-email"
+            className="text-muted mb-1.5 block text-xs font-medium uppercase tracking-wider"
+          >
             Email address
           </label>
           <input
+            id="institution-login-email"
+            name="email"
             className="border-surface-border bg-void focus:border-accent w-full rounded-xl border px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted/50"
             type="email"
             value={email}
@@ -52,7 +57,10 @@ export default function InstitutionLogin() {
         </div>
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-muted text-xs font-medium uppercase tracking-wider">
+            <label
+              htmlFor="institution-login-password"
+              className="text-muted text-xs font-medium uppercase tracking-wider"
+            >
               Password
             </label>
             <Link
@@ -64,6 +72,8 @@ export default function InstitutionLogin() {
           </div>
           <div className="relative">
             <input
+              id="institution-login-password"
+              name="password"
               className="border-surface-border bg-void focus:border-accent w-full rounded-xl border px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition-colors placeholder:text-muted/50"
               type={showPassword ? "text" : "password"}
               value={password}
@@ -75,7 +85,9 @@ export default function InstitutionLogin() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              className="text-muted hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>

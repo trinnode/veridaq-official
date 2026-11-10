@@ -107,6 +107,80 @@ export class AdminService {
     return { total, page, limit, items }
   }
 
+  /**
+   * Registers an institution on chain and aligns its tier, then records the
+   * resulting status. Shared by KYC approval and by the retry action so a
+   * failed registration can be re-run without touching KYC state.
+   */
+  private async registerOnChain(
+    inst: { id: string; onChainId: string; name: string; publicKey: string; tier: "FREE" | "PAID" },
+    adminWallet: string
+  ): Promise<"REGISTERED" | "FAILED"> {
+    try {
+      const alreadyRegistered = await this.blockchainSvc.isInstitutionRegistered(
+        inst.onChainId as `0x${string}`
+      )
+      if (!alreadyRegistered) {
+        await this.blockchainSvc.registerInstitution(
+          inst.onChainId as `0x${string}`,
+          inst.name,
+          adminWallet as `0x${string}`,
+          inst.publicKey
+        )
+      }
+      const onChainTier = await this.blockchainSvc.getInstitutionTier(inst.onChainId as `0x${string}`)
+      const desiredTier = inst.tier === "FREE" ? 0 : 1
+      if (onChainTier !== desiredTier) {
+        await this.blockchainSvc.setInstitutionTier(inst.onChainId as `0x${string}`, inst.tier)
+      }
+      await this.prisma.institution.update({
+        where: { id: inst.id },
+        data: { blockchainStatus: "REGISTERED" },
+      })
+      return "REGISTERED"
+    } catch (err) {
+      log.error(
+        { err, institutionId: inst.id },
+        "On-chain registration failed — recorded FAILED so it can be retried"
+      )
+      await this.prisma.institution.update({
+        where: { id: inst.id },
+        data: { blockchainStatus: "FAILED" },
+      })
+      return "FAILED"
+    }
+  }
+
+  /**
+   * Re-runs the on-chain half of onboarding for an institution whose
+   * registration previously failed. KYC approval is deliberately untouched: an
+   * operator retrying a chain error must not be able to approve an account by
+   * accident.
+   */
+  async retryInstitutionRegistration(institutionId: string, adminId: string) {
+    const inst = await this.prisma.institution.findUnique({ where: { id: institutionId } })
+    if (!inst) return null
+    if (!inst.adminWallet) return { ok: false as const, error: "NO_ADMIN_WALLET" as const }
+
+    await this.prisma.institution.update({
+      where: { id: institutionId },
+      data: { blockchainStatus: "PENDING" },
+    })
+
+    const status = await this.registerOnChain(inst, inst.adminWallet)
+
+    await this.prisma.auditLog.create({
+      data: {
+        institutionId,
+        adminId,
+        action: "INSTITUTION_REGISTRATION_RETRIED",
+        details: { blockchainStatus: status },
+      },
+    })
+
+    return { ok: status === "REGISTERED", blockchainStatus: status }
+  }
+
   async approveInstitution(institutionId: string, adminId: string, adminWalletOverride?: string) {
     const inst = await this.prisma.institution.findUnique({ where: { id: institutionId } })
     if (!inst) return null
@@ -141,28 +215,7 @@ export class AdminService {
       data: { blockchainStatus: "PENDING" },
     })
 
-    // Register on-chain if missing, then set tier
-    try {
-      const alreadyRegistered = await this.blockchainSvc.isInstitutionRegistered(inst.onChainId as `0x${string}`)
-      if (!alreadyRegistered) {
-        await this.blockchainSvc.registerInstitution(inst.onChainId as `0x${string}`, inst.name, finalWallet as `0x${string}`, inst.publicKey)
-      }
-      const onChainTier = await this.blockchainSvc.getInstitutionTier(inst.onChainId as `0x${string}`)
-      const desiredTier = inst.tier === "FREE" ? 0 : 1
-      if (onChainTier !== desiredTier) {
-        await this.blockchainSvc.setInstitutionTier(inst.onChainId as `0x${string}`, inst.tier)
-      }
-      await this.prisma.institution.update({
-        where: { id: institutionId },
-        data: { blockchainStatus: "REGISTERED" },
-      })
-    } catch (err) {
-      log.error({ err, institutionId }, "On-chain registration failed — DB approved with FAILED status")
-      await this.prisma.institution.update({
-        where: { id: institutionId },
-        data: { blockchainStatus: "FAILED" },
-      })
-    }
+    await this.registerOnChain(inst, finalWallet as string)
 
     const updateData: Record<string, unknown> = { kycApproved: true }
     if (adminWalletOverride) {

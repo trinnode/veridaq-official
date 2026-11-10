@@ -63,6 +63,15 @@ Start PostgreSQL 16 and Redis 7 using Docker Compose:
 docker compose up -d
 ```
 
+The compose file publishes Postgres on port **5433** and Redis on port **6380**
+to avoid collisions with other local projects. Use those ports in
+`DATABASE_URL` and `REDIS_URL`:
+
+```
+DATABASE_URL=postgresql://veridaq:veridaq_dev@localhost:5433/veridaq
+REDIS_URL=redis://localhost:6380
+```
+
 Wait for the containers to become healthy:
 
 ```bash

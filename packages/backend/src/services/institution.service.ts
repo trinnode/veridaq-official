@@ -11,7 +11,9 @@ import pino from "pino"
 import { formatEther } from "viem"
 import { decrypt } from "../utils/crypto.js"
 import { hexToField } from "../utils/field.js"
+import { programmeMatchesRecord } from "../utils/course.js"
 import { BlockchainService } from "./blockchain.service.js"
+import { spendFreeVerification, spendPaidCredit } from "./credit.service.js"
 import { EarningsService } from "./earnings.service.js"
 import { config } from "../config/index.js"
 
@@ -311,7 +313,17 @@ export class InstitutionService {
         courseName: true,
         createdAt: true,
         completedAt: true,
+        institutionNote: true,
         employer: { select: { name: true, email: true } },
+        credential: {
+          select: {
+            id: true,
+            batchId: true,
+            encryptedData: true,
+            encryptedIv: true,
+            encryptedTag: true,
+          },
+        },
       },
     })
 
@@ -322,8 +334,28 @@ export class InstitutionService {
       select: { label: true, description: true, reviewType: true },
     })
 
+    // For a named-programme claim, tell the reviewer whether the name the
+    // employer typed is actually the programme on the credential. The review
+    // is a human decision, but it should not be a blind one.
+    let programmeMatches: boolean | null = null
+    const { credential, ...rest } = request
+    if (request.claimType === 6 && request.courseName && credential) {
+      try {
+        const attrs = JSON.parse(
+          decrypt(credential.encryptedData, credential.encryptedIv, credential.encryptedTag)
+        ) as { courseHash?: string }
+        programmeMatches = attrs.courseHash
+          ? programmeMatchesRecord(request.courseName, attrs.courseHash)
+          : false
+      } catch {
+        programmeMatches = false
+      }
+    }
+
     return {
-      ...request,
+      ...rest,
+      batchId: credential?.batchId ?? null,
+      programmeMatches,
       claimLabel: claimDef?.label ?? null,
       claimDescription: claimDef?.description ?? null,
       reviewType: claimDef?.reviewType ?? "AUTO",
@@ -403,29 +435,28 @@ export class InstitutionService {
           employer.walletAddress as `0x${string}`
         )
         if (remaining <= 0) {
-          const dbRemaining = employer.freeVerificationsRemaining
-          if (dbRemaining <= 0) {
-            if ((employer.verificationCredits ?? 0) > 0) {
-              await this.prisma.employer.update({
-                where: { id: employer.id },
-                data: { verificationCredits: { decrement: 1 } },
-              })
-              isFreeVerification = false
-            } else {
-              return { ok: false, error: "No free verifications" }
+          const usedFree = await spendFreeVerification(this.prisma, employer.id)
+          if (!usedFree) {
+            const usedCredit = await spendPaidCredit(this.prisma, employer.id)
+            if (!usedCredit) {
+              return {
+                ok: false,
+                error:
+                  "This employer has no verification balance left. The request stays pending until they top up; nothing was charged.",
+              }
             }
-          } else {
-            await this.prisma.employer.update({
-              where: { id: employer.id },
-              data: { freeVerificationsRemaining: { decrement: 1 } },
-            })
+            isFreeVerification = false
           }
         } else {
           await this.blockchainSvc.consumeFreeVerification(employer.walletAddress as `0x${string}`)
         }
       } catch (err) {
         log.error({ err, requestId }, "Failed to consume free verification")
-        return { ok: false, error: "No free verifications" }
+        return {
+          ok: false,
+          error:
+            "Could not reach the subscription contract to charge this verification. Try again; nothing was charged.",
+        }
       }
     }
 
@@ -488,8 +519,13 @@ export class InstitutionService {
       return { ok: false, error: "Verification request not found" }
     }
 
-    // Deduct credits from employer
+    // Charge the employer for the review the institution just performed. The
+    // flag matters: earnings are only credited when money actually moved.
+    // Previously a decline credited the institution even when the employer had
+    // nothing to spend, which paid the institution out of platform funds for a
+    // check nobody was charged for.
     let isFreeVerification = true
+    let charged = false
     if (request.employerId) {
       const employer = await this.prisma.employer.findUnique({
         where: { id: request.employerId },
@@ -502,23 +538,21 @@ export class InstitutionService {
             employer.walletAddress as `0x${string}`
           )
           if (remaining <= 0) {
-            const dbRemaining = employer.freeVerificationsRemaining
-            if (dbRemaining <= 0) {
-              if ((employer.verificationCredits ?? 0) > 0) {
-                await this.prisma.employer.update({
-                  where: { id: employer.id },
-                  data: { verificationCredits: { decrement: 1 } },
-                })
-                isFreeVerification = false
-              }
+            const usedFree = await spendFreeVerification(this.prisma, employer.id)
+            if (usedFree) {
+              charged = true
             } else {
-              await this.prisma.employer.update({
-                where: { id: employer.id },
-                data: { freeVerificationsRemaining: { decrement: 1 } },
-              })
+              const usedCredit = await spendPaidCredit(this.prisma, employer.id)
+              if (usedCredit) {
+                charged = true
+                isFreeVerification = false
+              } else {
+                log.warn({ requestId, employerId: employer.id }, "decline: employer has no credits left")
+              }
             }
           } else {
             await this.blockchainSvc.consumeFreeVerification(employer.walletAddress as `0x${string}`)
+            charged = true
           }
         } catch (err) {
           log.error({ err, requestId }, "Failed to consume free verification on decline")
@@ -526,21 +560,30 @@ export class InstitutionService {
       }
     }
 
-    // Credit institution earnings even on decline
-    const earningsSvc = new EarningsService(this.prisma)
-    await earningsSvc
-      .creditVerification(institutionId, request.id, config.VERIFICATION_PRICE_USD, "0", isFreeVerification)
-      .catch((err: unknown) => {
-        log.error({ err, requestId }, "Failed to credit earnings on manual decline")
-      })
+    if (charged) {
+      const earningsSvc = new EarningsService(this.prisma)
+      await earningsSvc
+        .creditVerification(institutionId, request.id, config.VERIFICATION_PRICE_USD, "0", isFreeVerification)
+        .catch((err: unknown) => {
+          log.error({ err, requestId }, "Failed to credit earnings on manual decline")
+        })
+    } else {
+      log.warn(
+        { requestId, institutionId },
+        "decline: employer was not charged, so no earnings were credited"
+      )
+    }
 
+    // The comment is written to institutionNote, not adminNote: this is the
+    // note the employer is shown, and a decline with no stated reason reads as
+    // a silent failure. adminNote stays free for internal-only remarks.
     await this.prisma.verificationRequest.update({
       where: { id: request.id },
       data: {
         status: "COMPLETED",
         result: "RECORD_NOT_FOUND",
         completedAt: new Date(),
-        adminNote: comment ?? null,
+        institutionNote: comment?.trim() ? comment.trim() : null,
       },
     })
 

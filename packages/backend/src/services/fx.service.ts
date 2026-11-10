@@ -54,7 +54,8 @@ export type FxQuote = {
   refreshMinutes: number
 }
 
-const CACHE_KEY = "fx:usd-ngn"
+export const FX_CACHE_KEY = "fx:usd-ngn"
+const CACHE_KEY = FX_CACHE_KEY
 
 // 1 USD has sat between roughly ₦400 and ₦2,000 since 2020. Anything outside
 // this band is a broken payload, not an exchange rate.
@@ -148,9 +149,17 @@ export class FxService {
 
   constructor(private readonly redis?: Redis) {}
 
+  /**
+   * The last rate this process knows about, without touching the network.
+   * Health checks must not trigger an outbound fetch: a slow provider would
+   * make the process look unhealthy precisely when it is merely waiting.
+   */
+  peekCached(): FxQuote | null {
+    return this.memory
+  }
+
   /** The configured URL is treated as an additional provider, so a deployment
-   *  can point at its own bank feed without losing the consensus check. */
-  private providers(): Provider[] {
+   *  can point at its own bank feed without losing the consensus check. */  private providers(): Provider[] {
     const configured = config.FX_API_URL
     if (USD_PROVIDERS.some((p) => p.url === configured)) return USD_PROVIDERS
     return [

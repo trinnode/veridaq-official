@@ -231,11 +231,30 @@ Copy `.env.example` to `.env` and fill in the values. The following table explai
 
 | Variable                  | Description                        | Default |
 | ------------------------- | ---------------------------------- | ------- |
-| `PLATFORM_REVENUE_SHARE`  | Platform cut per verification      | `0.70`  |
-| `INSTITUTION_REVENUE_SHARE` | Institution cut per verification | `0.20`  |
+| `PLATFORM_REVENUE_SHARE`  | Platform cut per verification      | `0.20`  |
+| `INSTITUTION_REVENUE_SHARE` | Institution cut per verification | `0.70`  |
 | `GAS_POOL_REVENUE_SHARE`  | Gas pool accumulation rate         | `0.10`  |
 | `VERIFICATION_CREDIT_PRICE_USD` | Price per single credit      | `1.50`  |
 | `GAS_POOL_ADDRESS`        | Ethereum address for gas pool       |         |
+
+Every amount is stored, charged and settled in US dollars. The Naira figure in
+the interface is a display conversion only and never affects a stored balance.
+
+### Currency display and payout pricing
+
+| Variable | Description | Default |
+| -------- | ----------- | ------- |
+| `FX_REFRESH_MINUTES` | How often the USD→NGN rate is refreshed | `30` |
+| `FX_API_URL` | Extra keyless FX provider, tried alongside the built-in set | `https://open.er-api.com/v6/latest/USD` |
+| `FX_FALLBACK_USD_NGN` | Last-resort rate when every provider fails | `1350` |
+| `ETH_USD_FALLBACK` | ETH price used only if the live quote is unreachable | `3000` |
+| `ETH_USD_CACHE_SECONDS` | How long an ETH/USD quote is reused | `300` |
+| `FREE_VERIFICATION_SYNC_MINUTES` | Chain → database free-check reconciliation; `0` disables | `360` |
+
+The displayed rate is the median of every keyless provider that answers, cached
+in Redis for `FX_REFRESH_MINUTES`. A stale rate is marked in the header toggle.
+Crypto payouts are sized from a live ETH/USD quote; the applied rate, its source
+and whether it was stale are recorded on the withdrawal.
 
 ### Email (optional)
 
@@ -246,6 +265,21 @@ Copy `.env.example` to `.env` and fill in the values. The following table explai
 | `SMTP_USER`               | SMTP username                      |
 | `SMTP_PASS`               | SMTP password                      |
 | `EMAIL_FROM`              | Sender email address               |
+
+---
+
+## Claim Type 6 — Programme Completion
+
+Claim types 1–5 are automatic: the circuit proves a CGPA or classification
+predicate without revealing the value. Claim type 6 is different — the employer
+names a programme and the institution confirms it manually.
+
+The credential already holds `courseHash = keccak(courseName.trim().toLowerCase()) mod p`.
+Before a credit is spent, the typed name is normalised the same way and compared
+with that hash. A mismatch returns `PROGRAMME_MISMATCH` and nothing is charged.
+The institution's review sheet shows the verdict so the reviewer is not asked to
+trust the employer silently, and a decline carries a reason that the employer
+sees in their history.
 
 ---
 
@@ -274,6 +308,10 @@ pnpm install
 ```
 
 ### Step 2 — Start Local Infrastructure
+
+The compose file publishes Postgres on **5433** and Redis on **6380** rather than
+the defaults, so this project does not collide with anything else on the machine.
+The backend runs on **4100** locally and the frontend on **3000**.
 
 ```bash
 docker compose up -d
@@ -365,6 +403,12 @@ Created by `pnpm db:seed`. These exist only in your local PostgreSQL database an
 | Institution | /institution/login | futminna@veridaq.xyz  | Inst@2026!  |
 | Employer    | /employer/login    | firstbank@veridaq.xyz | Emp@2026!   |
 | Admin       | /admin/login       | admin@veridaq.xyz     | Admin@2026! |
+
+Re-running the seed is safe, with one important caveat: it must not regenerate
+an institution's key material or admin wallet. The nullifier of every issued
+credential is `Poseidon(matricHash, institutionKey)`, so rotating that key
+silently invalidates every credential already registered on chain. The seed
+script is written to preserve existing keys; do not "fix" it by rewriting them.
 
 ---
 

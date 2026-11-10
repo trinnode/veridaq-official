@@ -1,6 +1,7 @@
 "use client"
 import { OrbitalLoader } from "@/components/ui/orbital-loader"
 import { useAuth } from "@/lib/auth"
+import { homePathForRole } from "@/lib/roles"
 import { LogOut, Menu, X, ChevronRight, Shield } from "@/lib/icons"
 import { usePathname, useRouter } from "next/navigation"
 import { SafeLink } from "@/components/safe-link"
@@ -27,8 +28,15 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
   const { logout, user, loading } = useAuth()
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return
+    if (!user) {
       router.push("/admin/login")
+      return
+    }
+    // A session for a different role must not render this portal. Send it home
+    // instead of letting every request fail with a 403.
+    if (user.role !== "ADMIN") {
+      router.push(homePathForRole(user.role))
     }
   }, [loading, user, router])
 
@@ -61,8 +69,8 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
     )
   }
 
-  if (!user) {
-    window.location.href = "/admin/login"
+  if (!user || user.role !== "ADMIN") {
+    // The redirect is handled in the effect; render nothing in the meantime.
     return null
   }
 
@@ -101,7 +109,7 @@ export function AdminLayout({ children, title }: { children: React.ReactNode; ti
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <CurrencyToggle className="hidden sm:flex" />
+            <CurrencyToggle className="shrink-0" />
             <div className="hidden items-center gap-2 sm:flex">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/10">
                 <Shield className="h-3.5 w-3.5 text-warning" />

@@ -292,6 +292,16 @@ export class ReportService {
 
       doc.y = qrSectionY + qrCardH + 4
 
+      // The application can display amounts in Naira, but nothing is charged or
+      // settled in anything other than USD. Say so on the document itself so a
+      // reader is not left to assume the currency.
+      doc.fontSize(5.5).fillColor(MUTED_SUBTLE).font(FONT)
+      doc.text(
+        "All fees are denominated and settled in US dollars (USD). Naira figures shown in the application are indicative conversions at the published rate.",
+        LX, doc.y, { width: CW, align: "center" }
+      )
+      doc.y += 8
+
       // ════════════════ ZKP DETAILS (only for VERIFIED) ───────────
       if (data.isVerified && data.credentialCommitment) {
         section("Zero-Knowledge Proof Details")

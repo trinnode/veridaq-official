@@ -11,6 +11,8 @@ type Item = {
   claimType: number
   createdAt: string
   completedAt?: string
+  /** Public note from the institution — carries the decline reason. */
+  institutionNote?: string | null
   institution: { name: string }
 }
 
@@ -45,7 +47,15 @@ export function HistoryTable({ items }: { items: Item[] }) {
   }
 
   if (items.length === 0) {
-    return <div className="text-muted py-10 text-center text-sm">No verification history yet.</div>
+    return (
+      <div className="border-surface-border bg-surface-card rounded-xl border px-6 py-12 text-center">
+        <p className="text-foreground text-sm font-medium">No verification history yet</p>
+        <p className="text-muted mt-1 text-xs">
+          Checks you run will appear here with their outcome and, where the institution
+          declined, the reason it gave.
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -68,9 +78,21 @@ export function HistoryTable({ items }: { items: Item[] }) {
               <td className="text-muted py-3">{CLAIM_LABELS[item.claimType] ?? `Type ${item.claimType}`}</td>
               <td className="py-3">
                 {item.result ? (
-                  <span className={resultClass[item.result] ?? "badge-muted"}>
-                    {item.result.replace(/_/g, " ")}
-                  </span>
+                  <div className="space-y-1">
+                    <span className={resultClass[item.result] ?? "badge-muted"}>
+                      {item.result.replace(/_/g, " ")}
+                    </span>
+                    {/* The institution's decline reason, verbatim. Truncated in the
+                        cell but available in full on hover and to screen readers. */}
+                    {item.institutionNote && (
+                      <p
+                        className="text-muted max-w-[22rem] text-xs leading-snug"
+                        title={item.institutionNote}
+                      >
+                        {item.institutionNote}
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <span className="badge-yellow">{item.status}</span>
                 )}

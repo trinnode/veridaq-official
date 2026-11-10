@@ -151,6 +151,12 @@ describe("VerificationService.createRequest — with a real credential", () => {
         status: "ACTIVE",
       },
     })
+
+    // Requests from an earlier aborted run would be picked up by the 60-second
+    // dedupe window and make these assertions non-deterministic.
+    await prisma.verificationRequest.deleteMany({
+      where: { employerId, institutionId, matricNumber: "TEST/2024/CS/001" },
+    })
   })
 
   it("creates a PROCESSING request for an AUTO claim", async () => {
@@ -185,6 +191,38 @@ describe("VerificationService.createRequest — with a real credential", () => {
     // Nothing is created and no credit is spent: the institution has no
     // programme to confirm without a name.
     expect(result).toEqual({ error: "COURSE_NAME_REQUIRED" })
+  })
+
+  it("returns the same request when the same check is submitted twice", async () => {
+    const first = await verifySvc.createRequest({
+      employerId,
+      institutionOnChainId,
+      matricNumber: "TEST/2024/CS/001",
+      claimType: 1,
+      threshold: 0,
+    })
+
+    const second = await verifySvc.createRequest({
+      employerId,
+      institutionOnChainId,
+      matricNumber: "TEST/2024/CS/001",
+      claimType: 1,
+      threshold: 0,
+    })
+
+    expect("requestId" in first).toBe(true)
+    expect("requestId" in second).toBe(true)
+    if ("requestId" in first && "requestId" in second) {
+      expect(second.requestId).toBe(first.requestId)
+      expect("deduplicated" in second && second.deduplicated).toBe(true)
+
+      const count = await prisma.verificationRequest.count({
+        where: { id: first.requestId },
+      })
+      expect(count).toBe(1)
+
+      await prisma.verificationRequest.delete({ where: { id: first.requestId } })
+    }
   })
 
   it("returns CREDENTIAL_REVOKED when the credential is revoked in the database", async () => {

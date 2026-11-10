@@ -8,13 +8,14 @@ let earningsSvc: EarningsService
 // Use unique institution IDs for each group to avoid state leakage
 const INST_EMAIL_CREDIT = "earnings-test-credit@veridaq.xyz"
 const INST_EMAIL_WITHDRAW = "earnings-test-withdraw@veridaq.xyz"
+const INST_EMAIL_RACE = "earnings-test-race@veridaq.xyz"
 
 beforeAll(async () => {
   prisma = new PrismaClient()
   earningsSvc = new EarningsService(prisma)
 
   // Create fresh institutions for isolated tests
-  for (const email of [INST_EMAIL_CREDIT, INST_EMAIL_WITHDRAW]) {
+  for (const email of [INST_EMAIL_CREDIT, INST_EMAIL_WITHDRAW, INST_EMAIL_RACE]) {
     const existing = await prisma.institution.findUnique({ where: { email } })
     if (!existing) {
       await prisma.institution.create({
@@ -39,7 +40,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Clean up test institutions and their earnings/transactions
-  for (const email of [INST_EMAIL_CREDIT, INST_EMAIL_WITHDRAW]) {
+  for (const email of [INST_EMAIL_CREDIT, INST_EMAIL_WITHDRAW, INST_EMAIL_RACE]) {
     const inst = await prisma.institution.findUnique({ where: { email } })
     if (inst) {
       await prisma.earningTransaction.deleteMany({ where: { institutionId: inst.id } })
@@ -203,5 +204,24 @@ describe("EarningsService.processFiatWithdrawal", () => {
     await expect(
       earningsSvc.processFiatWithdrawal("nonexistent-id", true)
     ).rejects.toThrow("Transaction not found")
+  })
+})
+
+describe("EarningsService.requestWithdrawal — concurrency", () => {
+  it("pays out once when two withdrawals race for the same balance", async () => {
+    const instId = await getInstId(INST_EMAIL_RACE)
+
+    // $100 of verification revenue credits the institution with 20% = $20.
+    await earningsSvc.creditVerification(instId, "race-credit", 100, "0", false)
+
+    const settled = await Promise.allSettled([
+      earningsSvc.requestWithdrawal(instId, 20, "FIAT"),
+      earningsSvc.requestWithdrawal(instId, 20, "FIAT"),
+    ])
+
+    expect(settled.filter((r) => r.status === "fulfilled")).toHaveLength(1)
+
+    const after = await earningsSvc.getInstitutionSummary(instId)
+    expect(after.availableUsd).toBeCloseTo(0, 4)
   })
 })

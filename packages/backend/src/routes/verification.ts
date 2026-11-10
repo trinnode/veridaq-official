@@ -83,6 +83,12 @@ export const verificationRoutes: FastifyPluginAsync = async (app) => {
         .code(400)
         .send({ error: "This credential has no programme recorded, so this claim cannot be proven" })
     }
+    if (result.error === "PROGRAMME_MISMATCH") {
+      return rep.code(400).send({
+        error:
+          "That programme does not match the one recorded on this credential. Enter it exactly as the institution recorded it.",
+      })
+    }
 
     if (result.result === "CREDENTIAL_REVOKED") {
       return rep.code(200).send({ requestId: result.requestId, status: result.status, result: "CREDENTIAL_REVOKED" })

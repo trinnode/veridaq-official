@@ -14,7 +14,9 @@ import { PrismaClient } from "@prisma/client"
 import pino from "pino"
 import { decrypt } from "../utils/crypto.js"
 import { hashToField, hexToField } from "../utils/field.js"
+import { programmeMatchesRecord } from "../utils/course.js"
 import { BlockchainService } from "./blockchain.service.js"
+import { spendFreeVerification, spendPaidCredit, hasVerificationUnitAvailable } from "./credit.service.js"
 import { EarningsService } from "./earnings.service.js"
 import { ProofService } from "./proof.service.js"
 import { config } from "../config/index.js"
@@ -97,6 +99,31 @@ export class VerificationService {
       return { error: "INSTITUTION_INACTIVE" as const }
     }
 
+    // A double submit (two tabs, a slow connection, an impatient click) must not
+    // create two requests or spend two credits. The client disables the button
+    // while in flight, but the server has to enforce it too.
+    //
+    // A completed check is deduplicated as well: re-running the identical query
+    // a second later returns the same answer and would cost another credit.
+    // FAILED is deliberately excluded so a genuine retry still works.
+    const recent = await this.prisma.verificationRequest.findFirst({
+      where: {
+        employerId: input.employerId,
+        institutionId: institution.id,
+        matricNumber: input.matricNumber,
+        claimType: input.claimType,
+        threshold: input.threshold,
+        courseName: input.courseName ?? null,
+        status: { in: ["PROCESSING", "AWAITING_INSTITUTION", "COMPLETED"] },
+        createdAt: { gte: new Date(Date.now() - 60_000) },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, status: true },
+    })
+    if (recent) {
+      return { requestId: recent.id, status: recent.status, deduplicated: true }
+    }
+
     // Look up the employer and check free verifications
     const employer = await this.prisma.employer.findUnique({
       where: { id: input.employerId },
@@ -167,14 +194,36 @@ export class VerificationService {
         if (!attrs.courseHash || attrs.courseHash === "0") {
           return { error: "PROGRAMME_NOT_RECORDED" as const }
         }
+        // The named programme must be the one on the credential. Otherwise the
+        // institution would be attesting to a string the record contradicts.
+        if (!programmeMatchesRecord(input.courseName, attrs.courseHash)) {
+          return { error: "PROGRAMME_MISMATCH" as const }
+        }
       } catch {
         return { error: "PROGRAMME_NOT_RECORDED" as const }
       }
     }
 
+    // Manual requests are charged when the institution reviews them, not here.
+    // That is fair — the employer should not pay for a review that may never
+    // happen — but it lets a zero-balance employer queue unlimited work for a
+    // registrar. Refuse early. The database mirror answers the common case; the
+    // chain is only asked before a rejection, because the mirror lags it.
+    if (isManual && !(await hasVerificationUnitAvailable(this.prisma, employer.id))) {
+      let chainHasUnit = false
+      try {
+        const remaining = await this.blockchainSvc.getRemainingFreeVerifications(
+          employer.walletAddress as `0x${string}`
+        )
+        chainHasUnit = remaining > 0
+      } catch (err) {
+        log.error({ err }, "Could not confirm free-verification balance with the chain")
+      }
+      if (!chainHasUnit) return { error: "NO_FREE_VERIFICATIONS" as const }
+    }
+
     // Create the request record
-    const request = await this.prisma.verificationRequest.create({
-      data: {
+    const request = await this.prisma.verificationRequest.create({      data: {
         employerId: input.employerId,
         institutionId: institution.id,
         credentialId: credential.id,
@@ -193,24 +242,15 @@ export class VerificationService {
           employer.walletAddress as `0x${string}`
         )
         if (remaining <= 0) {
-          // No on-chain credits — check DB for free trials
-          const dbRemaining = employer.freeVerificationsRemaining
-          if (dbRemaining <= 0) {
-            // Free trials exhausted — check paid credits
-            if ((employer.verificationCredits ?? 0) > 0) {
-              await this.prisma.employer.update({
-                where: { id: employer.id },
-                data: { verificationCredits: { decrement: 1 } },
-              })
-              isFreeVerification = false
-            } else {
+          // Guarded updates: concurrent requests cannot both consume the same
+          // free check or the same paid credit.
+          const usedFree = await spendFreeVerification(this.prisma, employer.id)
+          if (!usedFree) {
+            const usedCredit = await spendPaidCredit(this.prisma, employer.id)
+            if (!usedCredit) {
               return { error: "NO_FREE_VERIFICATIONS" as const }
             }
-          } else {
-            await this.prisma.employer.update({
-              where: { id: employer.id },
-              data: { freeVerificationsRemaining: { decrement: 1 } },
-            })
+            isFreeVerification = false
           }
         } else {
           await this.blockchainSvc.consumeFreeVerification(employer.walletAddress as `0x${string}`)

@@ -87,6 +87,14 @@ const envSchema = z.object({
   FX_REFRESH_MINUTES: z.coerce.number().int().positive().default(30),
   FX_API_URL: z.string().url().default("https://open.er-api.com/v6/latest/USD"),
   FX_FALLBACK_USD_NGN: z.coerce.number().positive().default(1350),
+  // Payouts are settled in ETH but denominated in USD, so the conversion must
+  // use a current price. The fallback is only for when the feed is unreachable;
+  // the rate actually applied is recorded on every withdrawal.
+  ETH_USD_FALLBACK: z.coerce.number().positive().default(3000),
+  ETH_USD_CACHE_SECONDS: z.coerce.number().int().positive().default(300),
+  // Chain → database reconciliation of the three free employer checks. Set to
+  // 0 to disable the in-process schedule.
+  FREE_VERIFICATION_SYNC_MINUTES: z.coerce.number().int().min(0).default(360),
 
   // Gas pool
   GAS_POOL_MIN_BALANCE_USD: z.coerce.number().positive().default(10),

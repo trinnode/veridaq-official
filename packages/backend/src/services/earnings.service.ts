@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client"
 import pino from "pino"
 import { parseEther } from "viem"
 import { config } from "../config/index.js"
+import { getEthUsdQuote } from "./eth-price.service.js"
 
 const log = pino({ name: "earnings-service" })
 
@@ -254,14 +255,13 @@ export class EarningsService {
     destinationWallet?: string
   ) {
     const earnings = await this.ensureInstitutionEarnings(institutionId)
-    const available = earnings.availableUsd.toNumber()
+
+    if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
+      throw new Error("Withdrawal amount must be a positive number")
+    }
 
     if (amountUsd < 10) {
       throw new Error("Minimum withdrawal is $10")
-    }
-
-    if (available < amountUsd) {
-      throw new Error(`Insufficient balance. Available: $${available}, requested: $${amountUsd}`)
     }
 
     const destWallet = destinationWallet ?? earnings.payoutWallet
@@ -270,26 +270,63 @@ export class EarningsService {
       if (!destWallet) {
         throw new Error("No payout wallet set. Set a payout wallet before requesting crypto withdrawal.")
       }
-      // For crypto, use a simple wei estimate: $1 ≈ 0.0006 ETH (at ~$1669 ETH)
-      const ethAmount = (amountUsd / 1669.3).toFixed(10)
-      const weiEquivalent = parseEther(ethAmount)
+
+      // Price the payout at the time of payment rather than with a constant
+      // compiled into the source. The quote is recorded below so an auditor can
+      // reconstruct exactly what rate was applied.
+      const quote = await getEthUsdQuote()
+      const weiEquivalent = parseEther((amountUsd / quote.usd).toFixed(18))
+      if (weiEquivalent <= 0n) {
+        throw new Error("Withdrawal amount is too small to settle in ETH")
+      }
+
+      // Reserve the balance BEFORE sending. A read-then-write check would let
+      // two concurrent requests both pass and both pay out; a conditional
+      // update is the only check that is atomic under concurrency.
+      const reserved = await this.prisma.institutionEarnings.updateMany({
+        where: { id: earnings.id, availableUsd: { gte: amountUsd } },
+        data: {
+          availableUsd: { decrement: amountUsd },
+          availableWei: { decrement: weiEquivalent.toString() },
+          withdrawnUsd: { increment: amountUsd },
+          withdrawnWei: { increment: weiEquivalent.toString() },
+        },
+      })
+
+      if (reserved.count !== 1) {
+        const current = await this.prisma.institutionEarnings.findUnique({
+          where: { id: earnings.id },
+          select: { availableUsd: true },
+        })
+        throw new Error(
+          `Insufficient balance. Available: $${current?.availableUsd.toNumber() ?? 0}, requested: $${amountUsd}`
+        )
+      }
 
       const { BlockchainService } = await import("./blockchain.service.js")
       const blockchainSvc = new BlockchainService()
-      const txHash = await blockchainSvc.sendEth(destWallet as `0x${string}`, weiEquivalent)
 
-      return this.prisma.$transaction(async (tx) => {
-        await tx.institutionEarnings.update({
+      let txHash: `0x${string}`
+      try {
+        txHash = await blockchainSvc.sendEth(destWallet as `0x${string}`, weiEquivalent)
+      } catch (err) {
+        // The send failed, so the money never left. Give the reservation back.
+        await this.prisma.institutionEarnings.update({
           where: { id: earnings.id },
           data: {
-            availableUsd: { decrement: amountUsd },
-            availableWei: { decrement: weiEquivalent.toString() },
-            withdrawnUsd: { increment: amountUsd },
-            withdrawnWei: { increment: weiEquivalent.toString() },
+            availableUsd: { increment: amountUsd },
+            availableWei: { increment: weiEquivalent.toString() },
+            withdrawnUsd: { decrement: amountUsd },
+            withdrawnWei: { decrement: weiEquivalent.toString() },
           },
         })
+        throw err
+      }
 
-        const txRecord = await tx.earningTransaction.create({
+      // From here the money HAS left the wallet. If recording fails we must not
+      // refund, or the institution is paid twice; log loudly for reconciliation.
+      try {
+        const txRecord = await this.prisma.earningTransaction.create({
           data: {
             institutionId,
             type: "WITHDRAWN",
@@ -297,23 +334,45 @@ export class EarningsService {
             amountWei: weiEquivalent.toString(),
             description: `Crypto withdrawal of $${amountUsd} to ${destWallet}`,
             referenceId: txHash,
-            metadata: { method: "CRYPTO", destinationWallet: destWallet, status: "COMPLETED", txHash },
+            metadata: {
+              method: "CRYPTO",
+              destinationWallet: destWallet,
+              status: "COMPLETED",
+              txHash,
+              ethUsd: quote.usd,
+              ethUsdSource: quote.source,
+              ethUsdStale: quote.stale,
+            },
           },
         })
 
         return { transactionId: txRecord.id, status: "COMPLETED", txHash }
-      })
+      } catch (err) {
+        log.error(
+          { err, institutionId, txHash, amountUsd, wei: weiEquivalent.toString() },
+          "payout sent but the ledger record failed — reconcile by tx hash"
+        )
+        throw new Error(
+          `Payout sent (${txHash}) but the ledger could not be written. Contact the platform admin with this hash.`
+        )
+      }
     }
 
-    // FIAT withdrawal — recorded as pending, admin processes manually
+    // FIAT withdrawal — recorded as pending, admin processes manually. The
+    // balance check and the debit happen in one transaction with a guarded
+    // update, so two concurrent requests cannot both pass.
     return this.prisma.$transaction(async (tx) => {
-      await tx.institutionEarnings.update({
-        where: { id: earnings.id },
+      const reserved = await tx.institutionEarnings.updateMany({
+        where: { id: earnings.id, availableUsd: { gte: amountUsd } },
         data: {
           availableUsd: { decrement: amountUsd },
           withdrawnUsd: { increment: amountUsd },
         },
       })
+
+      if (reserved.count !== 1) {
+        throw new Error(`Insufficient balance for a $${amountUsd} withdrawal`)
+      }
 
       const txRecord = await tx.earningTransaction.create({
         data: {

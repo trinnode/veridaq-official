@@ -5,6 +5,7 @@ import { UploadModal } from "@/components/institution/upload-modal"
 import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { toast } from "@/components/ui/toast"
+import { LoadFailure } from "@/components/ui/load-failure"
 import { Download } from "@/lib/icons"
 import { useEffect, useState } from "react"
 
@@ -12,14 +13,22 @@ export default function BatchesPage() {
   const { user } = useAuth()
   const [batches, setBatches] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<{ status: number | null; message: string } | null>(null)
   const [showUpload, setShowUpload] = useState(false)
 
   async function load(page = 1) {
     try {
       setLoading(true)
+      setError(null)
       const { data } = await api.get(`/institution/batch?page=${page}&limit=10`)
       setBatches(data)
     } catch (err: any) {
+      // A failed load is not an empty batch list; keep the distinction visible.
+      setBatches(null)
+      setError({
+        status: err?.response?.status ?? null,
+        message: err?.response?.data?.error ?? "The batch list could not be loaded.",
+      })
       toast.error(err?.response?.data?.error ?? "Failed to load batches")
     } finally {
       setLoading(false)
@@ -81,6 +90,8 @@ export default function BatchesPage() {
 
       {loading ? (
         <div className="text-muted py-12 text-center text-sm">Loading…</div>
+      ) : error ? (
+        <LoadFailure status={error.status} message={error.message} onRetry={() => load()} />
       ) : (
         <BatchTable batches={batches?.items ?? []} onDismiss={load} />
       )}

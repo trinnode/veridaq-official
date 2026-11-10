@@ -1266,6 +1266,11 @@ export class BlockchainService {
     return Number(remaining)
   }
 
+  /** Chain head — the cheapest liveness probe for the configured RPC. */
+  async getBlockNumber(): Promise<bigint> {
+    return this.publicClient.getBlockNumber()
+  }
+
   /**
    * Get the current ETH balance of an address. Useful for monitoring
    * the PaymasterVault balance to avoid running out of gas funds.

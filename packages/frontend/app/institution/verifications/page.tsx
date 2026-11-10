@@ -31,6 +31,10 @@ type VerificationItem = {
   claimLabel: string | null
   claimDescription: string | null
   reviewType: string
+  /** Batch the credential was issued in, for cross-checking against the register. */
+  batchId?: string | null
+  /** Whether the typed programme matches the hash on the credential (claim 6). */
+  programmeMatches?: boolean | null
 }
 
 export default function VerificationsPage() {
@@ -89,6 +93,17 @@ export default function VerificationsPage() {
     } finally {
       setProcessingId(null)
     }
+  }
+
+  // The list carries enough to render the table, but the review needs the
+  // programme-match verdict and batch reference, which only the detail endpoint
+  // computes. Fetch it on selection rather than widening every list row.
+  const selectRequest = (r: VerificationItem) => {
+    setSelected(r)
+    api
+      .get(`/institution/verifications/${r.id}`)
+      .then(({ data }) => setSelected((cur) => (cur?.id === data.id ? data : cur)))
+      .catch(() => {})
   }
 
   const openDeclineModal = () => {
@@ -161,7 +176,7 @@ export default function VerificationsPage() {
               {requests.map((r) => (
                 <tr
                   key={r.id}
-                  onClick={() => setSelected(r)}
+                  onClick={() => selectRequest(r)}
                   className={`hover:bg-void/30 transition-colors cursor-pointer ${selected?.id === r.id ? "bg-void/40" : ""}`}
                 >
                   <td className="px-4 py-3 whitespace-nowrap text-muted text-xs">
@@ -238,6 +253,28 @@ export default function VerificationsPage() {
                       <span className="text-xs text-foreground font-medium">{selected.courseName}</span>
                     </div>
                   )}
+                  {/* The reviewer should not have to take the typed programme on
+                      trust: the credential stores a hash of the real one. */}
+                  {selected.claimType === 6 && selected.programmeMatches != null && (
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="text-xs text-muted">Programme on record</span>
+                      {selected.programmeMatches ? (
+                        <span className="text-accent flex items-center gap-1 text-xs font-medium">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Matches
+                        </span>
+                      ) : (
+                        <span className="text-error flex items-center gap-1 text-xs font-medium">
+                          <XCircle className="w-3.5 h-3.5" /> Does not match
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {selected.batchId && (
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="text-xs text-muted">Batch reference</span>
+                      <span className="text-xs font-mono text-foreground">{selected.batchId}</span>
+                    </div>
+                  )}
                   {selected.claimDescription && (
                     <div className="px-3 py-2">
                       <span className="text-xs text-muted block mb-0.5">Description</span>
@@ -300,12 +337,12 @@ export default function VerificationsPage() {
             <p className="text-muted mt-1 text-sm">This record will be marked as not found.</p>
             <div className="mt-4">
               <label className="mb-1.5 block text-xs font-medium text-foreground">
-                Reason (institution only — not shared externally)
+                Reason (shown to the employer)
               </label>
               <textarea
                 value={declineComment}
                 onChange={(e) => setDeclineComment(e.target.value)}
-                placeholder="Optional internal note about why this was declined..."
+                placeholder="e.g. No record of this programme for this matriculation number..."
                 className="bg-void border-surface-border focus:border-accent h-24 w-full resize-none rounded-lg border px-3 py-2 text-sm text-foreground outline-none transition-colors"
               />
             </div>

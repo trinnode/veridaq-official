@@ -16,7 +16,8 @@ import multipart from "@fastify/multipart"
 import rateLimit from "@fastify/rate-limit"
 import swagger from "@fastify/swagger"
 import swaggerUi from "@fastify/swagger-ui"
-import Fastify from "fastify"
+import Fastify, { type FastifyError } from "fastify"
+import { ZodError } from "zod"
 
 import { config } from "./config/index.js"
 import { authPlugin } from "./plugins/auth.js"
@@ -33,6 +34,9 @@ import { fxRoutes } from "./routes/fx.js"
 import { paymentRoutes } from "./routes/payment.js"
 import { statsRoutes } from "./routes/stats.js"
 import { verificationRoutes } from "./routes/verification.js"
+import { BlockchainService } from "./services/blockchain.service.js"
+import { FX_CACHE_KEY, type FxQuote } from "./services/fx.service.js"
+import { ReconcileService } from "./services/reconcile.service.js"
 
 const loggerConfig =
   config.NODE_ENV === "production"
@@ -158,6 +162,30 @@ async function bootstrap() {
     await app.register(swaggerUi, { routePrefix: "/docs" })
   }
 
+  // ── Error handling ──────────────────────────────────────────────
+  // A Zod failure is the client's mistake, not a server fault. Without this
+  // it surfaced as a 500 on any route that used `.parse()`, which reads as an
+  // outage and hides the actual field that was wrong.
+  app.setErrorHandler((error: FastifyError, request, reply) => {
+    if (error instanceof ZodError) {
+      return reply.code(400).send({
+        error: "Invalid request",
+        details: error.issues.map((issue) => ({
+          path: issue.path.join(".") || "(body)",
+          message: issue.message,
+        })),
+      })
+    }
+
+    const statusCode =
+      typeof error.statusCode === "number" && error.statusCode >= 400 ? error.statusCode : 500
+    if (statusCode >= 500) {
+      request.log.error({ err: error }, "request failed")
+      return reply.code(500).send({ error: "Internal server error" })
+    }
+    return reply.code(statusCode).send({ error: error.message })
+  })
+
   // ── Public routes (no auth) ─────────────────────────────────────
   // Must be registered before any plugin that adds auth hooks,
   // because Fastify parent hooks propagate to all child contexts.
@@ -219,13 +247,132 @@ async function bootstrap() {
   }
 
   // Health check — used by Docker and load balancers
-  app.get("/health", async () => ({ status: "ok", ts: Date.now() }))
+  // ── Health ───────────────────────────────────────────────────────────────
+  // Reports each dependency separately. A single "ok" hides which part is
+  // broken; a monitor needs to know whether the database is unreachable, the
+  // chain RPC is timing out, or the FX rate has quietly gone stale.
+  //
+  // The chain probe is memoised for 15 seconds so a 1-second monitor does not
+  // turn into a denial-of-service against the public RPC.
+  const health = {
+    chainAt: 0,
+    chainOk: false,
+    blockNumber: null as string | null,
+    chainError: null as string | null,
+  }
+  const blockchainSvc = new BlockchainService()
+
+  async function checkChain() {
+    if (Date.now() - health.chainAt < 15_000) {
+      return { ok: health.chainOk, blockNumber: health.blockNumber, error: health.chainError }
+    }
+    health.chainAt = Date.now()
+
+    // Two attempts, because the first RPC call after a restart pays for a cold
+    // TCP/TLS handshake and a 5s cap is not always enough for it. Without the
+    // retry, every deploy produces a 503 on the first health check and pages
+    // whoever is on call for something that is not broken.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const block = await Promise.race([
+          blockchainSvc.getBlockNumber(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("RPC timed out after 5s")), 5_000).unref?.()
+          ),
+        ])
+        health.chainOk = true
+        health.blockNumber = block.toString()
+        health.chainError = null
+        return { ok: true, blockNumber: health.blockNumber, error: null }
+      } catch (err) {
+        if (attempt === 2) {
+          health.chainOk = false
+          health.blockNumber = null
+          health.chainError = err instanceof Error ? err.message : "RPC unreachable"
+        }
+      }
+    }
+    return { ok: health.chainOk, blockNumber: health.blockNumber, error: health.chainError }
+  }
+
+  app.get("/health", async (_req, rep) => {
+    const database = await app.prisma
+      .$queryRaw`SELECT 1`
+      .then(() => ({ ok: true, error: null as string | null }))
+      .catch((err: unknown) => ({
+        ok: false,
+        error: err instanceof Error ? err.message : "database unreachable",
+      }))
+
+    const redis = await app.redis
+      .ping()
+      .then(() => ({ ok: true, error: null as string | null }))
+      .catch((err: unknown) => ({
+        ok: false,
+        error: err instanceof Error ? err.message : "redis unreachable",
+      }))
+
+    const chain = await checkChain()
+
+    const fx = await app.redis
+      .get(FX_CACHE_KEY)
+      .then((raw) => {
+        if (!raw) return { ok: true, status: "uninitialised" as const }
+        const quote = JSON.parse(raw) as FxQuote
+        const ageMinutes = Math.round(
+          (Date.now() - new Date(quote.fetchedAt).getTime()) / 60_000
+        )
+        return {
+          ok: !quote.stale,
+          status: quote.stale ? ("stale" as const) : ("fresh" as const),
+          rate: quote.rate,
+          ageMinutes,
+          refreshMinutes: quote.refreshMinutes,
+        }
+      })
+      .catch(() => ({ ok: false, status: "unreadable" as const }))
+
+    const ok = database.ok && redis.ok && chain.ok
+    const payload = {
+      status: ok ? "ok" : "degraded",
+      ts: new Date().toISOString(),
+      checks: { database, redis, chain, fx },
+    }
+
+    // 503 makes a monitor act; the body still explains which check failed.
+    return rep.code(ok ? 200 : 503).send(payload)
+  })
 
   await app.listen({ port: config.PORT, host: "0.0.0.0" })
   app.log.info(`Server running at http://0.0.0.0:${config.PORT}`)
 
   if (config.NODE_ENV !== "production") {
     app.log.info(`API docs at http://localhost:${config.PORT}/docs`)
+  }
+
+  // Free-verification reconciliation. The contract is authoritative; this keeps
+  // the database mirror honest. It runs in-process so no extra worker process is
+  // required, and every run is idempotent.
+  if (config.FREE_VERIFICATION_SYNC_MINUTES > 0) {
+    const reconcileSvc = new ReconcileService(app.prisma)
+    const run = () =>
+      reconcileSvc
+        .syncAll()
+        .then((summary) => {
+          if (summary.updated > 0 || summary.failed > 0) {
+            app.log.info(summary, "free-verification reconciliation")
+          }
+        })
+        .catch((err) => app.log.warn({ err }, "free-verification reconciliation failed"))
+
+    const timer = setInterval(run, config.FREE_VERIFICATION_SYNC_MINUTES * 60_000)
+    timer.unref()
+    const first = setTimeout(run, 30_000)
+    first.unref()
+    app.log.info(
+      { everyMinutes: config.FREE_VERIFICATION_SYNC_MINUTES },
+      "free-verification reconciliation scheduled"
+    )
   }
 }
 

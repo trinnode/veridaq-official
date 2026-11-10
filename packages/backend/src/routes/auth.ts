@@ -80,19 +80,60 @@ const executeResetBody = z.object({
 export const authRoutes: FastifyPluginAsync = async (app) => {
   const authSvc = new AuthService(app.prisma)
 
-  // Tighten rate limit for login endpoints: 5 attempts per 15 minutes per IP
+  // Two independent limits. The IP limit stops a spray from one address; the
+  // per-account counter stops a distributed spray against one known email.
+  // 10 rather than 5 because a shared campus or office NAT would otherwise lock
+  // out everyone behind it, and per-account backoff already covers the
+  // credential-stuffing case.
+  const LOGIN_IP_MAX = 10
+  const LOGIN_ACCOUNT_MAX = 10
+  const LOGIN_WINDOW_SECONDS = 15 * 60
+
   const loginRateLimit = {
     config: {
-      rateLimit: { max: 100, timeWindow: "15 minutes" },
+      rateLimit: { max: LOGIN_IP_MAX, timeWindow: "15 minutes" },
     },
+  }
+
+  const failureKey = (portal: string, email: string) =>
+    `login:fail:${portal}:${email.trim().toLowerCase()}`
+
+  async function accountLocked(portal: string, email: string): Promise<boolean> {
+    const raw = await app.redis.get(failureKey(portal, email))
+    const attempts = Number(raw ?? 0)
+    return Number.isFinite(attempts) && attempts >= LOGIN_ACCOUNT_MAX
+  }
+
+  async function noteFailure(portal: string, email: string): Promise<void> {
+    const key = failureKey(portal, email)
+    const attempts = await app.redis.incr(key)
+    if (attempts === 1) await app.redis.expire(key, LOGIN_WINDOW_SECONDS)
+  }
+
+  async function clearFailures(portal: string, email: string): Promise<void> {
+    await app.redis.del(failureKey(portal, email))
+  }
+
+  const lockedResponse = {
+    error: "Too many failed sign-in attempts for this account. Try again in 15 minutes.",
   }
 
   // ── Institution login ────────────────────────────────────────────────────
 
   app.post("/institution/login", { ...loginRateLimit }, async (req, rep) => {
     const { email, password } = loginBody.parse(req.body)
+
+    if (await accountLocked("institution", email)) {
+      return rep.code(429).send(lockedResponse)
+    }
+
     const result = await authSvc.loginInstitution(email, password)
-    if (!result) return rep.code(401).send({ error: "Invalid credentials" })
+    if (!result) {
+      await noteFailure("institution", email)
+      return rep.code(401).send({ error: "Invalid credentials" })
+    }
+
+    await clearFailures("institution", email)
 
     // Access token in httpOnly cookie so it survives full page loads
     const secure = cookieSecure(req)
@@ -118,8 +159,18 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
   app.post("/employer/login", { ...loginRateLimit }, async (req, rep) => {
     const { email, password } = loginBody.parse(req.body)
+
+    if (await accountLocked("employer", email)) {
+      return rep.code(429).send(lockedResponse)
+    }
+
     const result = await authSvc.loginEmployer(email, password)
-    if (!result) return rep.code(401).send({ error: "Invalid credentials" })
+    if (!result) {
+      await noteFailure("employer", email)
+      return rep.code(401).send({ error: "Invalid credentials" })
+    }
+
+    await clearFailures("employer", email)
 
     const secure = cookieSecure(req)
     rep.setCookie("accessToken", result.accessToken, {
@@ -144,8 +195,18 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
   app.post("/admin/login", { ...loginRateLimit }, async (req, rep) => {
     const { email, password } = loginBody.parse(req.body)
+
+    if (await accountLocked("admin", email)) {
+      return rep.code(429).send(lockedResponse)
+    }
+
     const result = await authSvc.loginAdmin(email, password)
-    if (!result) return rep.code(401).send({ error: "Invalid credentials" })
+    if (!result) {
+      await noteFailure("admin", email)
+      return rep.code(401).send({ error: "Invalid credentials" })
+    }
+
+    await clearFailures("admin", email)
 
     const secure = cookieSecure(req)
     rep.setCookie("accessToken", result.accessToken, {
