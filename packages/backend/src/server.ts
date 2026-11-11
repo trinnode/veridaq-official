@@ -69,9 +69,18 @@ async function bootstrap() {
   // subdomain (dynamic `.up.railway.app` origins).  Railway
   // generates per-service subdomains that the user can't predict
   // at build time, so a static list won't work.
+  //
+  // Loopback origins are accepted outside production: a developer running the
+  // frontend on localhost against a shared .env whose FRONTEND_URL points at the
+  // deployed site would otherwise have every request blocked, and the browser
+  // reports only "CORS error" with no hint that the URL is the problem.
   const isRailwayOrigin = (origin: string) =>
     origin.endsWith(".up.railway.app") ||
     /^https:\/\/[a-z0-9-]+\.railway\.app$/.test(origin)
+
+  const isLoopbackOrigin = (origin: string) =>
+    config.NODE_ENV !== "production" &&
+    /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)
 
   await app.register(cors, {
     origin: (origin, cb) => {
@@ -79,11 +88,17 @@ async function bootstrap() {
       if (
         origin === config.FRONTEND_URL ||
         isRailwayOrigin(origin) ||
+        isLoopbackOrigin(origin) ||
         extensionOrigins.includes(origin)
       ) {
         return cb(null, true)
       }
-      return cb(new Error("Origin not allowed"), false)
+      // Deny quietly. Throwing here turned a browser-side policy decision into
+      // a 500 in the access log, which reads as an outage and hides a plain
+      // misconfiguration. With no CORS headers the browser blocks the response
+      // on its own, which is the intended outcome.
+      app.log.debug({ origin }, "origin not allowed by CORS")
+      return cb(null, false)
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

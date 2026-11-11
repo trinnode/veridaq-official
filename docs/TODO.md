@@ -89,6 +89,16 @@ pre-existing warnings), `pnpm test:backend` 11 files / 106 tests passing.
       *Evidence (HTTP):* balance zeroed → `402` with the request refused and no
       row created; balance restored → `46`.
 
+- [x] P1.8 The local frontend could not talk to the local API at all: the CORS
+      origin check threw, so a blocked origin appeared as a `500` in the access
+      log, and only an exact match against `FRONTEND_URL` was accepted — which in
+      a shared `.env` points at the deployed site, not `localhost`.
+      *Evidence (HTTP):* preflight from `http://localhost:3000` → `204` with
+      `access-control-allow-origin` + `allow-credentials`; login from that origin
+      sets `accessToken` and `refreshToken` as `HttpOnly`; an unlisted origin gets
+      no CORS headers and no `500`. Loopback origins are accepted outside
+      production only.
+
 ## P2 — UI
 
 - [x] P2.1 Error states (not empty tables) on admin institutions, employer
