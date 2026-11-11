@@ -130,8 +130,11 @@ pre-existing warnings), `pnpm test:backend` 11 files / 106 tests passing.
 - [x] P2.12 README and GUIDE: Naira/FX, local ports, claim-6 rules, seed
       invariance, corrected 70/20/10 split, reconciliation and ETH-price
       variables.
-- [x] P2.13 SECURITY.md: findings 8.1–8.7 including the race and
-      programme-binding ones, with the open items stated.
+- [x] P2.13 SECURITY.md: findings 8.1–8.8 including the race, unpaid-review and
+      programme-binding ones, with the open items stated. This file is
+      gitignored by design (`.gitignore`, internal planning), so the durable
+      record of these findings is this page; the SECURITY.md section is the
+      long form kept with the local docs.
 
 ## P3 — operations
 
