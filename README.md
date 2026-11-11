@@ -311,7 +311,10 @@ pnpm install
 
 The compose file publishes Postgres on **5433** and Redis on **6380** rather than
 the defaults, so this project does not collide with anything else on the machine.
-The backend runs on **4100** locally and the frontend on **3000**.
+The backend runs on **4000** locally (`PORT`) and the frontend on **3000**.
+`NEXT_PUBLIC_BACKEND_URL` must point at the same backend port — it is baked in
+at build time, so a mismatch shows up as connection refused rather than an
+error message.
 
 ```bash
 docker compose up -d

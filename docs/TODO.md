@@ -7,8 +7,9 @@ Legend: `[x]` done and verified · `[~]` implemented, verification incomplete ·
 `[ ]` not started · `[!]` blocked on something external · `[-]` deliberately
 deferred
 
-Local stack for every test below: Postgres 5433, Redis 6380, Fastify 4100,
-Next 3000, Base Sepolia 84532. No deployment is involved.
+Local stack for every test below: Postgres 5433, Redis 6380, Next 3000, Base
+Sepolia 84532. The Fastify port was 4100 during these runs because 4000 was
+occupied at the time; it is 4000 by default. No deployment is involved.
 
 Verification limits for this pass: no browser automation is available, so UI
 items are verified at compile and code level only and are marked `[~]` rather

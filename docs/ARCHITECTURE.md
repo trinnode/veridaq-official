@@ -5,7 +5,7 @@ deliberately narrower than `README.md`: that file explains the product, this one
 explains the moving parts, the boundaries between them and the decisions that
 are easy to get wrong when changing the code.
 
-Version: November 2026. Local stack: Postgres 5433, Redis 6380, Fastify 4100,
+Version: November 2026. Local stack: Postgres 5433, Redis 6380, Fastify 4000,
 Next 3000, Base Sepolia 84532.
 
 ---

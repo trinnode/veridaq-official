@@ -16,13 +16,20 @@ The local stack uses offset ports:
 | Service | Port |
 | --- | --- |
 | Next.js | 3000 |
-| Fastify | 4100 |
+| Fastify | 4000 (`PORT`) |
 | Postgres | 5433 |
 | Redis | 6380 |
 
 Test containers are named `veridaq-test-pg` and `veridaq-test-redis`.
 Commands in the docs use these ports explicitly rather than relying on `.env`,
 because `.env` is often the thing that is wrong.
+
+The API port is the one value that must be set on both sides: `PORT` for the
+backend and `NEXT_PUBLIC_BACKEND_URL` for the frontend, which is baked in at
+build time. If 4000 is occupied, change both to the same new number — a mismatch
+looks like a broken API rather than a misconfiguration, because the browser
+simply gets connection refused. The verification runs recorded in
+`docs/TODO.md` used 4100 for this reason.
 
 ## Alternatives
 
